@@ -1,11 +1,11 @@
 <?php
 /*
-	servers/view.php
+	domains/view.php
 
 	access:
 		namedadmins
 
-	Displays all the details and configuration options for a specific name server.
+	Displays all the details and configuration options for a specific domain.
 */
 
 class page_output
@@ -45,7 +45,7 @@ class page_output
 		// make sure the server is valid
 		if (!$this->obj_domain->verify_id())
 		{
-			log_write("error", "page_output", "The requested domain server (". $this->obj_domain->id .") does not exist - possibly the domain has been deleted?");
+			log_write("error", "page_output", "The requested domain (". $this->obj_domain->id .") does not exist - possibly the domain has been deleted?");
 			return 0;
 		}
 
@@ -63,7 +63,7 @@ class page_output
 		$this->obj_form->formname	= "domain_edit";
 		$this->obj_form->language	= $_SESSION["user"]["lang"];
 
-		$this->obj_form->action		= "domain/edit-process.php";
+		$this->obj_form->action		= "domains/edit-process.php";
 		$this->obj_form->method		= "post";
 
 		// general
@@ -74,14 +74,53 @@ class page_output
 		$this->obj_form->add_input($structure);
 
 		$structure = NULL;
-		$structure["fieldname"] 	= "domain_master";
+		$structure["fieldname"] 	= "domain_description";
 		$structure["type"]		= "input";
 		$structure["options"]["req"]	= "yes";
 		$this->obj_form->add_input($structure);
-			
+
 		$structure = NULL;
-		$structure["fieldname"]		= "notified_serial";
-		$structure["type"]		= "textarea";
+		$structure["fieldname"] 	= "domain_description";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$this->obj_form->add_input($structure);
+
+
+
+		// SOA configuration
+		$structure = NULL;
+		$structure["fieldname"] 	= "soa_hostmaster";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
+		$structure["fieldname"] 	= "soa_serial";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
+		$structure["fieldname"] 	= "soa_refresh";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
+		$structure["fieldname"] 	= "soa_retry";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$this->obj_form->add_input($structure);
+
+		$structure["fieldname"] 	= "soa_expire";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$this->obj_form->add_input($structure);
+
+		$structure["fieldname"] 	= "soa_default_ttl";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$structure["defaultvalue"]	= $GLOBALS["config"]["DEFAULT_TTL_SOA"];
 		$this->obj_form->add_input($structure);
 
 
@@ -101,8 +140,8 @@ class page_output
 		
 		
 		// define subforms
-		$this->obj_form->subforms["domain_details"]	= array("domain_name", "domain_master");
-		$this->obj_form->subforms["domain_status"]	= array("notified_serial");
+		$this->obj_form->subforms["domain_details"]	= array("domain_name", "domain_description");
+		$this->obj_form->subforms["domain_soa"]		= array("soa_hostmaster", "soa_serial", "soa_refresh", "soa_retry", "soa_expire", "soa_default_ttl");
 		$this->obj_form->subforms["hidden"]		= array("id_domain");
 		$this->obj_form->subforms["submit"]		= array("submit");
 
@@ -116,9 +155,15 @@ class page_output
 		{
 			if ($this->obj_domain->load_data())
 			{
-				$this->obj_form->structure["domain_name"]["defaultvalue"]		= $this->obj_domain->data["name"];
-				$this->obj_form->structure["domain_master"]["defaultvalue"]		= $this->obj_domain->data["master"];
-				$this->obj_form->structure["notified_serial"]["defaultvalue"]		= $this->obj_domain->data["notified_serial"];
+				$this->obj_form->structure["domain_name"]["defaultvalue"]		= $this->obj_domain->data["domain_name"];
+				$this->obj_form->structure["domain_description"]["defaultvalue"]	= $this->obj_domain->data["domain_description"];
+
+				$this->obj_form->structure["soa_hostmaster"]["defaultvalue"]		= $this->obj_domain->data["soa_hostmaster"];
+				$this->obj_form->structure["soa_serial"]["defaultvalue"]		= $this->obj_domain->data["soa_serial"];
+				$this->obj_form->structure["soa_refresh"]["defaultvalue"]		= $this->obj_domain->data["soa_refresh"];
+				$this->obj_form->structure["soa_retry"]["defaultvalue"]			= $this->obj_domain->data["soa_retry"];
+				$this->obj_form->structure["soa_expire"]["defaultvalue"]		= $this->obj_domain->data["soa_expire"];
+				$this->obj_form->structure["soa_default_ttl"]["defaultvalue"]		= $this->obj_domain->data["soa_default_ttl"];
 			}
 		}
 	}

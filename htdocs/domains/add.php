@@ -1,15 +1,15 @@
 <?php
 /*
-	servers/add.php
+	domains/add.php
 
-	access: namedadmins only
+	access:
+		namedadmins
 
-	Configure a new FreeRadius server to allow it to recieve configuration and push log to phpfreename.
+	Allows a new domain to be added to the system.
 */
 
 class page_output
 {
-	var $obj_menu_nav;
 	var $obj_form;
 
 
@@ -33,30 +33,71 @@ class page_output
 			Define form structure
 		*/
 		$this->obj_form			= New form_input;
-		$this->obj_form->formname	= "name_server_edit";
+		$this->obj_form->formname	= "domain_add";
 		$this->obj_form->language	= $_SESSION["user"]["lang"];
 
-		$this->obj_form->action		= "servers/edit-process.php";
+		$this->obj_form->action		= "domains/edit-process.php";
 		$this->obj_form->method		= "post";
-
 
 		// general
 		$structure = NULL;
-		$structure["fieldname"] 	= "server_name";
+		$structure["fieldname"] 	= "domain_name";
 		$structure["type"]		= "input";
 		$structure["options"]["req"]	= "yes";
-		$this->obj_form->add_input($structure);
-							
-		$structure = NULL;
-		$structure["fieldname"]		= "server_description";
-		$structure["type"]		= "textarea";
 		$this->obj_form->add_input($structure);
 
 		$structure = NULL;
-		$structure["fieldname"]		= "api_auth_key";
+		$structure["fieldname"] 	= "domain_description";
 		$structure["type"]		= "input";
 		$structure["options"]["req"]	= "yes";
-		$structure["options"]["label"]	= " ". lang_trans("help_api_auth_key");
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
+		$structure["fieldname"] 	= "domain_description";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$this->obj_form->add_input($structure);
+
+
+
+		// SOA configuration
+		$structure = NULL;
+		$structure["fieldname"] 	= "soa_hostmaster";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
+		$structure["fieldname"] 	= "soa_serial";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$structure["defaultvalue"]	= date("Ymd") ."01";
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
+		$structure["fieldname"] 	= "soa_refresh";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$structure["defaultvalue"]	= "21600";
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
+		$structure["fieldname"] 	= "soa_retry";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$structure["defaultvalue"]	= "3600";
+		$this->obj_form->add_input($structure);
+
+		$structure["fieldname"] 	= "soa_expire";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$structure["defaultvalue"]	= "604800";
+		$this->obj_form->add_input($structure);
+
+		$structure["fieldname"] 	= "soa_default_ttl";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$structure["defaultvalue"]	= $GLOBALS["config"]["DEFAULT_TTL_SOA"];
 		$this->obj_form->add_input($structure);
 
 
@@ -67,15 +108,14 @@ class page_output
 		$structure["defaultvalue"]	= "Save Changes";
 		$this->obj_form->add_input($structure);
 		
-
-		// subforms
-		$this->obj_form->subforms["server_details"]	= array("server_name", "server_description");
-		$this->obj_form->subforms["server_api"]		= array("api_auth_key");
+		
+		// define subforms
+		$this->obj_form->subforms["domain_details"]	= array("domain_name", "domain_description");
+		$this->obj_form->subforms["domain_soa"]		= array("soa_hostmaster", "soa_serial", "soa_refresh", "soa_retry", "soa_expire", "soa_default_ttl");
 		$this->obj_form->subforms["submit"]		= array("submit");
 
 
-
-		// load data
+		// import data
 		if (error_check())
 		{
 			$this->obj_form->load_data_error();
@@ -86,8 +126,8 @@ class page_output
 	function render_html()
 	{
 		// title + summary
-		print "<h3>ADD NEW NAME SERVER</h3><br>";
-		print "<p>This page allows you to add a new name server to the system and define the API access key for the server.</p>";
+		print "<h3>ADD NEW DOMAIN</h3><br>";
+		print "<p>Use this page to add a new domain to the system.</p>";
 
 	
 		// display the form

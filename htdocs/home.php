@@ -48,19 +48,7 @@ else
 			print "<h3>OVERVIEW</h3>";
 			//print "<p>Welcome to <a target=\"new\" href=\"http://www.amberdms.com/namedmanager\">LDAPAuthManager</a>, an open-source, PHP web-based LDAP authentication management interface designed to make it easy to manage users running on centralised authentication environments.</p>";
 			print "<p>Welcome to NamedManager, a PHP web-based DNS management interface for managing DNS zones.</p>";
-	
-			
-			// buttons
-			print "<br><p>";
-			print "<a class=\"button\" href=\"index.php?page=user/account.php\">Adjust your login or change your password</a> ";
 
-			if (user_permissions_get("ldapadmins"))
-			{
-				print "<a class=\"button\" href=\"index.php?page=user_management/users.php\">Manage Users</a> ";
-				print "<a class=\"button\" href=\"index.php?page=group_management/groups.php\">Manage Groups</a> ";
-			}
-
-			print "</p>";
 
 		}
 	}

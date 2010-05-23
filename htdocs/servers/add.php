@@ -52,12 +52,25 @@ class page_output
 		$structure["type"]		= "textarea";
 		$this->obj_form->add_input($structure);
 
+		$structure = NULL;
+		$structure["fieldname"] 	= "server_primary";
+		$structure["type"]		= "checkbox";
+		$structure["options"]["req"]	= "yes";
+		$structure["options"]["label"]	= lang_trans("server_primary_option_help");
+		$this->obj_form->add_input($structure);
+			
 
 		// api	
 		$structure = NULL;
 		$structure["fieldname"]		= "server_type";
 		$structure["type"]		= "radio";
-		$structure["values"]		= array("api","powerdns-compat");
+		$structure["values"]		= array("api");
+		
+		if ($GLOBALS["config"]["ZONE_DB_TYPE"] == "powerdns-mysql")
+		{
+			$structure["values"][] = "powerdns-compat";
+		}
+
 		$structure["defaultvalue"]	= "api";
 		$this->obj_form->add_input($structure);
 
@@ -81,7 +94,7 @@ class page_output
 		
 
 		// subforms
-		$this->obj_form->subforms["server_details"]	= array("server_name", "server_description");
+		$this->obj_form->subforms["server_details"]	= array("server_name", "server_description", "server_primary");
 		$this->obj_form->subforms["server_type"]	= array("server_type", "api_auth_key");
 		$this->obj_form->subforms["submit"]		= array("submit");
 

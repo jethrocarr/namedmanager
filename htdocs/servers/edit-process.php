@@ -42,6 +42,8 @@ if (user_permissions_get('namedadmins'))
 	// basic fields
 	$obj_name_server->data["server_name"]			= security_form_input_predefined("any", "server_name", 1, "");
 	$obj_name_server->data["server_description"]		= security_form_input_predefined("any", "server_description", 0, "");
+	$obj_name_server->data["server_primary"]		= security_form_input_predefined("any", "server_primary", 0, "");
+
 	$obj_name_server->data["server_type"]			= security_form_input_predefined("any", "server_type", 1, "");
 
 	if ($obj_name_server->data["server_type"] == "api")

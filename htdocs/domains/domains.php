@@ -35,20 +35,21 @@ class page_output
 		$this->obj_table->tablename	= "name_servers";
 
 		// define all the columns and structure
-		$this->obj_table->add_column("standard", "domain_name", "name");
-		$this->obj_table->add_column("standard", "domain_master", "master");
-		$this->obj_table->add_column("timestamp", "updated", "notified_serial");
+		$this->obj_table->add_column("standard", "domain_name", "domain_name");
+		$this->obj_table->add_column("standard", "domain_serial", "soa_serial");
+		$this->obj_table->add_column("standard", "domain_description", "domain_description");
 
 		// defaults
-		$this->obj_table->columns		= array("domain_name", "domain_master", "updated");
+		$this->obj_table->columns		= array("domain_name", "domain_serial", "domain_description");
 		$this->obj_table->columns_order		= array("domain_name");
 		$this->obj_table->columns_order_options	= array("domain_name");
 
+		// TODO: we should stop querying directly and use the domains class logic, this would also provide support for multiple backends.
 		// use seporate zone database
-		$this->obj_table->sql_obj->session_init("mysql", $GLOBALS["config"]["ZONE_DB_HOST"], $GLOBALS["config"]["ZONE_DB_NAME"], $GLOBALS["config"]["ZONE_DB_USERNAME"], $GLOBALS["config"]["ZONE_DB_PASSWORD"]);
+		//$this->obj_table->sql_obj->session_init("mysql", $GLOBALS["config"]["ZONE_DB_HOST"], $GLOBALS["config"]["ZONE_DB_NAME"], $GLOBALS["config"]["ZONE_DB_USERNAME"], $GLOBALS["config"]["ZONE_DB_PASSWORD"]);
 
 		// fetch all the domains
-		$this->obj_table->sql_obj->prepare_sql_settable("domains");
+		$this->obj_table->sql_obj->prepare_sql_settable("dns_domains");
 		$this->obj_table->sql_obj->prepare_sql_addfield("id", "");
 
 		// load data
@@ -75,10 +76,10 @@ class page_output
 			$structure["id"]["column"]	= "id";
 			$this->obj_table->add_link("tbl_lnk_details", "domains/view.php", $structure);
 
-			// logging link
+			// domain records
 			$structure = NULL;
 			$structure["id"]["column"]	= "id";
-			$this->obj_table->add_link("tbl_lnk_logs", "domains/logs.php", $structure);
+			$this->obj_table->add_link("tbl_lnk_records", "domains/records.php", $structure);
 
 			// delete link
 			$structure = NULL;

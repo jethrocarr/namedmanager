@@ -157,13 +157,16 @@ class name_server
 	{
 		log_debug("name_server", "Executing action_create()");
 
-		// create a new NAS
+		// create a new server
 		$sql_obj		= New sql_query;
 		$sql_obj->string	= "INSERT INTO `name_servers` (server_name, api_sync_config, api_sync_log) VALUES ('". $this->data["server_name"] ."', '1', '1')";
 		$sql_obj->execute();
 
 		$this->id = $sql_obj->fetch_insert_id();
 
+
+
+		// assign the server to the domains
 		return $this->id;
 
 	} // end of action_create
@@ -224,7 +227,42 @@ class name_server
 						."WHERE id='". $this->id ."' LIMIT 1";
 		$sql_obj->execute();
 
-		
+
+		/*
+			Update primary server (if set)
+		*/
+
+		if ($this->data["server_primary"])
+		{
+			$sql_obj->string	= "UPDATE `name_servers` SET server_primary='0'";
+			$sql_obj->execute();
+
+			$sql_obj->string	= "UPDATE `name_servers` SET server_primary='1' WHERE id='". $this->id ."' LIMIT 1";
+			$sql_obj->execute();
+		}		
+
+
+
+		/*
+			Update NS records
+
+			We need to run through all the domains and update their name server values
+			as well as their serial numbers to push out the new configuration.
+		*/
+
+		$obj_domain			= New domain;
+		$obj_domain->load_data_all();
+
+		foreach ($obj_domain->data as $data_domain)
+		{
+			$obj_domain_sub		= New domain;
+			$obj_domain_sub->id	= $data_domain["id"];
+
+			$obj_domain_sub->load_data();
+			$obj_domain_sub->action_update_ns();
+			$obj_domain_sub->action_update_serial();
+		}
+
 
 
 		/*

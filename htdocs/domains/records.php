@@ -10,13 +10,24 @@
 
 class page_output
 {
-	var $obj_domain;
+	// framework
+	var $requires;
 	var $obj_menu_nav;
+
+	// data objects
+	var $obj_domain;
 	var $obj_form;
+
+	// used to tracking how many form rows for records to display
+	var $num_records_mx;
+	var $num_records_ns;
+	var $num_records_custom;
 
 
 	function page_output()
 	{
+		// include custom scripts and/or logic
+		$this->requires["javascript"][]	= "include/javascript/domain_records.js";
 
 		// initate object
 		$this->obj_domain		= New domain_records;
@@ -56,6 +67,14 @@ class page_output
 	function execute()
 	{
 		/*
+			Load domain data & records
+		*/
+
+		$this->obj_domain->load_data();
+		$this->obj_domain->load_data_record_all();
+
+
+		/*
 			Define form structure
 		*/
 		$this->obj_form			= New form_input;
@@ -66,131 +85,310 @@ class page_output
 		$this->obj_form->method		= "post";
 		
 
-		// general
+
+		/*
+			General Domain Info
+		*/
 		$structure = NULL;
-		$structure["fieldname"] 	= "domain_name";
-		$structure["type"]		= "input";
+		$structure["fieldname"] 		= "domain_name";
+		$structure["type"]			= "message";
+ 		$structure["options"]["css_row_class"]	= "table_highlight";
+		$structure["defaultvalue"]		= "<p><b>Domain ". $this->obj_domain->data["domain_name"] ." selected for adjustment</b></p>";
 		$this->obj_form->add_input($structure);
 
 
 		/*
-			Define Record Structure
+			Define Nameservers
 		*/
 
 		// unless there has been error data returned, fetch all the records
-		// from the DB, and work out the number of rows
+		// and work out the number of rows - always have one extra
 		if (!isset($_SESSION["error"]["form"][$this->obj_form->formname]))
 		{
-			$sql_trans_obj		= New sql_query;
-			$sql_trans_obj->string	= "SELECT date_trans, amount_debit, amount_credit, chartid, source, memo FROM `account_trans` WHERE type='gl' AND customid='". $this->id ."'";
-			$sql_trans_obj->execute();
-	
-			if ($sql_trans_obj->num_rows())
+			$this->num_records_ns = 1;
+			
+			foreach ($this->obj_domain->data["records"] as $record)
 			{
-				$sql_trans_obj->fetch_array();
-		
-				$this->num_records = $sql_trans_obj->data_num_rows+1;
+				if ($record["type"] == "NS")
+				{
+					$this->num_records_ns++;
+				}
 			}
 		}
 		else
 		{
-			$this->num_records = @security_script_input('/^[0-9]*$/', $_SESSION["error"]["num_records"])+1;
+			$this->num_records_ns = @security_script_input('/^[0-9]*$/', $_SESSION["error"]["num_records_ns"]);
 		}
 
 		
-
-		// ensure there are always 2 rows at least, additional rows are added if required (ie viewing
-		// an existing transaction) or on the fly when needed by javascript UI.
+		// ensure there are at least two rows, if more are needed when entering information,
+		// then the javascript functions will provide.
 		
-		if ($this->num_records < 2)
+		if ($this->num_records_ns < 2)
 		{
-			$this->num_records = 2;
+			$this->num_records_ns = 2;
 		}
 
-		// transaction rows
-		for ($i = 0; $i < $this->num_records; $i++)
+
+		// NS domain records
+		for ($i = 0; $i < $this->num_records_ns; $i++)
 		{					
-			// account
-			$structure = form_helper_prepare_dropdownfromdb("trans_". $i ."_account", "SELECT id, code_chart as label, description as label1 FROM account_charts WHERE chart_type!='1' ORDER BY code_chart");
-			$structure["options"]["width"]	= "200";
-			$this->obj_form->add_input($structure);
-			
-			// debit field
+			// values
 			$structure = NULL;
-			$structure["fieldname"] 	= "trans_". $i ."_debit";
-			$structure["type"]		= "input";
-			$structure["options"]["width"]	= "80";
+			$structure["fieldname"] 		= "record_ns_". $i ."_type";
+			$structure["type"]			= "text";
+			$structure["defaultvalue"]		= "NS";
 			$this->obj_form->add_input($structure);
 
-			// credit field
 			$structure = NULL;
-			$structure["fieldname"] 	= "trans_". $i ."_credit";
-			$structure["type"]		= "input";
-			$structure["options"]["width"]	= "80";
+			$structure["fieldname"]		 	= "record_ns_". $i ."_name";
+			$structure["type"]			= "input";
+			$structure["options"]["width"]		= "300";
 			$this->obj_form->add_input($structure);
-		
-			
-			// source
-			$structure = NULL;
-			$structure["fieldname"] 	= "trans_". $i ."_source";
-			$structure["type"]		= "input";
-			$structure["options"]["width"]	= "100";
-			$this->obj_form->add_input($structure);
-			
-			// description
-			$structure = NULL;
-			$structure["fieldname"] 	= "trans_". $i ."_description";
-			$structure["type"]		= "textarea";
-			$this->obj_form->add_input($structure);
-			
 
-			// if we have data from a sql query, load it in
-			if ($sql_trans_obj->data_num_rows)
+			$structure = NULL;
+			$structure["fieldname"] 		= "record_ns_". $i ."_content";
+			$structure["type"]			= "input";
+			$structure["options"]["width"]		= "300";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 		= "record_ns_". $i ."_ttl";
+			$structure["type"]			= "input";
+			$structure["options"]["width"]		= "80";
+			$structure["defaultvalue"]		= $GLOBALS["config"]["DEFAULT_TTL_NS"];
+			$this->obj_form->add_input($structure);
+		}
+
+		// load in what data we have
+		$i = 0;
+
+		foreach ($this->obj_domain->data["records"] as $record)
+		{
+			if ($record["type"] == "NS")
 			{
-				if (isset($sql_trans_obj->data[$i]["chartid"]))
+				// fetch data
+				$this->obj_form->structure["record_ns_". $i ."_name"]["defaultvalue"]		= $record["name"];
+				$this->obj_form->structure["record_ns_". $i ."_content"]["defaultvalue"]	= $record["content"];
+				$this->obj_form->structure["record_ns_". $i ."_ttl"]["defaultvalue"]		= $record["ttl"];
+
+
+				// if the NS records belong to the domain, then disable
+				if ($record["name"] == $this->obj_domain->data["domain_name"])
 				{
-					$this->obj_form->structure["trans_". $i ."_debit"]["defaultvalue"]		= $sql_trans_obj->data[$i]["amount_debit"];
-					$this->obj_form->structure["trans_". $i ."_credit"]["defaultvalue"]		= $sql_trans_obj->data[$i]["amount_credit"];
-					$this->obj_form->structure["trans_". $i ."_account"]["defaultvalue"]		= $sql_trans_obj->data[$i]["chartid"];
-					$this->obj_form->structure["trans_". $i ."_source"]["defaultvalue"]		= $sql_trans_obj->data[$i]["source"];
-					$this->obj_form->structure["trans_". $i ."_description"]["defaultvalue"]	= $sql_trans_obj->data[$i]["memo"];
+					$this->obj_form->structure["record_ns_". $i ."_name"]["type"]		= "text";
+					$this->obj_form->structure["record_ns_". $i ."_content"]["type"]	= "text";
+					$this->obj_form->structure["record_ns_". $i ."_ttl"]["type"]		= "text";
 				}
+
+
+				$i++;
 			}
 		}
 
 
-		// total fields
-		$structure = NULL;
-		$structure["fieldname"] 	= "total_debit";
-		$structure["type"]		= "hidden";
-		$this->obj_form->add_input($structure);
-		
-		$structure = NULL;
-		$structure["fieldname"] 	= "total_credit";
-		$structure["type"]		= "hidden";
-		$this->obj_form->add_input($structure);
 
-		$structure = NULL;
-		$structure["fieldname"]		= "money_format";
-		$structure["type"]		= "hidden";
-		$structure["defaultvalue"]	= format_money(0);
-		$this->obj_form->add_input($structure);
+
+
+		/*
+			Define MX Record Structure
+		*/
+
+		// unless there has been error data returned, fetch all the records
+		// and work out the number of rows
+		if (!isset($_SESSION["error"]["form"][$this->obj_form->formname]))
+		{
+			$this->num_records_mx = 1;
+			
+			foreach ($this->obj_domain->data["records"] as $record)
+			{
+				if ($record["type"] == "mx")
+				{
+					$this->num_records_mx++;
+				}
+			}
+		}
+		else
+		{
+			$this->num_records_mx = @security_script_input('/^[0-9]*$/', $_SESSION["error"]["num_records_mx"]);
+		}
+
+		
+		// ensure there are at least two rows, if more are needed when entering information,
+		// then the javascript functions will provide.
+		
+		if ($this->num_records_mx < 2)
+		{
+			$this->num_records_mx = 2;
+		}
+
+
+		// MX domain records
+		for ($i = 0; $i < $this->num_records_mx; $i++)
+		{					
+			// values
+			$structure = NULL;
+			$structure["fieldname"] 		= "record_mx_". $i ."_type";
+			$structure["type"]			= "text";
+			$structure["defaultvalue"]		= "MX";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 		= "record_mx_". $i ."_prio";
+			$structure["type"]			= "input";
+			$structure["options"]["width"]		= "50";
+			$structure["options"]["max_length"]	= "2";
+			$structure["defaultvalue"]		= "10";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"]		 	= "record_mx_". $i ."_name";
+			$structure["type"]			= "input";
+			$structure["options"]["width"]		= "300";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 		= "record_mx_". $i ."_content";
+			$structure["type"]			= "input";
+			$structure["options"]["width"]		= "300";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 		= "record_mx_". $i ."_ttl";
+			$structure["type"]			= "input";
+			$structure["options"]["width"]		= "80";
+			$structure["defaultvalue"]		= $GLOBALS["config"]["DEFAULT_TTL_MX"];
+			$this->obj_form->add_input($structure);
+		}
+
+		// load in what data we have
+		$i = 0;
+
+		foreach ($this->obj_domain->data["records"] as $record)
+		{
+			if ($record["type"] == "MX")
+			{
+				$this->obj_form->structure["record_mx_". $i ."_prio"]["defaultvalue"]		= $record["prio"];
+				$this->obj_form->structure["record_mx_". $i ."_name"]["defaultvalue"]		= $record["name"];
+				$this->obj_form->structure["record_mx_". $i ."_content"]["defaultvalue"]	= $record["content"];
+				$this->obj_form->structure["record_mx_". $i ."_ttl"]["defaultvalue"]		= $record["ttl"];
+
+				$i++;
+			}
+		}
+
+
+
+
+		/*
+			Define stucture for all other record types
+
+			This includes A, AAAA, PTR and other record types.
+		*/
+
+
+		// fetch all the known record types from the database
+		$dns_record_types = sql_get_singlecol("SELECT type as value FROM `dns_record_types` WHERE user_selectable='1'");
+			
+
+		// unless there has been error data returned, fetch all the records
+		// and work out the number of rows
+		if (!isset($_SESSION["error"]["form"][$this->obj_form->formname]))
+		{
+			$this->num_records_custom = 1;
+
+			foreach ($this->obj_domain->data["records"] as $record)
+			{
+				if (in_array($record["type"], $dns_record_types))
+				{
+					$this->num_records_custom++;
+				}
+			}
+		}
+		else
+		{
+			$this->num_records_custom = @security_script_input('/^[0-9]*$/', $_SESSION["error"]["num_records_custom"]);
+		}
+
+		
+
+		// ensure there are at least two rows, if more are needed when entering information,
+		// then the javascript functions will provide.
+
+		if ($this->num_records_custom < 2)
+		{
+			$this->num_records_custom = 2;
+		}
+
+
+		// custom domain records
+		for ($i = 0; $i < $this->num_records_custom; $i++)
+		{					
+			// values
+			$structure = form_helper_prepare_dropdownfromdb("record_custom_". $i ."_type", "SELECT type as label, type as id FROM `dns_record_types` WHERE user_selectable='1'");
+			$structure["defaultvalue"]		= "A";
+			$structure["options"]["width"]		= "100";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"]		 	= "record_custom_". $i ."_name";
+			$structure["type"]			= "input";
+			$structure["options"]["width"]		= "300";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 		= "record_custom_". $i ."_content";
+			$structure["type"]			= "input";
+			$structure["options"]["width"]		= "300";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 		= "record_custom_". $i ."_ttl";
+			$structure["type"]			= "input";
+			$structure["options"]["width"]		= "80";
+			$structure["defaultvalue"]		= $GLOBALS["config"]["DEFAULT_TTL_OTHER"];
+			$this->obj_form->add_input($structure);
+		}
+
+
+		// load in what data we have
+		$i = 0;
+
+		foreach ($this->obj_domain->data["records"] as $record)
+		{
+			if (in_array($record["type"], $dns_record_types))
+			{
+				$this->obj_form->structure["record_custom_". $i ."_type"]["defaultvalue"]		= $record["type"];
+				$this->obj_form->structure["record_custom_". $i ."_prio"]["defaultvalue"]		= $record["prio"];
+				$this->obj_form->structure["record_custom_". $i ."_name"]["defaultvalue"]		= $record["name"];
+				$this->obj_form->structure["record_custom_". $i ."_content"]["defaultvalue"]		= $record["content"];
+				$this->obj_form->structure["record_custom_". $i ."_ttl"]["defaultvalue"]		= $record["ttl"];
+
+				$i++;
+			}
+		}
+		
 
 
 		// hidden
 		$structure = NULL;
-		$structure["fieldname"] 	= "id_transaction";
+		$structure["fieldname"] 	= "id_domain";
 		$structure["type"]		= "hidden";
-		$structure["defaultvalue"]	= $this->id;
+		$structure["defaultvalue"]	= $this->obj_domain->id;
 		$this->obj_form->add_input($structure);
 
 		$structure = NULL;
-		$structure["fieldname"] 	= "num_records";
+		$structure["fieldname"] 	= "num_records_mx";
 		$structure["type"]		= "hidden";
-		$structure["defaultvalue"]	= "$this->num_records";
+		$structure["defaultvalue"]	= "$this->num_records_mx";
 		$this->obj_form->add_input($structure);
 
-	
+		$structure = NULL;
+		$structure["fieldname"] 	= "num_records_custom";
+		$structure["type"]		= "hidden";
+		$structure["defaultvalue"]	= "$this->num_records_custom";
+		$this->obj_form->add_input($structure);
+
 	
 		// submit section
 		$structure = NULL;
@@ -238,25 +436,39 @@ class page_output
 		print "</tr>";
 
 
+		// spacer
+		print "<tr><td colspan=\"2\"><br></td></tr>";
+
+
 
 		/*
-			Domain Records
-
-			This section is the most complex part of the form, where we add new rows to the form
-			for each transactions.
+			NS Records
 		*/
 		print "<tr class=\"header\">";
-		print "<td colspan=\"2\"><b>". lang_trans("domain_records") ."</b></td>";
+		print "<td colspan=\"2\"><b>". lang_trans("domain_records_ns") ."</b></td>";
 		print "</tr>";
 
 		print "<tr>";
-		print "<td colspan=\"2\">";
+		print "<td colspan=\"2\" width=\"100%\">";
 
+		print "<p>". lang_trans("domain_records_ns_help") ."</p>";
+
+		print "<table width=\"100%\">";
+
+		print "<tr class=\"table_highlight_info\">";
+			print "<td width=\"10%\"><b>". lang_trans("record_type") ."</b></td>";
+			print "<td width=\"20%\"><b>". lang_trans("record_ttl") ."</b></td>";
+			print "<td width=\"35%\"><b>". lang_trans("record_name") ."</b></td>";
+			print "<td width=\"35%\"><b>". lang_trans("record_content") ."</b></td>";
+		print "</tr>";
+
+		print "</tr>";
+		
 
 		// display all the rows
-		for ($i = 0; $i < $this->num_records; $i++)
+		for ($i = 0; $i < $this->num_records_ns; $i++)
 		{
-			if (isset($_SESSION["error"]["trans_". $i ."-error"]))
+			if (isset($_SESSION["error"]["record_ns_". $i ."-error"]))
 			{
 				print "<tr class=\"form_error\">";
 			}
@@ -265,71 +477,154 @@ class page_output
 				print "<tr class=\"table_highlight\">";
 			}
 
-			// account
+			print "<td width=\"10%\" valign=\"top\">";
+			$this->obj_form->render_field("record_ns_". $i ."_type");
+			print "</td>";
+
 			print "<td width=\"20%\" valign=\"top\">";
-			$this->obj_form->render_field("trans_". $i ."_account");
+			$this->obj_form->render_field("record_ns_". $i ."_ttl");
 			print "</td>";
 
-			// debit
-			print "<td width=\"15%\" valign=\"top\">";
-			$this->obj_form->render_field("trans_". $i ."_debit");
-			print "</td>";
-
-			// credit
-			print "<td width=\"15%\" valign=\"top\">";
-			$this->obj_form->render_field("trans_". $i ."_credit");
-			print "</td>";
-
-			// source
-			print "<td width=\"15%\" valign=\"top\">";
-			$this->obj_form->render_field("trans_". $i ."_source");
-			print "</td>";
-		
-			// description
 			print "<td width=\"35%\" valign=\"top\">";
-			$this->obj_form->render_field("trans_". $i ."_description");
+			$this->obj_form->render_field("record_ns_". $i ."_name");
 			print "</td>";
 
+			print "<td width=\"35%\" valign=\"top\">";
+			$this->obj_form->render_field("record_ns_". $i ."_content");
+			print "</td>";
+
+			print "</tr>";
+		}
+
+		print "</table>";
+		print "</td></tr>";
+
+		// spacer
+		print "<tr><td colspan=\"2\"><br></td></tr>";
+
+
+		/*
+			MX Records
+		*/
+		print "<tr class=\"header\">";
+		print "<td colspan=\"2\"><b>". lang_trans("domain_records_mx") ."</b></td>";
+		print "</tr>";
+
+		print "<tr>";
+		print "<td colspan=\"2\" width=\"100%\">";
+		print "<table width=\"100%\">";
+
+		print "<p>". lang_trans("domain_records_mx_help") ."</p>";
+
+		print "<tr class=\"table_highlight_info\">";
+			print "<td width=\"10%\"><b>". lang_trans("record_type") ."</b></td>";
+			print "<td width=\"20%\"><b>". lang_trans("record_ttl") ."</b></td>";
+			print "<td width=\"35%\"><b>". lang_trans("record_prio") ."</b></td>";
+			print "<td width=\"35%\"><b>". lang_trans("record_content") ."</b></td>";
+		print "</tr>";
+		
+
+		// display all the rows
+		for ($i = 0; $i < $this->num_records_mx; $i++)
+		{
+			if (isset($_SESSION["error"]["record_mx_". $i ."-error"]))
+			{
+				print "<tr class=\"form_error\">";
+			}
+			else
+			{
+				print "<tr class=\"table_highlight\">";
+			}
+
+			print "<td width=\"10%\" valign=\"top\">";
+			$this->obj_form->render_field("record_mx_". $i ."_type");
+			print "</td>";
+
+			print "<td width=\"20%\" valign=\"top\">";
+			$this->obj_form->render_field("record_mx_". $i ."_ttl");
+			print "</td>";
+
+			print "<td width=\"35%\" valign=\"top\">";
+			$this->obj_form->render_field("record_mx_". $i ."_prio");
+			print "</td>";
+
+			print "<td width=\"35%\" valign=\"top\">";
+			$this->obj_form->render_field("record_mx_". $i ."_content");
+			print "</td>";
 	
 			print "</tr>";
 		}
 
+		print "</table>";
+		print "</td></tr>";
+	
+		// spacer
+		print "<tr><td colspan=\"2\"><br></td></tr>";
+
 
 		/*
-			Totals Display
+			All other records
 		*/
-	
-		print "<tr class=\"table_highlight\">";
-
-		// joining/filler columns
-		print "<td width=\"20%\"></td>";
-	
-
-		// total debit
-		print "<td width=\"15%\">";
-		$this->obj_form->render_field("total_debit");
-		print "</td>";
-
-		// total credit
-		print "<td width=\"15%\">";
-		$this->obj_form->render_field("total_credit");
-		print "</td>";
-	
-		// joining/filler columns
-		print "<td width=\"15%\"></td>";
-		print "<td width=\"35%\"></td>";
-		
+		print "<tr class=\"header\">";
+		print "<td colspan=\"2\"><b>". lang_trans("domain_records_custom") ."</b></td>";
 		print "</tr>";
 
+		print "<tr>";
+		print "<td colspan=\"2\" width=\"100%\">";
+		print "<table width=\"100%\">";
+
+		print "<p>". lang_trans("domain_records_custom_help") ."</p>";
+
+		print "<tr class=\"table_highlight_info\">";
+			print "<td width=\"10%\"><b>". lang_trans("record_type") ."</b></td>";
+			print "<td width=\"20%\"><b>". lang_trans("record_ttl") ."</b></td>";
+			print "<td width=\"35%\"><b>". lang_trans("record_name") ."</b></td>";
+			print "<td width=\"35%\"><b>". lang_trans("record_content") ."</b></td>";
+		print "</tr>";
 		
+
+		// display all the rows
+		for ($i = 0; $i < $this->num_records_custom; $i++)
+		{
+			if (isset($_SESSION["error"]["record_custom_". $i ."-error"]))
+			{
+				print "<tr class=\"form_error\">";
+			}
+			else
+			{
+				print "<tr class=\"table_highlight\">";
+			}
+
+			print "<td width=\"10%\" valign=\"top\">";
+			$this->obj_form->render_field("record_custom_". $i ."_type");
+			print "</td>";
+
+			print "<td width=\"20%\" valign=\"top\">";
+			$this->obj_form->render_field("record_custom_". $i ."_ttl");
+			print "</td>";
+
+			print "<td width=\"35%\" valign=\"top\">";
+			$this->obj_form->render_field("record_custom_". $i ."_name");
+			print "</td>";
+
+			print "<td width=\"35%\" valign=\"top\">";
+			$this->obj_form->render_field("record_custom_". $i ."_content");
+			print "</td>";
+				
+			print "</tr>";
+		}
 
 		print "</table>";
-		print "</td>";
-		print "</tr>";
+		print "</td></tr>";
+
+		// spacer
+		print "<tr><td colspan=\"2\"><br></td></tr>";
+
 
 		// hidden fields
 		$this->obj_form->render_field("id_domain");
-		$this->obj_form->render_field("num_records");
+		$this->obj_form->render_field("num_records_mx");
+		$this->obj_form->render_field("num_records_custom");
 
 
 		// form submit

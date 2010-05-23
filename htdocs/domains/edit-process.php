@@ -1,11 +1,11 @@
 <?php
 /*
-	servers/edit-process.php
+	domains/edit-process.php
 
 	access:
 		namedadmins
 
-	Updates or creates a new name server entry.
+	Updates or creates a domain name
 */
 
 
@@ -21,29 +21,33 @@ if (user_permissions_get('namedadmins'))
 		Form Input
 	*/
 
-	$obj_name_server		= New name_server;
-	$obj_name_server->id		= security_form_input_predefined("int", "id_name_server", 0, "");
+	$obj_domain		= New domain;
+	$obj_domain->id		= security_form_input_predefined("int", "id_domain", 0, "");
 
 
-	// are we editing an existing server or adding a new one?
-	if ($obj_name_server->id)
+	// are we editing an existing domain or adding a new one?
+	if ($obj_domain->id)
 	{
-		if (!$obj_name_server->verify_id())
+		if (!$obj_domain->verify_id())
 		{
-			log_write("error", "process", "The name server you have attempted to edit - ". $obj_name_server->id ." - does not exist in this system.");
+			log_write("error", "process", "The domain you have attempted to edit - ". $obj_name_server->id ." - does not exist in this system.");
 		}
 		else
 		{
 			// load existing data
-			$obj_name_server->load_data();
+			$obj_domain->load_data();
 		}
 	}
 
 	// basic fields
-	$obj_name_server->data["server_name"]			= security_form_input_predefined("any", "server_name", 1, "");
-	$obj_name_server->data["server_description"]		= security_form_input_predefined("any", "server_description", 0, "");
-	$obj_name_server->data["server_type"]			= security_form_input_predefined("any", "server_type", 1, "");
-	$obj_name_server->data["api_auth_key"]			= security_form_input_predefined("any", "api_auth_key", 1, "");
+	$obj_domain->data["domain_name"]			= security_form_input_predefined("any", "domain_name", 1, "");
+	$obj_domain->data["domain_description"]			= security_form_input_predefined("any", "domain_description", 0, "");
+	$obj_domain->data["soa_hostmaster"]			= security_form_input_predefined("email", "soa_hostmaster", 1, "");
+	$obj_domain->data["soa_serial"]				= security_form_input_predefined("int", "soa_serial", 1, "");
+	$obj_domain->data["soa_refresh"]			= security_form_input_predefined("int", "soa_refresh", 1, "");
+	$obj_domain->data["soa_retry"]				= security_form_input_predefined("int", "soa_retry", 1, "");
+	$obj_domain->data["soa_expire"]				= security_form_input_predefined("int", "soa_expire", 1, "");
+	$obj_domain->data["soa_default_ttl"]			= security_form_input_predefined("int", "soa_default_ttl", 1, "");
 
 
 
@@ -52,12 +56,11 @@ if (user_permissions_get('namedadmins'))
 		Verify Data
 	*/
 
-	// ensure the server name is unique
-	if (!$obj_name_server->verify_server_name())
+	if (!$obj_domain->verify_domain_name())
 	{
-		log_write("error", "process", "The requested server name already exists, have you checked that the server you're trying to add doesn't already exist?");
+		log_write("error", "process", "The requested domain you are trying to add already exists!");
 
-		error_flag_field("server_name");
+		error_flag_field("domain_name");
 	}
 
 
@@ -67,15 +70,15 @@ if (user_permissions_get('namedadmins'))
 
 	if (error_check())
 	{
-		if ($obj_name_server->id)
+		if ($obj_domain->id)
 		{
-			$_SESSION["error"]["form"]["name_server_edit"]	= "failed";
-			header("Location: ../index.php?page=servers/view.php&id=". $obj_name_server->id ."");
+			$_SESSION["error"]["form"]["domain_edit"]	= "failed";
+			header("Location: ../index.php?page=domains/view.php&id=". $obj_domain->id ."");
 		}
 		else
 		{
-			$_SESSION["error"]["form"]["name_server_edit"]	= "failed";
-			header("Location: ../index.php?page=servers/add.php");
+			$_SESSION["error"]["form"]["domain_add"]	= "failed";
+			header("Location: ../index.php?page=domains/add.php");
 		}
 
 		exit(0);
@@ -87,17 +90,19 @@ if (user_permissions_get('namedadmins'))
 
 
 		/*
-			Update name server
+			Update domain
 		*/
 
-		$obj_name_server->action_update();
+		$obj_domain->action_update();
+		$obj_domain->action_update_serial();
+		$obj_domain->action_update_ns();
 
 
 		/*
 			Return
 		*/
 
-		header("Location: ../index.php?page=servers/view.php&id=". $obj_name_server->id ."");
+		header("Location: ../index.php?page=domains/view.php&id=". $obj_domain->id ."");
 		exit(0);
 
 

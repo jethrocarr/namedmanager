@@ -37,13 +37,14 @@ class page_output
 		$this->obj_table->tablename	= "name_servers";
 
 		// define all the columns and structure
+		$this->obj_table->add_column("bool_tick", "server_primary", "");
 		$this->obj_table->add_column("standard", "server_name", "");
 		$this->obj_table->add_column("standard", "server_description", "");
 		$this->obj_table->add_column("standard", "server_type", "");
 		$this->obj_table->add_column("standard", "sync_status", "NONE");
 
 		// defaults
-		$this->obj_table->columns		= array("server_name", "server_description", "server_type", "sync_status");
+		$this->obj_table->columns		= array("server_primary", "server_name", "server_description", "server_type", "sync_status");
 		$this->obj_table->columns_order		= array("server_name");
 		$this->obj_table->columns_order_options	= array("server_name");
 
