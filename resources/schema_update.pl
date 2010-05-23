@@ -2,7 +2,7 @@
 #
 # resources/schema_update.pl
 #
-# This script checks the current version of the database for the LDAPAuthManager application
+# This script checks the current version of the database for the NamedManager application
 # and applies any upgrades.
 #
 # It reads in the MySQL authentication data from the configuration file to provide
@@ -21,7 +21,7 @@ use Getopt::Long;
 my $debug = 0;
 my $help;
 
-my $opt_cfgfile			= "/etc/ldapauthmanager/config.php";
+my $opt_cfgfile			= "/etc/namedmanager/config.php";
 
 my $opt_schema;
 my $opt_version_schema;
@@ -35,11 +35,11 @@ GetOptions ("cfgfile=s"		=> \$opt_cfgfile,	"c=s"	=> \$opt_cfgfile,
 
 if ($help)
 {
-	print "LDAPAuthManager Schema Management Utility\n";
+	print "NamedManager Schema Management Utility\n";
 	print "\n";
 	print "Usage: schema_manage.pl --schemadir=<schemadir>\n";
 	print "\n";
-	print "-c, --cfgfile=FILENAME            LDAPAuthManager configuration file with MySQL settings.\n";
+	print "-c, --cfgfile=FILENAME            NamedManager configuration file with MySQL settings.\n";
 	print "\n";
 	print "-s, --schemadir=LOCATION          Location of the schema SQL files..\n";
 	print "\n";

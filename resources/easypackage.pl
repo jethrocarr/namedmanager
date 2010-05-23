@@ -40,20 +40,9 @@ print "Please enter version (eg: 20080419_beta0):\n";
 my $version = get_question('^\S*$');
 
 # determine final name
-my $name_base		= "ldapauthmanager";
-my $name_withversion	= "ldapauthmanager-$version";
+my $name_base		= "namedmanager";
+my $name_withversion	= "namedmanager-$version";
 
-
-# update CVS tag?
-print "Would you like to CVS tag the current source with tag of \"v_$version\"? (y/n)\n";
-$input = get_question('^[y|n]$');
-
-if ($input eq "y")
-{
-	print "Please enter CVS module name:\n";
-	$input = get_question('^\S*$');
-	system("cvs rtag v_$version $input");
-}
 
 
 # make sure destination data does not exist.
@@ -78,8 +67,8 @@ system("cp -avr * /tmp/$name_withversion/");
 # we have finished with the orignal source
 chdir("/tmp");
 
-# remove CVS stuff
-system("find $name_withversion/* -type d | grep CVS | sed \"s/^/rm -rf /\" | sh");
+# remove SVN stuff
+system("find $name_withversion/* -type d | grep .svn | sed \"s/^/rm -rf /\" | sh");
 
 # remove a config file if one exists
 system("rm -f $name_withversion/htdocs/include/config-settings.php");

@@ -1,0 +1,9 @@
+#
+# NAMEDMANAGER INTEGRATION
+# Cron Jobs
+#
+
+# check for new configuration every minute
+*/1 * * * * root php -q /usr/share/namedmanager/scripts/namedmanager_bind_configwriter.php >> /var/log/namedmanager_bind_configwriter
+
+
