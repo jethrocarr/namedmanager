@@ -1,0 +1,619 @@
+/*
+Default theme with Amberdms branding
+*/
+
+body
+{
+	font-family: Lucida Grande,Arial,sans-serif;
+	font-style: normal;
+	font-weight: normal;
+	color: black;
+	background-color: #cfcfcf;
+	margin: 0px;
+	padding: 0px;
+	border: none;
+}
+
+h1, h2, h3, h4, h5
+{
+	font-family: sans-serif;
+	color: gray;
+	display: inline;
+}
+
+h2
+{
+	font-size: 18px;
+}
+
+h3
+{
+	font-size: 14px;
+}
+
+
+table, p {
+	font-size: 12px;
+}
+
+
+a:link, a:visited {
+	color: black;
+	background-color: transparent;
+	text-decoration: underline;
+	border: none;
+}
+
+a:hover {
+	color: #ac6500;
+	text-decoration: none;
+	padding: 0px;
+}
+
+a:active {
+	color: #FF0000;
+	text-decoration: none;
+	background-color: transparent;
+}
+
+
+/*
+	table_content
+
+	Used for all the tables drawn by the table class	
+*/
+
+.table_content {
+	border-bottom: 1px solid #2580a2;
+	font-size: 11px;
+}
+
+	.table_content .header {
+		background-color: #2580a2;
+		color: #ffffff;
+		padding: 8px;
+	}
+
+	.table_content .header_link {
+		color: #ffffff;
+	}
+
+	.table_content .footer {
+		background-color: #e7e7e7;
+		color: #000000;
+	}
+
+	.table_content .chart_heading {
+		background-color: #e7e7e7;
+	}
+
+	.table_content a:hover {
+		color: #ffffff;
+	}
+
+	.table_content td {
+		border-spacing: 0px;
+		padding: 4px;
+		border-bottom: 1px solid #7e7e7e;
+	}
+
+	.table_content tr:hover {
+		background-color: #2580a2;
+	}
+
+	.table_content .blank {
+		border-bottom: 0px;
+		padding: 4px;
+		background-color: #ffffff;
+	}
+
+
+/*
+	table_options_dropdown
+
+	Defines the style of the options dropdown
+*/
+
+.table_options_dropdown {
+	border: 1px solid #000000;
+	border-spacing: 4px;
+	font-size: 12px;
+}
+
+	.table_options_dropdown td {
+		padding: 8px;
+	}
+
+
+	.table_options_dropdown tr:hover {
+		padding: 8px;
+		background-color: #92dd90;
+	}
+
+
+
+
+/*
+	table_highlight
+
+	Used to give a table a different background colour - typically used to highlight
+	a segment of text, or a 2nd table or form on the same page.
+*/
+.table_highlight {
+	padding: 4px;
+	background-color: #e7e7e7;
+}
+
+.table_highlight_important {
+	padding: 4px;
+	background-color: #ff933c;
+}
+
+.table_highlight_open {
+	padding: 4px;
+	background-color: #92dd90;
+}
+
+.table_highlight_info {
+	padding: 4px;
+	background-color: #95c7d9;
+}
+
+.table_highlight_locked {
+	padding: 4px;
+	background-color: #95c7d9;
+}
+
+
+/*
+	table_linkbox
+
+	Used to give a table a different background colour, with another colour for rollover
+	effects. Used for creating linked colour boxes that take users to a page when clicked
+*/
+
+.table_linkbox_default {
+	background-color: #e7e7e7;
+}
+
+	.table_linkbox_default td {
+		padding: 4px;
+	}
+
+	.table_linkbox_default tr:hover {
+		padding: 4px;
+		background-color: #95c7d9;
+	}
+
+
+
+
+/*
+	Menu Code
+	Thanks to http://www.cssmenumaker.com/ for this excellent CSS menu code
+*/
+#menu {
+	background: #333333;
+	float: left;
+	list-style: none;
+	margin: 0 0 -4px 0;
+	padding: 0;
+	width: 100%;
+}
+
+#menu li {
+	float: left;
+	font: 67.5% "Lucida Sans Unicode", "Bitstream Vera Sans", "Trebuchet Unicode MS", "Lucida Grande", Verdana, Helvetica, sans-serif;
+	font-size: 10px;
+	margin: 0;
+	padding: 0;
+}
+
+#menu a {
+	background: #333333;
+	color: #cccccc;
+	display: block;
+	float: left;
+	margin: 0;
+	padding: 8px 12px;
+	text-decoration: none;
+}
+
+#menu a:hover {
+	background: #2580a2;
+	color: #ffffff;
+	padding-bottom: 8px;
+}
+
+
+#navmenu {
+	background: #057b08;
+	float: left;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	width: 100%;
+}
+
+#navmenu li {
+	float: left;
+	font: 67.5% "Lucida Sans Unicode", "Bitstream Vera Sans", "Trebuchet Unicode MS", "Lucida Grande", Verdana, Helvetica, sans-serif;
+	font-size: 10px;
+	margin: 0;
+	padding: 0;
+}
+
+#navmenu a {
+	background: #057b08;
+	color: #cccccc;
+	display: block;
+	float: left;
+	margin: 0;
+	padding: 8px 12px;
+	text-decoration: none;
+}
+
+#navmenu a:hover {
+	background: #2580a2;
+	color: #ffffff;
+	padding-bottom: 8px;
+}
+
+
+
+
+
+
+
+/*
+	Form Styling
+*/
+
+.form_standard {
+}
+
+	.form_standard input {
+		border:			1px #128300 solid;
+	
+		padding: 		2px 2px;
+
+		-moz-border-radius:	5px;
+		-khtml-border-radius:	5px;
+		-webkit-border-radius:	5px;
+		border-radius:		5px;
+		-moz-box-sizing:	content-box;
+		-webkit-box-sizing:	content-box;
+		-khtml-box-sizing:	content-box;
+		box-sizing:		content-box;
+
+	}
+
+	.form_standard textarea {
+		border: 1px #128300 solid;
+	}
+
+
+
+.form_error {
+	background: #ffeda4;	
+}
+
+.form_table {
+	border-spacing: 0px;
+	width:		100%;
+}
+	.form_table .header {
+		background-color: #2580a2;
+		color: #ffffff;
+		padding: 8px;
+	}
+
+	.form_table a:hover {
+		color: #ffffff;
+	}
+
+	.form_table td {
+		padding: 4px;
+	}
+
+
+
+
+/*
+	Journal Styling
+*/
+.journal_header {
+	background-image: url("../../images/colourstrip-orange.png");
+	background-repeat: no-repeat;
+}
+
+
+	
+/*
+	Buttons
+*/
+
+
+.submit input:hover, input[type="button"]:hover, input[type="submit"]:hover, .button:hover, .button-secondary:hover
+{
+	background-color:	#74d465;
+	color:			#000000;
+}
+
+
+.submit input, input[type="button"], input[type="submit"], a.button
+{
+	background-color:	#128300;
+
+	text-decoration:	none;
+	font-size:		10px !important;
+	line-height:		12px;
+	padding: 		5px 15px;
+	cursor:			pointer;
+
+	color:			#ffffff;
+	font-style:		normal;
+	font-weight:		bold;
+
+	border-width:		0px;
+	border-style:		solid;
+
+	-moz-border-radius:	9px;
+	-khtml-border-radius:	9px;
+	-webkit-border-radius:	9px;
+	border-radius:		9px;
+	-moz-box-sizing:	content-box;
+	-webkit-box-sizing:	content-box;
+	-khtml-box-sizing:	content-box;
+	box-sizing:		content-box;
+}
+
+
+.button_small:hover, .button_small:hover
+{
+	background-color:	#9ac8e5;
+	color:			#000000;
+}
+
+a.button_small
+{
+	background-color:	#2580a2;
+
+	text-decoration:	none;
+	font-size:		10px !important;
+	line-height:		10px;
+	padding: 		2px 10px;
+	cursor:			pointer;
+
+	color:			#ffffff;
+	font-style:		normal;
+	font-weight:		normal;
+
+	border-width:		0px;
+	border-style:		solid;
+
+	-moz-border-radius:	5px;
+	-khtml-border-radius:	5px;
+	-webkit-border-radius:	5px;
+	border-radius:		5px;
+	-moz-box-sizing:	content-box;
+	-webkit-box-sizing:	content-box;
+	-khtml-box-sizing:	content-box;
+	box-sizing:		content-box;
+}
+
+
+.button_export:hover, .button_export:hover
+{
+	background-color:	#7e7e7e;
+	color:			#ffffff;
+}
+
+a.button_export
+{
+	background-color:	#333333;
+
+	text-decoration:	none;
+	font-size:		10px !important;
+	line-height:		12px;
+	padding: 		5px 15px;
+	cursor:			pointer;
+
+	color:			#ffffff;
+	font-style:		normal;
+	font-weight:		normal;
+
+	border-width:		0px;
+	border-style:		solid;
+
+	-moz-border-radius:	9px;
+	-khtml-border-radius:	9px;
+	-webkit-border-radius:	9px;
+	border-radius:		9px;
+	-moz-box-sizing:	content-box;
+	-webkit-box-sizing:	content-box;
+	-khtml-box-sizing:	content-box;
+	box-sizing:		content-box;
+}
+
+  
+/*main page structure and standard header, footer, and debugging area*/
+#table_main_struct
+{
+	width:			90%;
+	border-spacing:		5px;
+	padding:		0;
+	margin-left:		auto;
+	margin-right:		auto;
+}
+
+#header_td_outer
+{
+	background-color:	#ffbf00;
+	border:			1px #747474 dashed;
+}
+
+#header_table_inner
+{
+	width:			100%;
+}
+
+#header_logo
+{
+	width:			50%;
+	text-align:		left;
+}
+
+#header_logout
+{
+	width:			50%;
+	text-align:		right;
+	vertical-align:		top;
+}
+
+#header_logout_text
+{
+	font-size:		10px;
+	font-weight:		bold;
+}
+
+#data_td_outer
+{
+	background-color:	#ffffff;
+	border:			1px #000000 dashed;
+	padding:		5px;
+}
+
+#data_table_inner
+{
+	width:			100%;
+	border-spacing:		0;
+	padding:		0;
+}
+
+#data_td_inner
+{
+	vertical-align:		top;
+	padding:		5px;
+}
+
+#footer_td_outer
+{
+	background-color:	#ffbf00;
+	border:			1px #747474 dashed;
+}
+
+#footer_table_inner
+{
+	width:			100%;
+}
+
+#footer_copyright
+{
+	text-align:		left;
+}
+
+#footer_copyright_text
+{
+	font-size:		10px;
+}
+
+#footer_version
+{
+	text-align:		right;
+}
+
+#footer_version_text
+{
+	font-size:		10px;
+}
+
+#debug_td_outer
+{
+	background-color:	#ffffff;
+	border:			1px #000000 dashed;
+}
+
+.menu_table
+{
+	width:			100%;
+	border-spacing:		0;
+	padding:		0;
+/* 	border:			1px #333333 solid; */
+	background-color:	#333333;
+}
+
+.menu_current
+{
+	background-color:	#7e7e7e!important;
+}
+
+.menu_nav_current
+{
+	background-color:	#60ae62!important;
+}
+
+.menu_nav_table
+{
+	width:			100%;
+	border-spacing:		0;
+	padding:		0;
+/* 	border:			1px #057b08 solid; */
+	background-color:	#057b08;
+}
+
+.error_table
+{
+	width:			100%;
+	border:			0;
+	border-spacing:		0;
+	padding:		0;
+}
+
+.error_td
+{
+	background-color:	#ffeda4;
+	border:			1px dashed #dc6d00;
+	padding:		3px;
+}
+
+.notification_table
+{
+	padding:		0;
+	border-spacing:		0;
+	border:			0;
+	width:			100%;
+}
+
+.notification_td
+{
+	background-color:	#c7e8ed;
+	border:			1px dashed #374893;
+	padding:		3px;
+}
+
+/*for import page*/
+.hide_element
+{
+	display:	none;
+}
+
+.show_element
+{
+	display:	inline;
+}
+
+.dropdown
+{
+	width:		50%;
+}
+
+div[class*='toggle']
+{
+	text-align:	center;
+}
+
+.include
+{
+	text-align:	center;
+}
