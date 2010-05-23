@@ -120,7 +120,7 @@ if (user_permissions_get("namedadmins"))
 	{
 		$obj_record		= New domain_records;
 		$obj_record->id		= $obj_domain->id;
-		$obj_record->id_record	= $record["id"];
+		$obj_record->id_record	= $record["id_record"];
 
 		$obj_record->action_delete_record();
 	}
