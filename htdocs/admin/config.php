@@ -69,6 +69,32 @@ class page_output
 		$this->obj_form->add_input($structure);
 
 
+		// default TTL configuration
+		$structure = NULL;
+		$structure["fieldname"]					= "DEFAULT_TTL_SOA";
+		$structure["type"]					= "input";
+		$structure["options"]["no_translate_fieldname"]		= "yes";
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
+		$structure["fieldname"]					= "DEFAULT_TTL_NS";
+		$structure["type"]					= "input";
+		$structure["options"]["no_translate_fieldname"]		= "yes";
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
+		$structure["fieldname"]					= "DEFAULT_TTL_MX";
+		$structure["type"]					= "input";
+		$structure["options"]["no_translate_fieldname"]		= "yes";
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
+		$structure["fieldname"]					= "DEFAULT_TTL_OTHER";
+		$structure["type"]					= "input";
+		$structure["options"]["no_translate_fieldname"]		= "yes";
+		$this->obj_form->add_input($structure);
+
+
 		// zone database configuration
 		$structure = NULL;
 		$structure["fieldname"]					= "ZONE_DB_TYPE";
@@ -114,11 +140,13 @@ class page_output
 		
 		// define subforms
 //		$this->obj_form->subforms["config_security"]		= array("BLACKLIST_ENABLE", "BLACKLIST_LIMIT");
+		$this->obj_form->subforms["config_default_ttl"]		= array("DEFAULT_TTL_SOA", "DEFAULT_TTL_NS", "DEFAULT_TTL_MX", "DEFAULT_TTL_OTHER");
 		$this->obj_form->subforms["config_zone_database"]	= array("ZONE_DB_TYPE", "ZONE_DB_HOST","ZONE_DB_NAME", "ZONE_DB_USERNAME", "ZONE_DB_PASSWORD");
 		$this->obj_form->subforms["config_dateandtime"]		= array("DATEFORMAT", "TIMEZONE_DEFAULT");
 		$this->obj_form->subforms["submit"]			= array("submit");
 
-		if ($_SESSION["error"]["message"])
+
+		if (error_check())
 		{
 			// load error datas
 			$this->obj_form->load_data_error();

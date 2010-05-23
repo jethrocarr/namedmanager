@@ -25,6 +25,11 @@ if (user_permissions_get("namedadmins"))
 	$data["ZONE_DB_USERNAME"]		= @security_form_input_predefined("any", "ZONE_DB_USERNAME", 1, "");
 	$data["ZONE_DB_PASSWORD"]		= @security_form_input_predefined("any", "ZONE_DB_PASSWORD", 0, "");
 
+	$data["DEFAULT_TTL_SOA"]		= security_form_input_predefined("int", "DEFAULT_TTL_SOA", 1, "");
+	$data["DEFAULT_TTL_NS"]			= security_form_input_predefined("int", "DEFAULT_TTL_NS", 1, "");
+	$data["DEFAULT_TTL_MX"]			= security_form_input_predefined("int", "DEFAULT_TTL_MX", 1, "");
+	$data["DEFAULT_TTL_OTHER"]		= security_form_input_predefined("int", "DEFAULT_TTL_OTHER", 1, "");
+
 	$data["DATEFORMAT"]			= security_form_input_predefined("any", "DATEFORMAT", 1, "");
 	$data["TIMEZONE_DEFAULT"]		= security_form_input_predefined("any", "TIMEZONE_DEFAULT", 1, "");
 
