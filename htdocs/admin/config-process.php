@@ -45,7 +45,7 @@ if (user_permissions_get("namedadmins"))
 
 		if (!$obj_sql->session_init("mysql", $data["ZONE_DB_HOST"], $data["ZONE_DB_NAME"], $data["ZONE_DB_USERNAME"], $data["ZONE_DB_PASSWORD"]))
 		{
-			log_write("error", "sql_query", "Unable to connect to powerdns-compliant zone database!");
+			log_write("error", "process", "Unable to connect to powerdns-compliant zone database!");
 
 			error_flag_field("ZONE_DB_HOST");
 			error_flag_field("ZONE_DB_NAME");
@@ -54,14 +54,16 @@ if (user_permissions_get("namedadmins"))
 		}
 		else
 		{
-			log_write("notification", "sql_query", "Tested successful connection to powerdns-compliant zone database");
+			log_write("notification", "process", "Tested successful connection to powerdns-compliant zone database");
 
 			$obj_sql->session_terminate();
 		}
 
 	}
-
-
+	else
+	{
+		log_write("notification", "process", "Using internal application database for record storage");
+	}
 
 
 	/*

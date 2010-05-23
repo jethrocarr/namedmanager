@@ -99,7 +99,7 @@ class page_output
 		$structure = NULL;
 		$structure["fieldname"]					= "ZONE_DB_TYPE";
 		$structure["type"]					= "radio";
-		$structure["values"]					= array("powerdns_mysql");
+		$structure["values"]					= array("zone_internal", "powerdns_mysql");
 		$structure["options"]["autoselect"]			= "yes";
 		$structure["options"]["no_translate_fieldname"]		= "yes";
 		$this->obj_form->add_input($structure);
@@ -128,6 +128,17 @@ class page_output
 		$structure["options"]["no_translate_fieldname"]		= "yes";
 		$this->obj_form->add_input($structure);
 
+
+		$this->obj_form->add_action("ZONE_DB_TYPE", "default", "ZONE_DB_HOST", "hide");
+		$this->obj_form->add_action("ZONE_DB_TYPE", "default", "ZONE_DB_NAME", "hide");
+		$this->obj_form->add_action("ZONE_DB_TYPE", "default", "ZONE_DB_USERNAME", "hide");
+		$this->obj_form->add_action("ZONE_DB_TYPE", "default", "ZONE_DB_PASSWORD", "hide");
+
+		$this->obj_form->add_action("ZONE_DB_TYPE", "powerdns_mysql", "ZONE_DB_HOST", "show");
+		$this->obj_form->add_action("ZONE_DB_TYPE", "powerdns_mysql", "ZONE_DB_NAME", "show");
+		$this->obj_form->add_action("ZONE_DB_TYPE", "powerdns_mysql", "ZONE_DB_USERNAME", "show");
+		$this->obj_form->add_action("ZONE_DB_TYPE", "powerdns_mysql", "ZONE_DB_PASSWORD", "show");
+		
 
 
 		// submit section
