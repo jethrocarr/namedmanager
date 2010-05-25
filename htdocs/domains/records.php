@@ -202,7 +202,7 @@ class page_output
 			
 			foreach ($this->obj_domain->data["records"] as $record)
 			{
-				if ($record["type"] == "mx")
+				if ($record["type"] == "MX")
 				{
 					$this->num_records_mx++;
 				}
@@ -238,7 +238,6 @@ class page_output
 			$structure["type"]			= "input";
 			$structure["options"]["width"]		= "50";
 			$structure["options"]["max_length"]	= "2";
-			$structure["defaultvalue"]		= "10";
 			$this->obj_form->add_input($structure);
 
 			$structure = NULL;
@@ -375,6 +374,12 @@ class page_output
 		$structure["fieldname"] 	= "id_domain";
 		$structure["type"]		= "hidden";
 		$structure["defaultvalue"]	= $this->obj_domain->id;
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
+		$structure["fieldname"] 	= "num_records_ns";
+		$structure["type"]		= "hidden";
+		$structure["defaultvalue"]	= "$this->num_records_ns";
 		$this->obj_form->add_input($structure);
 
 		$structure = NULL;
@@ -623,6 +628,7 @@ class page_output
 
 		// hidden fields
 		$this->obj_form->render_field("id_domain");
+		$this->obj_form->render_field("num_records_ns");
 		$this->obj_form->render_field("num_records_mx");
 		$this->obj_form->render_field("num_records_custom");
 
