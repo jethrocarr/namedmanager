@@ -1,0 +1,56 @@
+CONTRIBTION INFORMATION
+=======================
+
+(If you are looking for information on who has developed or contributed
+changes to this program, please see the AUTHORS file.)
+
+
+If you would like to contribute changes to this program - whether it is code,
+documentation or alternate language support, please send it to either the project
+development mailing list or directly to developers@amberdms.com.
+
+Security issues should always be reported to security@amberdms.com so that
+we can issue updates promptly to all users.
+
+Amberdms will always public credit anyone who finds a security flaw or contributes
+any other content.
+
+
+The following are requirements for getting your code (or any other content) merged upstream:
+
+
+1. Amberdms requires copyright assignment of your code, otherwise we can not use it. We
+   require assignment so that we can license the source code under different licences
+   in future or for commercial reasons (eg: dual licenses).
+
+   You still retain full credit for developing the code.
+
+   To do this, when sending your code, please add the following:
+
+  "I assign copyright ownership of this source code to Amberdms Ltd (New Zealand) to
+   use in anyway they see fit."
+
+
+2. Amberdms can not accept any code which is covered by software patents - if you wish to
+   submit patented technologies, Amberdms will only accept if all of the following are true:
+   	
+	a) You/your organisation owns the patent(s) in question.
+
+	b) You issue a world-wide, irrevokable, royalty-free license for anyone using Amberdms
+	   source code under an open source license (as defined by the OSI or FSF).
+
+	c) The patented code must be clearly marked.
+
+
+
+Please send all submissions to any of the following locations:
+
+a) The development mailing list for the project:
+
+b) security@amberdms.com (security issues only)
+
+c) developers@amberdms.com (private submission to Amberdms)
+
+
+
+<end>
