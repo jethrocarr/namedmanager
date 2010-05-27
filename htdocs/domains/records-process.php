@@ -42,30 +42,54 @@ if (user_permissions_get("namedadmins"))
 	// add valid NS records
 	for ($i = 0; $i < $data["ns"]["num_records"]; $i++)
 	{
+		$data_tmp			= array();
+		$data_tmp["id"]			= @security_form_input_predefined("int", "record_ns_". $i ."_id", 0, "");
 		$data_tmp["type"]		= "NS";
 		$data_tmp["ttl"]		= @security_form_input_predefined("int", "record_ns_". $i ."_ttl", 0, "");
 		$data_tmp["name"]		= @security_form_input_predefined("any", "record_ns_". $i ."_name", 0, "");
 		$data_tmp["content"]		= @security_form_input_predefined("any", "record_ns_". $i ."_content", 0, "");
-
-		if ($data_tmp["content"])
+		$data_tmp["delete_undo"]	= @security_form_input_predefined("any", "record_ns_". $i ."_delete_undo", 0, "");
+		
+		if ($data_tmp["id"] && $data_tmp["delete_undo"] == "true")
 		{
-			$data["records"][] = $data_tmp;
+			$data_tmp["mode"] = "delete";
 		}
+		else
+		{
+			if (!empty($data_tmp["content"]) && $data_tmp["delete_undo"] == "false")
+			{
+				$data_tmp["mode"] = "update";
+			}
+		}
+
+		$data["records"][] = $data_tmp;
 	}
 
 
 	// add valid MX records
 	for ($i = 0; $i < $data["mx"]["num_records"]; $i++)
 	{	
+		$data_tmp			= array();
+		$data_tmp["id"]			= @security_form_input_predefined("int", "record_mx_". $i ."_id", 0, "");
 		$data_tmp["type"]		= "MX";
 		$data_tmp["ttl"]		= @security_form_input_predefined("int", "record_mx_". $i ."_ttl", 0, "");
 		$data_tmp["prio"]		= @security_form_input_predefined("any", "record_mx_". $i ."_prio", 0, "");
 		$data_tmp["content"]		= @security_form_input_predefined("any", "record_mx_". $i ."_content", 0, "");
-
-		if ($data_tmp["content"])
+		$data_tmp["delete_undo"]	= @security_form_input_predefined("any", "record_mx_". $i ."_delete_undo", 0, "");
+		
+		if ($data_tmp["id"] && $data_tmp["delete_undo"] == "true")
 		{
-			$data["records"][] = $data_tmp;
+			$data_tmp["mode"] = "delete";
 		}
+		else
+		{
+			if (!empty($data_tmp["content"]) && $data_tmp["delete_undo"] == "false")
+			{
+				$data_tmp["mode"] = "update";
+			}
+		}
+
+		$data["records"][] = $data_tmp;
 	}
 
 
@@ -73,15 +97,28 @@ if (user_permissions_get("namedadmins"))
 	// add custom records
 	for ($i = 0; $i < $data["custom"]["num_records"]; $i++)
 	{
+		$data_tmp			= array();
+		$data_tmp["id"]			= @security_form_input_predefined("int", "record_custom_". $i ."_id", 0, "");
 		$data_tmp["type"]		= @security_form_input_predefined("any", "record_custom_". $i ."_type", 0, "");
 		$data_tmp["ttl"]		= @security_form_input_predefined("int", "record_custom_". $i ."_ttl", 0, "");
 		$data_tmp["name"]		= @security_form_input_predefined("any", "record_custom_". $i ."_name", 0, "");
 		$data_tmp["content"]		= @security_form_input_predefined("any", "record_custom_". $i ."_content", 0, "");
-
-		if ($data_tmp["content"])
+		$data_tmp["delete_undo"]	= @security_form_input_predefined("any", "record_custom_". $i ."_delete_undo", 0, "");
+		
+		if ($data_tmp["id"] && $data_tmp["delete_undo"] == "true")
 		{
-			$data["records"][] = $data_tmp;
+			$data_tmp["mode"] = "delete";
 		}
+		else
+		{
+			if (!empty($data_tmp["content"]) && $data_tmp["delete_undo"] == "false")
+			{
+				$data_tmp["mode"] = "update";
+			}
+		}
+
+
+		$data["records"][] = $data_tmp;
 	}
 
 
@@ -108,39 +145,74 @@ if (user_permissions_get("namedadmins"))
 	*/
 
 
-	// TODO: this is kind of ugly and there should be a better way of doing this
-
-
 	// fetch all DNS records
 	$obj_domain->load_data();
 	$obj_domain->load_data_record_all();
-	
-	// delete existing records
-	foreach ($obj_domain->data["records"] as $record)
-	{
-		$obj_record		= New domain_records;
-		$obj_record->id		= $obj_domain->id;
-		$obj_record->id_record	= $record["id_record"];
 
-		$obj_record->action_delete_record();
-	}
-
-
-	// add new records
+	// update records
 	foreach ($data["records"] as $record)
 	{
-		$obj_record		= New domain_records;
-		$obj_record->id		= $obj_domain->id;
+		if (!empty($record["mode"]))
+		{
+			$obj_record		= New domain_records;
+			
+			$obj_record->id		= $obj_domain->id;
+			$obj_record->data	= $obj_domain->data;		// copy domain data from existing object to save time & SQL queries
 
-		$obj_record->data_record["name"]	= $record["name"];
-		$obj_record->data_record["type"]	= $record["type"];
-		$obj_record->data_record["content"]	= $record["content"];
-		$obj_record->data_record["ttl"]		= $record["ttl"];
-		$obj_record->data_record["prio"]	= $record["prio"];
+			$obj_record->id_record	= $record["id"];
+			$obj_record->load_data_record();			// load record data
+			
 
-		$obj_record->action_update_record();
+			if ($record["mode"] == "update")
+			{
+				// data sent through, we should update an existing record. But first, let's check if we actually need to
+				// make a change or not.
+
+				if ($obj_record->data_record["name"]		!= $record["name"]
+					|| $obj_record->data_record["type"]	!= $record["type"]
+					|| $obj_record->data_record["content"]	!= $record["content"]
+					|| $obj_record->data_record["ttl"]	!= (int)$record["ttl"]
+					|| $obj_record->data_record["prio"]	!= (int)$record["prio"]
+					)
+				{
+/*
+					print "<pre>OLD";
+					print_r($obj_record->data_record);
+					print "</pre>";
+					print "<pre>NEW";
+					print_r($record);
+					print "</pre>";
+					die("foo");
+*/
+					log_write("debug", "process", "Updating record ". $record["id"] ." due to changed details");
+			
+					$obj_record->data_record["name"]	= $record["name"];
+					$obj_record->data_record["type"]	= $record["type"];
+					$obj_record->data_record["content"]	= $record["content"];
+					$obj_record->data_record["ttl"]		= $record["ttl"];
+					$obj_record->data_record["prio"]	= $record["prio"];
+
+					$obj_record->action_update_record();
+
+
+
+				}
+				else
+				{
+					log_write("debug", "process", "Not updating record ". $record["id"] ." due to no change in details");
+				}
+			}
+			elseif ($record["mode"] == "delete")
+			{
+				$obj_record->action_delete_record();
+			}
+		}
+		else
+		{
+			// new row but empty/deleted
+		}
+
 	}
-
 
 	// update domain
 	$obj_domain->action_update_serial();

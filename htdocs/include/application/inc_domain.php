@@ -291,20 +291,6 @@ class domain
 		$this->id = $this->sql_obj->fetch_insert_id();
 
 
-		// create a new domain version row for all the servers
-		$obj_app_sql		= New sql_query;
-
-		$obj_app_sql->string	= "SELECT id as id_name_server FROM name_servers";
-		$obj_app_sql->execute();
-		$obj_app_sql->fetch_array();
-
-		foreach ($obj_app_sql->data as $data_server)
-		{
-			$obj_app_sql->string	= "INSERT INTO `api_domains_versions` (id_domain, id_name_server, status) VALUES ('". $this->id ."', '". $data_server["id_name_server"] ."', 'disabled')";
-			$obj_app_sql->execute();
-		}
-
-
 		return $this->id;
 
 	} // end of action_create
@@ -395,10 +381,22 @@ class domain
 			if ($mode == "update")
 			{
 				log_write("notification", "domain", "Domain has been successfully updated.");
+
+				$log 			= New changelog;
+				$log->id_domain		= $this->id;
+
+				$log->log_post("audit", "Domain ". $this->data["domain_name"] ." details updated.");
+
 			}
 			else
 			{
 				log_write("notification", "domain", "Domain successfully created.");
+
+
+				$log 			= New changelog;
+				$log->id_domain		= $this->id;
+
+				$log->log_post("audit", "New domain ". $this->data["domain_name"] ." created.");
 			}
 			
 			return $this->id;
@@ -522,6 +520,13 @@ class domain
 			$this->sql_obj->trans_commit();
 
 			log_write("debug", "domain", "The domain serial has been updated to ". $this->data["soa_serial"] ." and nameservers have been instructed to reload.");
+
+
+			$log 			= New changelog;
+			$log->id_domain		= $this->id;
+
+			$log->log_post("audit", "Domain ". $this->data["domain_name"] ." serial updated to ". $this->data["soa_serial"] ."");
+
 		
 			return 1;
 		}
@@ -599,7 +604,13 @@ class domain
 			$this->sql_obj->trans_commit();
 
 			log_write("notification", "domain", "Nameserver configuration settings and domain serials updated for domain ". $this->data["domain_name"] ."");
-		
+	
+			$log 			= New changelog;
+			$log->id_domain		= $this->id;
+
+			$log->log_post("audit", "Updated nameserver (NS) records for ". $this->data["domain_name"] ."");
+
+
 			return 1;
 		}
 
@@ -673,6 +684,12 @@ class domain
 			$this->sql_obj->trans_commit();
 
 			log_write("notification", "domain", "The domain has been successfully deleted.");
+
+
+			$log 			= New changelog;
+
+			$log->log_post("audit", "Domain ". $this->data["domain_name"] ." has been deleted.");
+
 
 			return 1;
 		}
@@ -762,7 +779,7 @@ class domain_records extends domain
 	{
 		log_debug("domain_records", "Executing load_data_record()");
 
-		$this->sql_obj->string	= "SELECT * FROM `dns_records` WHERE id='". $this->id ."' LIMIT 1";
+		$this->sql_obj->string	= "SELECT * FROM `dns_records` WHERE id='". $this->id_record ."' LIMIT 1";
 		$this->sql_obj->execute();
 
 		if ($this->sql_obj->num_rows())
@@ -896,10 +913,23 @@ class domain_records extends domain
 			if ($mode == "update")
 			{
 				log_write("notification", "domain_records", "Domain record has been successfully updated.");
+
+				$log 			= New changelog;
+				$log->id_domain		= $this->id;
+
+				$log->log_post("audit", "Updated domain record type ". $this->data_record["type"] ." ". $this->data_record["name"] ."/". $this->data_record["content"] ." for domain ". $this->data["domain_name"] ."");
+
 			}
 			else
 			{
 				log_write("notification", "domain_records", "Domain record successfully created.");
+
+				$log 			= New changelog;
+				$log->id_domain		= $this->id;
+
+				$log->log_post("audit", "Updated domain record type ". $this->data_record["type"] ." ". $this->data_record["name"] ."/". $this->data_record["content"] ." for domain ". $this->data["domain_name"] ."");
+
+
 			}
 			
 			return $this->id_record;
@@ -958,6 +988,12 @@ class domain_records extends domain
 			$this->sql_obj->trans_commit();
 
 			log_write("notification", "domain_records", "The domain record has been successfully deleted.");
+
+
+			$log 			= New changelog;
+			$log->id_domain		= $this->id;
+
+			$log->log_post("audit", "Domain record type ". $this->data_record["type"] ." ". $this->data_record["name"] ."/". $this->data_record["content"] ." has been deleted from domain ". $this->data["domain_name"] ."");
 
 			return 1;
 		}

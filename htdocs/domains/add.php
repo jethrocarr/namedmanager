@@ -65,6 +65,7 @@ class page_output
 		$structure["fieldname"] 	= "soa_hostmaster";
 		$structure["type"]		= "input";
 		$structure["options"]["req"]	= "yes";
+		$structure["defaultvalue"]	= $GLOBALS["config"]["DEFAULT_HOSTMASTER"];
 		$this->obj_form->add_input($structure);
 
 		$structure = NULL;

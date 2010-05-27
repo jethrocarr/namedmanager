@@ -135,6 +135,11 @@ class page_output
 		{					
 			// values
 			$structure = NULL;
+			$structure["fieldname"] 		= "record_ns_". $i ."_id";
+			$structure["type"]			= "hidden";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
 			$structure["fieldname"] 		= "record_ns_". $i ."_type";
 			$structure["type"]			= "text";
 			$structure["defaultvalue"]		= "NS";
@@ -149,7 +154,6 @@ class page_output
 			$structure = NULL;
 			$structure["fieldname"] 		= "record_ns_". $i ."_content";
 			$structure["type"]			= "input";
-			$structure["helpmessage"]		= "ayudame!";
 			$structure["options"]["width"]		= "300";
 			$this->obj_form->add_input($structure);
 
@@ -175,6 +179,7 @@ class page_output
 			if ($record["type"] == "NS")
 			{
 				// fetch data
+				$this->obj_form->structure["record_ns_". $i ."_id"]["defaultvalue"]		= $record["id_record"];
 				$this->obj_form->structure["record_ns_". $i ."_name"]["defaultvalue"]		= $record["name"];
 				$this->obj_form->structure["record_ns_". $i ."_content"]["defaultvalue"]	= $record["content"];
 				$this->obj_form->structure["record_ns_". $i ."_ttl"]["defaultvalue"]		= $record["ttl"];
@@ -236,6 +241,11 @@ class page_output
 		{					
 			// values
 			$structure = NULL;
+			$structure["fieldname"] 		= "record_mx_". $i ."_id";
+			$structure["type"]			= "hidden";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
 			$structure["fieldname"] 		= "record_mx_". $i ."_type";
 			$structure["type"]			= "text";
 			$structure["defaultvalue"]		= "MX";
@@ -281,6 +291,7 @@ class page_output
 		{
 			if ($record["type"] == "MX")
 			{
+				$this->obj_form->structure["record_mx_". $i ."_id"]["defaultvalue"]		= $record["id_record"];
 				$this->obj_form->structure["record_mx_". $i ."_prio"]["defaultvalue"]		= $record["prio"];
 				$this->obj_form->structure["record_mx_". $i ."_name"]["defaultvalue"]		= $record["name"];
 				$this->obj_form->structure["record_mx_". $i ."_content"]["defaultvalue"]	= $record["content"];
@@ -338,6 +349,11 @@ class page_output
 		for ($i = 0; $i < $this->num_records_custom; $i++)
 		{					
 			// values
+			$structure = NULL;
+			$structure["fieldname"] 		= "record_custom_". $i ."_id";
+			$structure["type"]			= "hidden";
+			$this->obj_form->add_input($structure);
+
 			$structure = form_helper_prepare_dropdownfromdb("record_custom_". $i ."_type", "SELECT type as label, type as id FROM `dns_record_types` WHERE user_selectable='1'");
 			$structure["defaultvalue"]		= "A";
 			$structure["options"]["width"]		= "100";
@@ -377,6 +393,7 @@ class page_output
 		{
 			if (in_array($record["type"], $dns_record_types))
 			{
+				$this->obj_form->structure["record_custom_". $i ."_id"]["defaultvalue"]			= $record["id_record"];
 				$this->obj_form->structure["record_custom_". $i ."_type"]["defaultvalue"]		= $record["type"];
 				$this->obj_form->structure["record_custom_". $i ."_prio"]["defaultvalue"]		= $record["prio"];
 				$this->obj_form->structure["record_custom_". $i ."_name"]["defaultvalue"]		= $record["name"];
@@ -505,6 +522,7 @@ class page_output
 
 			print "<td width=\"10%\" valign=\"top\">";
 			$this->obj_form->render_field("record_ns_". $i ."_type");
+			$this->obj_form->render_field("record_ns_". $i ."_id");
 			print "</td>";
 
 			print "<td width=\"15%\" valign=\"top\">";
@@ -525,6 +543,8 @@ class page_output
 				$this->obj_form->render_field("record_ns_". $i ."_delete_undo");
 				print "<strong class=\"delete_undo\"><a href=\"\">delete</a></strong>";
 			}
+
+
 			print "</td>";
 
 			print "</tr>";
@@ -573,6 +593,7 @@ class page_output
 
 			print "<td width=\"10%\" valign=\"top\">";
 			$this->obj_form->render_field("record_mx_". $i ."_type");
+			$this->obj_form->render_field("record_mx_". $i ."_id");
 			print "</td>";
 
 			print "<td width=\"15%\" valign=\"top\">";
@@ -638,6 +659,7 @@ class page_output
 
 			print "<td width=\"10%\" valign=\"top\">";
 			$this->obj_form->render_field("record_custom_". $i ."_type");
+			$this->obj_form->render_field("record_custom_". $i ."_id");
 			print "</td>";
 
 			print "<td width=\"15%\" valign=\"top\">";

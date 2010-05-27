@@ -12,6 +12,7 @@
 
 
 // include main code functions
+require("inc_changelog.php");
 require("inc_domain.php");
 require("inc_servers.php");
 

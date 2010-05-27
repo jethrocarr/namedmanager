@@ -170,7 +170,7 @@ class page_output
 				}
 				else
 				{
-					$this->obj_form->structure["sync_status_config"]["defaultvalue"]	= "<span class=\"table_highlight_green\">". lang_trans("status_synced") ."</span>";
+					$this->obj_form->structure["sync_status_config"]["defaultvalue"]	= "<span class=\"table_highlight_open\">". lang_trans("status_synced") ."</span>";
 				}
 
 
@@ -180,7 +180,7 @@ class page_output
 				}
 				else
 				{
-					$this->obj_form->structure["sync_status_log"]["defaultvalue"]		= "<span class=\"table_highlight_green\">". lang_trans("status_synced") ."</span> Last log message delivered on ". time_format_humandate($this->obj_name_server->data["api_sync_log"]) ." ". date("H:i:s", $this->obj_name_server->data["api_sync_log"]) ."";
+					$this->obj_form->structure["sync_status_log"]["defaultvalue"]		= "<span class=\"table_highlight_open\">". lang_trans("status_synced") ."</span> Last log message delivered on ". time_format_humandate($this->obj_name_server->data["api_sync_log"]) ." ". date("H:i:s", $this->obj_name_server->data["api_sync_log"]) ."";
 				}
 			}
 		}
