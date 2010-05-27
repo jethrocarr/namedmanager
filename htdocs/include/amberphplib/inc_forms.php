@@ -473,6 +473,8 @@ class form_input
 	{
 		log_debug("form", "Executing render_field($fieldname)");
 		
+		$helpmessagestatus = "false";
+		
 		switch ($this->structure[$fieldname]["type"])
 		{
 			case "input":
@@ -499,6 +501,7 @@ class form_input
 				{
 					print "class=\"helpmessage\" ";
 					print "value=\"". $this->structure[$fieldname]["helpmessage"] ."\" ";
+					$helpmessagestatus = "true";
 				}
 
 				if (isset($this->structure[$fieldname]["options"]["max_length"]))
@@ -512,6 +515,7 @@ class form_input
 					print $this->structure[$fieldname]["options"]["label"];
 				}
 
+				print "<input type=\"hidden\" name=\"".$fieldname."_helpmessagestatus\" value=\"".$helpmessagestatus."\">";
 			break;
 
 
@@ -549,13 +553,13 @@ class form_input
 				{
 					print "class=\"helpmessage\" ";
 					print "value=\"". $this->structure[$fieldname]["helpmessage"] ."\" ";
+					$helpmessagestatus = "true";
 				}
 
 				if (isset($this->structure[$fieldname]["options"]["max_length"]))
 					print "maxlength=\"". $this->structure[$fieldname]["options"]["max_length"] ."\" ";
 				
 				print "style=\"width: ". $this->structure[$fieldname]["options"]["width"] ."px;\">";
-
 
 				if ($position == "after")
 				{
@@ -569,6 +573,8 @@ class form_input
 				{
 					print $this->structure[$fieldname]["options"]["label"];
 				}
+				
+				print "<input type=\"hidden\" name=\"".$fieldname."_helpmessagestatus\" value=\"".$helpmessagestatus."\">";
 			break;
 
 
