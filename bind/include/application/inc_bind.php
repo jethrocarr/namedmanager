@@ -331,7 +331,19 @@ class bind_api extends soap_api
 		{
 			if ($record["record_type"] == "PTR")
 			{
-				fwrite($fh, $record["record_name"] . "\t". $record["record_ttl"] ." IN PTR ". $record["record_content"] ."\n");
+				fwrite($fh, $record["record_name"] . "\t". $record["record_ttl"] ." IN PTR ". $record["record_content"] );
+
+				if (preg_match("/\./", $record["record_content"]))
+				{
+					// FQDN
+					fwrite($fh, ".\n");
+				}
+				else
+				{
+					// non-FQND
+					fwrite($fh, "\n");
+				}
+
 			}
 		}
 

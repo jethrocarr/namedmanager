@@ -57,8 +57,7 @@ else
 	// confirm success
 	if (!error_check())
 	{
-	//	$obj_bind_api->set_update_version($config_version);
-		log_write("debug", "script", "VERSION UPDATE DISABLED (TODO)");
+		$obj_bind_api->set_update_version($config_version);
 	}
 	else
 	{
