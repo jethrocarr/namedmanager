@@ -253,7 +253,7 @@ class bind_api extends soap_api
 			if ($domain["id"] == $domain_id)
 			{
 				// header
-				fwrite($fh, "\$ORIGIN ". $domain["domain_name"] ."\n");
+				fwrite($fh, "\$ORIGIN ". $domain["domain_name"] .".\n");
 				fwrite($fh, "\$TTL ". $domain["soa_default_ttl"] ."\n");
 
 				// change @ to . for hostmaster email address
