@@ -1,0 +1,211 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<definitions name="namedmanager"
+	targetNamespace="http://www.amberdms.com/namedmanager/api/namedmanager.wsdl"
+	xmlns="http://schemas.xmlsoap.org/wsdl/"
+	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+	xmlns:tns="http://www.amberdms.com/namedmanager/api/namedmanager.wsdl"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+	<types>
+		<schema xmlns="http://www.w3.org/2001/XMLSchema"
+		targetNamespace="http://www.amberdms.com/namedmanager/api/namedmanager.wsdl"
+		xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+		xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/">
+
+			<complexType name="fetch_domains">
+				<complexContent>
+					<restriction base="soapenc:Array">
+						<attribute ref="soapenc:arrayType" wsdl:arrayType="fetch_domains_rows[]"/>
+					</restriction>
+				</complexContent>
+			</complexType>
+
+			<complexType name="fetch_domains_rows">
+				<all>
+					<element name="id" type="xsd:int"/>
+					<element name="domain_name" type="xsd:string"/>
+					<element name="domain_description" type="xsd:string"/>
+					<element name="soa_hostmaster" type="xsd:string"/>
+					<element name="soa_serial" type="xsd:int"/>
+					<element name="soa_refresh" type="xsd:int"/>
+					<element name="soa_retry" type="xsd:int"/>
+					<element name="soa_expire" type="xsd:int"/>
+					<element name="soa_default_ttl" type="xsd:int"/>
+					<element name="soa_ns_primary" type="xsd:string"/>
+				</all>
+			</complexType>
+
+
+			<complexType name="fetch_records">
+				<complexContent>
+					<restriction base="soapenc:Array">
+						<attribute ref="soapenc:arrayType" wsdl:arrayType="fetch_records_rows[]"/>
+					</restriction>
+				</complexContent>
+			</complexType>
+
+			<complexType name="fetch_records_rows">
+				<all>
+					<element name="id_record" type="xsd:int"/>
+					<element name="record_name" type="xsd:string"/>
+					<element name="record_type" type="xsd:string"/>
+					<element name="record_content" type="xsd:string"/>
+					<element name="record_ttl" type="xsd:int"/>
+					<element name="record_prio" type="xsd:int"/>
+				</all>
+			</complexType>
+
+		</schema>
+	</types>
+
+
+	<message name='authenticate_request'>
+		<part name='server_name' type='xsd:string'/>
+		<part name='api_auth_key' type='xsd:string'/>
+	</message>
+
+	<message name='authenticate_response'>
+		<part name='return' type='xsd:int'/>
+	</message>
+
+
+	<message name='log_write_request'>
+		<part name='timestamp' type='xsd:int'/>
+		<part name='log_type' type='xsd:string'/>
+		<part name='log_content' type='xsd:string'/>
+	</message>
+
+	<message name='log_write_response'>
+		<part name='return' type='xsd:int'/>
+	</message>
+
+
+	<message name='check_update_version_response'>
+		<part name='version' type='xsd:int'/>
+	</message>
+
+	<message name='set_update_version_request'>
+		<part name='version' type='xsd:int'/>
+	</message>
+
+	<message name='set_update_version_response'>
+		<part name='return' type='xsd:int'/>
+	</message>
+
+
+	<message name='fetch_domains_response'>
+		<part name='return' type='xsd1:fetch_domains'/>
+	</message>
+
+
+	<message name='fetch_records_request'>
+		<part name='domain_id' type='xsd:int'/>
+	</message>
+
+	<message name='fetch_records_response'>
+		<part name='return' type='xsd1:fetch_records'/>
+	</message>
+
+
+
+	<portType name='namedmanager_porttype'>
+		<operation name='authenticate'>
+			<input message='tns:authenticate_request'/>
+			<output message='tns:authenticate_response'/>
+		</operation>
+
+		<operation name='log_write'>
+			<input message='tns:log_write_request'/>
+			<output message='tns:log_write_response'/>
+		</operation>
+
+		<operation name='check_update_version'>
+			<output message='tns:check_update_version_response'/>
+		</operation>
+
+		<operation name='set_update_version'>
+			<input message='tns:set_update_version_request'/>
+			<output message='tns:set_update_version_response'/>
+		</operation>
+
+
+		<operation name='fetch_domains'>
+			<output message='tns:fetch_domains_response'/>
+		</operation>
+
+		<operation name='fetch_records'>
+			<input message='tns:fetch_records_request'/>
+			<output message='tns:fetch_records_response'/>
+		</operation>
+
+	</portType>
+
+	<binding name='namedmanager_binding' type='tns:namedmanager_porttype'>
+		<soap:binding style='rpc' transport='http://schemas.xmlsoap.org/soap/http'/>
+
+		<operation name='authenticate'>
+			<soap:operation soapAction='namedmanager'/>
+			<input>
+				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+			</input>
+
+			<output>
+				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+			</output>
+		</operation>
+
+		<operation name='log_write'>
+			<soap:operation soapAction='namedmanager'/>
+			<input>
+				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+			</input>
+
+			<output>
+				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+			</output>
+		</operation>
+		
+		<operation name='check_update_version'>
+			<soap:operation soapAction='namedmanager'/>
+			<output>
+				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+			</output>
+		</operation>
+
+		<operation name='set_update_version'>
+			<soap:operation soapAction='namedmanager'/>
+			<input>
+				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+			</input>
+			<output>
+				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+			</output>
+		</operation>
+
+
+		<operation name='fetch_domains'>
+			<soap:operation soapAction='namedmanager'/>
+			<output>
+				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+			</output>
+		</operation>
+	
+
+		<operation name='fetch_records'>
+			<soap:operation soapAction='namedmanager'/>
+			<input>
+				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+			</input>
+			<output>
+				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+			</output>
+		</operation>
+	
+	</binding>
+
+<service name='namedmanager'>
+  <port name='namedmanager_port' binding='namedmanager_binding'>
+    <soap:address location='http://www.amberdms.com/namedmanager/api/namedmanager.php'/>
+  </port>
+</service>
+</definitions>

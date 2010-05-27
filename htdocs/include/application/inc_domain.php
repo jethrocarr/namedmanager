@@ -232,6 +232,7 @@ class domain
 
 
 
+
 	/*
 		load_data_record_all
 
@@ -288,6 +289,21 @@ class domain
 		$this->sql_obj->execute();
 
 		$this->id = $this->sql_obj->fetch_insert_id();
+
+
+		// create a new domain version row for all the servers
+		$obj_app_sql		= New sql_query;
+
+		$obj_app_sql->string	= "SELECT id as id_name_server FROM name_servers";
+		$obj_app_sql->execute();
+		$obj_app_sql->fetch_array();
+
+		foreach ($obj_app_sql->data as $data_server)
+		{
+			$obj_app_sql->string	= "INSERT INTO `api_domains_versions` (id_domain, id_name_server, status) VALUES ('". $this->id ."', '". $data_server["id_name_server"] ."', 'disabled')";
+			$obj_app_sql->execute();
+		}
+
 
 		return $this->id;
 
@@ -479,6 +495,15 @@ class domain
 		$this->sql_obj->execute();
 
 	
+
+
+		/*
+			Update configuration status versions
+		*/
+		$sql_obj		= New sql_query;
+		$sql_obj->string	= "UPDATE `config` SET value='". time() ."' WHERE name='SYNC_STATUS_CONFIG' LIMIT 1";
+		$sql_obj->execute();
+
 
 		/*
 			Commit
