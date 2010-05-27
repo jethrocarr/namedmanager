@@ -1,0 +1,7 @@
+
+This section of the NamedManager application includes scripts and components that interact with the
+main NamedManager web application via the SOAP API to fetch configuration options and from those, to
+generate Bind nameserver configuration and zonefiles.
+
+When packaged into an RPM, it is called namedmanager-bind
+
