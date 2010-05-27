@@ -643,10 +643,10 @@ class form_input
 
 				print "style=\"width: ". $this->structure[$fieldname]["options"]["width"] ."px; height: ". $this->structure[$fieldname]["options"]["height"] ."px;\"";
 				
-				if (isset($this->structure[$fieldname]["helpmessage"]) && !isset($this->structure[$fieldname]["defaultvalue"]))
-				{
-					print "class= \"helpmessage\" ";
-				}
+//				if (isset($this->structure[$fieldname]["helpmessage"]) && !isset($this->structure[$fieldname]["defaultvalue"]))
+//				{
+//					print "class= \"helpmessage\" ";
+//				}
 				
 				print ">";
 
@@ -654,10 +654,10 @@ class form_input
 				{
 					print $this->structure[$fieldname]["defaultvalue"];
 				}
-				elseif (isset($this->structure[$fieldname]["helpmessage"]))
-				{
-					print $this->structure[$fieldname]["helpmessage"];
-				}
+//				elseif (isset($this->structure[$fieldname]["helpmessage"]))
+//				{
+//					print $this->structure[$fieldname]["helpmessage"];
+//				}
 
 				print "</textarea>";
 
