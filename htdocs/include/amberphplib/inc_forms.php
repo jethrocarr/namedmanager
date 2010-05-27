@@ -444,6 +444,7 @@ class form_input
 
 			
 			$option_array["defaultvalue"]		Default value (if any)
+			$option_array["helpmessage"]		Help message (if any). Cannot be used if a default value is set.
 			$option_array["options"]
 						["no_translate_fieldname"]	Set to "yes" to disable language translation for field names
 						["no_fieldname"]		Do not render a field name and shift the data left by 1 column
@@ -489,9 +490,15 @@ class form_input
 
 				// display
 				print "<input name=\"$fieldname\" ";
+				
 				if (isset($this->structure[$fieldname]["defaultvalue"]))
 				{
 					print "value=\"". $this->structure[$fieldname]["defaultvalue"] ."\" ";
+				}
+				elseif (isset($this->structure[$fieldname]["helpmessage"]))
+				{
+					print "class=\"helpmessage\" ";
+					print "value=\"". $this->structure[$fieldname]["helpmessage"] ."\" ";
 				}
 
 				if (isset($this->structure[$fieldname]["options"]["max_length"]))
@@ -538,6 +545,11 @@ class form_input
 				{
 					print "value=\"". $this->structure[$fieldname]["defaultvalue"] ."\" ";
 				}
+				elseif (isset($this->structure[$fieldname]["helpmessage"]))
+				{
+					print "class=\"helpmessage\" ";
+					print "value=\"". $this->structure[$fieldname]["helpmessage"] ."\" ";
+				}
 
 				if (isset($this->structure[$fieldname]["options"]["max_length"]))
 					print "maxlength=\"". $this->structure[$fieldname]["options"]["max_length"] ."\" ";
@@ -574,14 +586,14 @@ class form_input
 					$this->structure[$fieldname]["options"]["width"] = 250;
 		
 				// display
-				print "<input type=\"password\" name=\"$fieldname\" value=\"";
+				print "<input type=\"password\" name=\"$fieldname\" ";
 
 				if (isset($this->structure[$fieldname]["defaultvalue"]))
 				{
-					print $this->structure[$fieldname]["defaultvalue"];
+					print "value=\"". $this->structure[$fieldname]["defaultvalue"] ."\" ";
 				}
 
-				print "\" style=\"width: ". $this->structure[$fieldname]["options"]["width"] ."px;\">";
+				print " style=\"width: ". $this->structure[$fieldname]["options"]["width"] ."px;\">";
 
 				// optional label/description
 				if (isset($this->structure[$fieldname]["options"]["label"]))
@@ -629,11 +641,22 @@ class form_input
 					print "wrap=\"". $this->structure[$fieldname]["options"]["wrap"] ."\" ";
 				}
 
-				print "style=\"width: ". $this->structure[$fieldname]["options"]["width"] ."px; height: ". $this->structure[$fieldname]["options"]["height"] ."px;\">";
+				print "style=\"width: ". $this->structure[$fieldname]["options"]["width"] ."px; height: ". $this->structure[$fieldname]["options"]["height"] ."px;\"";
+				
+				if (isset($this->structure[$fieldname]["helpmessage"]) && !isset($this->structure[$fieldname]["defaultvalue"]))
+				{
+					print "class= \"helpmessage\" ";
+				}
+				
+				print ">";
 
 				if (isset($this->structure[$fieldname]["defaultvalue"]))
 				{
 					print $this->structure[$fieldname]["defaultvalue"];
+				}
+				elseif (isset($this->structure[$fieldname]["helpmessage"]))
+				{
+					print $this->structure[$fieldname]["helpmessage"];
 				}
 
 				print "</textarea>";

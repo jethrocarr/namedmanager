@@ -617,3 +617,8 @@ div[class*='toggle']
 {
 	text-align:	center;
 }
+
+.helpmessage
+{
+	color:	#ABABAB;
+}

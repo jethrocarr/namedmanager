@@ -29,7 +29,15 @@ $(document).ready(function()
 	$("select[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
 	$("input[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
 	$("textarea[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
-
+	
+	/*
+	 * 	Attach delete function to mouse click on delete link
+	 */
+	$(".delete_undo").click(function(){
+		var cell = $(this).parent();
+		delete_undo_row(cell);
+		return false;
+	});
 });
 
 
@@ -45,9 +53,10 @@ function add_recordrow_mx()
 	previous_row	= $("input[name='record_mx_" + (num_records_mx-1) + "_prio']").parent().parent();
 	new_row		= $(previous_row).clone().insertAfter(previous_row);
 
-	$(new_row).children().children("input[name^='record_mx_" + (num_records_mx-1) + "_prio']").removeAttr("name").attr("name", "record_mx_" + num_records_mx + "_prio").val("");
-	$(new_row).children().children("input[name^='record_mx_" + (num_records_mx-1) + "_ttl']").removeAttr("name").attr("name", "record_mx_" + num_records_mx + "_ttl").val("");
-	$(new_row).children().children("input[name^='record_mx_" + (num_records_mx-1) + "_content']").removeAttr("name").attr("name", "record_mx_" + num_records_mx + "_content").val("");
+	$(new_row).children().children("input[name^='record_mx_" + (num_records_mx-1) + "_prio']").removeAttr("name").attr("name", "record_mx_" + num_records_mx + "_prio").removeClass("helpmessage").val("");
+	$(new_row).children().children("input[name^='record_mx_" + (num_records_mx-1) + "_ttl']").removeAttr("name").attr("name", "record_mx_" + num_records_mx + "_ttl").removeClass("helpmessage").val("");
+	$(new_row).children().children("input[name^='record_mx_" + (num_records_mx-1) + "_content']").removeAttr("name").attr("name", "record_mx_" + num_records_mx + "_content").removeClass("helpmessage").val("");
+	$(new_row).children().children("input[name^='record_mx_" + (num_records_mx-1) + "_delete_undo']").removeAttr("name").attr("name", "record_mx_" + num_records_mx + "_delete_undo").val("false");
 	
 	//remove function calls from previous row
 	$("select[name^='record_mx_" + (num_records_mx-1) + "']").unbind("change");
@@ -61,7 +70,12 @@ function add_recordrow_mx()
 	//add function calls to new row
 	$("select[name^='record_mx_" + (num_records_mx-1) + "']").change(add_recordrow_mx);
 	$("input[name^='record_mx_" + (num_records_mx-1) + "']").change(add_recordrow_mx);
-	$("textarea[name^='record_mx_" + (num_records_mx-1) + "']").change(add_recordrow_mx);	
+	$("textarea[name^='record_mx_" + (num_records_mx-1) + "']").change(add_recordrow_mx);
+	$("input[name^='record_mx_" + (num_records_mx-1) + "_delete_undo']").siblings(".delete_undo").click(function(){
+		var cell = $(this).parent();
+		delete_undo_row(cell);
+		return false;
+	});
 }
 
 
@@ -75,9 +89,10 @@ function add_recordrow_ns()
 	previous_row	= $("input[name='record_ns_" + (num_records_ns-1) + "_name']").parent().parent();
 	new_row		= $(previous_row).clone().insertAfter(previous_row);
 
-	$(new_row).children().children("input[name^='record_ns_" + (num_records_ns-1) + "_ttl']").removeAttr("name").attr("name", "record_ns_" + num_records_ns + "_ttl");
-	$(new_row).children().children("input[name^='record_ns_" + (num_records_ns-1) + "_name']").removeAttr("name").attr("name", "record_ns_" + num_records_ns + "_name").val("");
-	$(new_row).children().children("input[name^='record_ns_" + (num_records_ns-1) + "_content']").removeAttr("name").attr("name", "record_ns_" + num_records_ns + "_content").val("");
+	$(new_row).children().children("input[name^='record_ns_" + (num_records_ns-1) + "_ttl']").removeAttr("name").attr("name", "record_ns_" + num_records_ns + "_ttl").removeClass("helpmessage");
+	$(new_row).children().children("input[name^='record_ns_" + (num_records_ns-1) + "_name']").removeAttr("name").attr("name", "record_ns_" + num_records_ns + "_name").removeClass("helpmessage").val("");
+	$(new_row).children().children("input[name^='record_ns_" + (num_records_ns-1) + "_content']").removeAttr("name").attr("name", "record_ns_" + num_records_ns + "_content").removeClass("helpmessage").val("");
+	$(new_row).children().children("input[name^='record_ns_" + (num_records_ns-1) + "_delete_undo']").removeAttr("name").attr("name", "record_ns_" + num_records_ns + "_delete_undo").val("false");
 	
 	//remove function calls from previous row
 	$("select[name^='record_ns_" + (num_records_ns-1) + "']").unbind("change");
@@ -92,6 +107,11 @@ function add_recordrow_ns()
 	$("select[name^='record_ns_" + (num_records_ns-1) + "']").change(add_recordrow_ns);
 	$("input[name^='record_ns_" + (num_records_ns-1) + "']").change(add_recordrow_ns);
 	$("textarea[name^='record_ns_" + (num_records_ns-1) + "']").change(add_recordrow_ns);	
+	$("input[name^='record_ns_" + (num_records_ns-1) + "_delete_undo']").siblings(".delete_undo").click(function(){
+		var cell = $(this).parent();
+		delete_undo_row(cell);
+		return false;
+	});
 }
 
 
@@ -109,6 +129,7 @@ function add_recordrow_custom()
 	$(new_row).children().children("input[name^='record_custom_" + (num_records_custom-1) + "_ttl']").removeAttr("name").attr("name", "record_custom_" + num_records_custom + "_ttl").val("");
 	$(new_row).children().children("input[name^='record_custom_" + (num_records_custom-1) + "_name']").removeAttr("name").attr("name", "record_custom_" + num_records_custom + "_name").val("");
 	$(new_row).children().children("input[name^='record_custom_" + (num_records_custom-1) + "_content']").removeAttr("name").attr("name", "record_custom_" + num_records_custom + "_content").val("");
+	$(new_row).children().children("input[name^='record_custom_" + (num_records_custom-1) + "_delete_undo']").removeAttr("name").attr("name", "record_custom_" + num_records_custom + "_delete_undo").val("false");
 	
 	//remove function calls from previous row
 	$("select[name^='record_custom_" + (num_records_custom-1) + "']").unbind("change");
@@ -123,7 +144,33 @@ function add_recordrow_custom()
 	$("select[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
 	$("input[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
 	$("textarea[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);	
+	$("input[name^='record_custom_" + (num_records_custom-1) + "_delete_undo']").siblings(".delete_undo").click(function(){
+		var cell = $(this).parent();
+		delete_undo_row(cell);
+		return false;
+	});
 }
 
 
+/*
+ * 	delete_row
+ * 
+ * 	grey out row (darken) and set hidden delete variable to true
+ */
+function delete_undo_row(cell)
+{
+	var status = $(cell).children("input").val();
+	if (status == "false")
+	{
+		$(cell).siblings().fadeTo("slow", 0.1);
+		$(cell).children(".delete_undo").children().html("undo");
+		$(cell).children("input").val("true");
+	}
+	else if (status == "true")
+	{
+		$(cell).siblings().fadeTo("slow", 1);
+		$(cell).children(".delete_undo").children().html("delete");
+		$(cell).children("input").val("false");
+	}
+}
 

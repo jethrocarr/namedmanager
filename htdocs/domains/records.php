@@ -149,6 +149,7 @@ class page_output
 			$structure = NULL;
 			$structure["fieldname"] 		= "record_ns_". $i ."_content";
 			$structure["type"]			= "input";
+			$structure["helpmessage"]		= "ayudame!";
 			$structure["options"]["width"]		= "300";
 			$this->obj_form->add_input($structure);
 
@@ -157,6 +158,12 @@ class page_output
 			$structure["type"]			= "input";
 			$structure["options"]["width"]		= "80";
 			$structure["defaultvalue"]		= $GLOBALS["config"]["DEFAULT_TTL_NS"];
+			$this->obj_form->add_input($structure);
+			
+			$structure = NULL;
+			$structure["fieldname"]			= "record_ns_". $i ."_delete_undo";
+			$structure["type"]			= "hidden";
+			$structure["defaultvalue"]		= "false";
 			$this->obj_form->add_input($structure);
 		}
 
@@ -179,6 +186,7 @@ class page_output
 					$this->obj_form->structure["record_ns_". $i ."_name"]["type"]		= "text";
 					$this->obj_form->structure["record_ns_". $i ."_content"]["type"]	= "text";
 					$this->obj_form->structure["record_ns_". $i ."_ttl"]["type"]		= "text";
+					$this->obj_form->structure["record_ns_". $i ."_delete_undo"]["defaultvalue"]	= "disabled";
 				}
 
 
@@ -257,6 +265,12 @@ class page_output
 			$structure["type"]			= "input";
 			$structure["options"]["width"]		= "80";
 			$structure["defaultvalue"]		= $GLOBALS["config"]["DEFAULT_TTL_MX"];
+			$this->obj_form->add_input($structure);
+			
+			$structure = NULL;
+			$structure["fieldname"]			= "record_mx_". $i ."_delete_undo";
+			$structure["type"]			= "hidden";
+			$structure["defaultvalue"]		= "false";
 			$this->obj_form->add_input($structure);
 		}
 
@@ -346,6 +360,12 @@ class page_output
 			$structure["type"]			= "input";
 			$structure["options"]["width"]		= "80";
 			$structure["defaultvalue"]		= $GLOBALS["config"]["DEFAULT_TTL_OTHER"];
+			$this->obj_form->add_input($structure);
+			
+			$structure = NULL;
+			$structure["fieldname"]			= "record_custom_". $i ."_delete_undo";
+			$structure["type"]			= "hidden";
+			$structure["defaultvalue"]		= "false";
 			$this->obj_form->add_input($structure);
 		}
 
@@ -462,9 +482,10 @@ class page_output
 
 		print "<tr class=\"table_highlight_info\">";
 			print "<td width=\"10%\"><b>". lang_trans("record_type") ."</b></td>";
-			print "<td width=\"20%\"><b>". lang_trans("record_ttl") ."</b></td>";
+			print "<td width=\"15%\"><b>". lang_trans("record_ttl") ."</b></td>";
 			print "<td width=\"35%\"><b>". lang_trans("record_name") ."</b></td>";
 			print "<td width=\"35%\"><b>". lang_trans("record_content") ."</b></td>";
+			print "<td width=\"5%\">&nbsp;</td>";
 		print "</tr>";
 
 		print "</tr>";
@@ -486,7 +507,7 @@ class page_output
 			$this->obj_form->render_field("record_ns_". $i ."_type");
 			print "</td>";
 
-			print "<td width=\"20%\" valign=\"top\">";
+			print "<td width=\"15%\" valign=\"top\">";
 			$this->obj_form->render_field("record_ns_". $i ."_ttl");
 			print "</td>";
 
@@ -496,6 +517,14 @@ class page_output
 
 			print "<td width=\"35%\" valign=\"top\">";
 			$this->obj_form->render_field("record_ns_". $i ."_content");
+			print "</td>";
+			
+			print "<td width=\"5%\" valign=\"top\">";
+			if ($this->obj_form->structure["record_ns_". $i ."_delete_undo"]["defaultvalue"] != "disabled")
+			{
+				$this->obj_form->render_field("record_ns_". $i ."_delete_undo");
+				print "<strong class=\"delete_undo\"><a href=\"\">delete</a></strong>";
+			}
 			print "</td>";
 
 			print "</tr>";
@@ -523,9 +552,10 @@ class page_output
 
 		print "<tr class=\"table_highlight_info\">";
 			print "<td width=\"10%\"><b>". lang_trans("record_type") ."</b></td>";
-			print "<td width=\"20%\"><b>". lang_trans("record_ttl") ."</b></td>";
+			print "<td width=\"15%\"><b>". lang_trans("record_ttl") ."</b></td>";
 			print "<td width=\"35%\"><b>". lang_trans("record_prio") ."</b></td>";
 			print "<td width=\"35%\"><b>". lang_trans("record_content") ."</b></td>";
+			print "<td width=\"5%\">&nbsp;</td>";
 		print "</tr>";
 		
 
@@ -545,7 +575,7 @@ class page_output
 			$this->obj_form->render_field("record_mx_". $i ."_type");
 			print "</td>";
 
-			print "<td width=\"20%\" valign=\"top\">";
+			print "<td width=\"15%\" valign=\"top\">";
 			$this->obj_form->render_field("record_mx_". $i ."_ttl");
 			print "</td>";
 
@@ -555,6 +585,11 @@ class page_output
 
 			print "<td width=\"35%\" valign=\"top\">";
 			$this->obj_form->render_field("record_mx_". $i ."_content");
+			print "</td>";
+			
+			print "<td width=\"5%\" valign=\"top\">";
+			$this->obj_form->render_field("record_mx_". $i ."_delete_undo");
+			print "<strong class=\"delete_undo\"><a href=\"\">delete</a></strong>";
 			print "</td>";
 	
 			print "</tr>";
@@ -582,9 +617,10 @@ class page_output
 
 		print "<tr class=\"table_highlight_info\">";
 			print "<td width=\"10%\"><b>". lang_trans("record_type") ."</b></td>";
-			print "<td width=\"20%\"><b>". lang_trans("record_ttl") ."</b></td>";
+			print "<td width=\"15%\"><b>". lang_trans("record_ttl") ."</b></td>";
 			print "<td width=\"35%\"><b>". lang_trans("record_name") ."</b></td>";
 			print "<td width=\"35%\"><b>". lang_trans("record_content") ."</b></td>";
+			print "<td width=\"5%\">&nbsp;</td>";
 		print "</tr>";
 		
 
@@ -604,7 +640,7 @@ class page_output
 			$this->obj_form->render_field("record_custom_". $i ."_type");
 			print "</td>";
 
-			print "<td width=\"20%\" valign=\"top\">";
+			print "<td width=\"15%\" valign=\"top\">";
 			$this->obj_form->render_field("record_custom_". $i ."_ttl");
 			print "</td>";
 
@@ -614,6 +650,11 @@ class page_output
 
 			print "<td width=\"35%\" valign=\"top\">";
 			$this->obj_form->render_field("record_custom_". $i ."_content");
+			print "</td>";
+			
+			print "<td width=\"5%\" valign=\"top\">";
+			$this->obj_form->render_field("record_custom_". $i ."_delete_undo");
+			print "<strong class=\"delete_undo\"><a href=\"\">delete</a></strong>";
 			print "</td>";
 				
 			print "</tr>";
