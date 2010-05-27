@@ -357,6 +357,13 @@ class name_server
 
 			log_write("notification", "name_server", "Name server version has been successfully updated.");
 
+
+			$log 			= New changelog;
+			$log->id_server		= $this->id;
+
+			$log->log_post("server", "Updated name server ". $this->data["server_name"] ." to configuration version ". $version ." and reloaded");
+
+
 			return 1;
 		}
 

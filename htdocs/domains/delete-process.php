@@ -71,6 +71,8 @@ if (user_permissions_get('namedadmins'))
 			Delete domain
 		*/
 
+		$obj_domain->load_data();
+
 		$obj_domain->action_delete();
 
 
