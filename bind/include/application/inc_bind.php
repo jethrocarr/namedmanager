@@ -83,9 +83,9 @@ class bind_api extends soap_api
 	*/
 	function action_reload()
 	{
-		log_write("debug", "script", "Reloading Bind with new configuration using ". $config["bind"]["reload"] ."");
+		log_write("debug", "script", "Reloading Bind with new configuration using ". $GLOBALS["config"]["bind"]["reload"] ."");
 
-		exec($config["bind"]["reload"], $exec_output, $exec_return_value);
+		exec($GLOBALS["config"]["bind"]["reload"], $exec_output, $exec_return_value);
 
 		if ($exec_return_value)
 		{
@@ -146,7 +146,7 @@ class bind_api extends soap_api
 
 
 		// reload Bind
-//		$this->action_reload();
+		$this->action_reload();
 	}
 
 
