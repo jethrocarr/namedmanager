@@ -8,7 +8,6 @@
 */
 
 
-
 /*
 	API Configuration
 */
@@ -39,7 +38,7 @@ $config["log_owner"]		= "radiusd";
 
 $config["bind"]["version"]		= "9";					// version of bind (currently only 9 is supported, although others may work)
 $config["bind"]["reload"]		= "rndc reload";			// command to reload bind config & zonefiles
-$config["bind"]["config"]		= "/etc/named.namedmanager.conf"	// configuration file to write bind config too
+$config["bind"]["config"]		= "/etc/named.namedmanager.conf";	// configuration file to write bind config too
 $config["bind"]["zonefiledir"]		= "/var/named/";			// directory to write zonefiles too
 										// note: if using chroot bind, will often be /var/named/chroot/var/named/
 

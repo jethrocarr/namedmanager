@@ -141,6 +141,9 @@ class bind_api extends soap_api
 		}
 
 
+		// remove any deleted domain zonefiles
+		$this->action_remove_deleted();
+
 		// update application configuration
 		$this->action_generate_appconfig();
 
@@ -193,6 +196,63 @@ class bind_api extends soap_api
 		return 1;
 
 	} // end of action_generate_app_config
+
+
+
+	/*
+		action_remove_deleted
+
+		Checks the list of domains returned from namedmanager and deletes any from the host
+		that no longer valid.
+
+		Returns
+		0		Failure
+		1		Success
+	*/
+	function action_remove_deleted()
+	{
+		log_write("debug", "script", "Executing action_remove_deleted()");
+
+
+		// fetch list of domains from old config
+		if (!$file = file($GLOBALS["config"]["bind"]["config"]))
+		{
+			log_write("error", "main", "Unable to open file ". $GLOBALS["config"]["bind"]["config"] ." for reading");
+			return 0;
+		}
+
+		foreach ($file as $line)
+		{
+			// fetch the old domains
+			if (preg_match("/zone\s\"(\S*)\"\sIN/", $line, $matches))
+			{
+				$domains_old[]	= $matches[1];
+			}
+		}
+
+
+		// fetch equalivent list of new domains
+		foreach ($this->domains as $domain)
+		{
+			$domains_new[] = $domain["domain_name"];
+		}
+
+
+		// compare with current domains
+		foreach ($domains_old as $domain)
+		{
+			if (!in_array($domain, $domains_new))
+			{
+				// domain has been deleted
+				log_write("debug", "script", "Domain $domain has been deleted, removing old configuration file");
+				unlink( $GLOBALS["config"]["bind"]["zonefiledir"] ."/". $domain .".zone" );
+			}
+			
+		}
+
+		return 1;
+
+	} // end of action_remove_deleted
 
 
 
