@@ -41,21 +41,78 @@ class page_output
 
 		// general
 		$structure = NULL;
+		$structure["fieldname"] 	= "domain_type";
+		$structure["type"]		= "radio";
+		$structure["values"]		= array("domain_standard", "domain_reverse_ipv4");
+		$structure["options"]["req"]	= "yes";
+		$structure["defaultvalue"]	= "domain_standard";
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
 		$structure["fieldname"] 	= "domain_name";
 		$structure["type"]		= "input";
 		$structure["options"]["req"]	= "yes";
 		$this->obj_form->add_input($structure);
 
 		$structure = NULL;
-		$structure["fieldname"] 	= "domain_description";
+		$structure["fieldname"] 		= "ipv4_help";
+		$structure["type"]			= "text";
+		$structure["options"]["req"]		= "yes";
+		$structure["defaultvalue"]		= "help_ipv4_help";
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
+		$structure["fieldname"] 	= "ipv4_network";
 		$structure["type"]		= "input";
+		$structure["options"]["help"]	= "eg: 192.168.0.0";
+		$structure["options"]["label"]	= " /24";
+		$structure["options"]["req"]	= "yes";
+		$this->obj_form->add_input($structure);
+/*
+		$structure = NULL;
+		$structure["fieldname"] 	= "ipv4_subnet";
+		$structure["type"]		= "radio";
+		$structure["values"]		= array("24", "16", "8");
+		$structure["options"]["req"]	= "yes";
+		$this->obj_form->add_input($structure);
+*/
+		$structure = NULL;
+		$structure["fieldname"] 	= "ipv4_autofill";
+		$structure["type"]		= "checkbox";
+		$structure["options"]["label"]	= lang_trans("help_ipv4_autofill");
 		$structure["options"]["req"]	= "yes";
 		$this->obj_form->add_input($structure);
 
 		$structure = NULL;
-		$structure["fieldname"] 	= "domain_description";
+		$structure["fieldname"] 	= "ipv4_autofill_domain";
 		$structure["type"]		= "input";
+		$structure["options"]["help"]	= "eg: static.example.com";
 		$structure["options"]["req"]	= "yes";
+		$this->obj_form->add_input($structure);
+
+
+		$this->obj_form->add_action("domain_type", "default", "domain_name", "show");
+		$this->obj_form->add_action("domain_type", "default", "ipv4_help", "hide");
+		$this->obj_form->add_action("domain_type", "default", "ipv4_network", "hide");
+//		$this->obj_form->add_action("domain_type", "default", "ipv4_subnet", "hide");
+		$this->obj_form->add_action("domain_type", "default", "ipv4_autofill", "hide");
+
+		$this->obj_form->add_action("domain_type", "domain_standard", "domain_name", "show");
+
+		$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "domain_name", "hide");
+		$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_help", "show");
+		$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_network", "show");
+//		$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_subnet", "show");
+		$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_autofill", "show");
+	
+
+		$this->obj_form->add_action("ipv4_autofill", "default", "ipv4_autofill_domain", "hide");
+		$this->obj_form->add_action("ipv4_autofill", "1", "ipv4_autofill_domain", "show");
+
+
+		$structure = NULL;
+		$structure["fieldname"] 	= "domain_description";
+		$structure["type"]		= "textarea";
 		$this->obj_form->add_input($structure);
 
 
@@ -111,7 +168,7 @@ class page_output
 		
 		
 		// define subforms
-		$this->obj_form->subforms["domain_details"]	= array("domain_name", "domain_description");
+		$this->obj_form->subforms["domain_details"]	= array("domain_type", "domain_name", "ipv4_help", "ipv4_network", "ipv4_autofill", "ipv4_autofill_domain", "domain_description");
 		$this->obj_form->subforms["domain_soa"]		= array("soa_hostmaster", "soa_serial", "soa_refresh", "soa_retry", "soa_expire", "soa_default_ttl");
 		$this->obj_form->subforms["submit"]		= array("submit");
 

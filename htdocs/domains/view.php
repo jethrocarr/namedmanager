@@ -81,8 +81,7 @@ class page_output
 
 		$structure = NULL;
 		$structure["fieldname"] 	= "domain_description";
-		$structure["type"]		= "input";
-		$structure["options"]["req"]	= "yes";
+		$structure["type"]		= "textarea";
 		$this->obj_form->add_input($structure);
 
 

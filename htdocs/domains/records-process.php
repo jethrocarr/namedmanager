@@ -219,7 +219,7 @@ if (user_permissions_get("namedadmins"))
 	$obj_domain->action_update_ns();
 
 	// clear messages & replace with custom one
-	$_SESSION["notification"] = array("Domain updated successfully - name servers scheduled to reload with new domain configuration");
+	$_SESSION["notification"]["message"] = array("Domain updated successfully - name servers scheduled to reload with new domain configuration");
 
 	// display updated details
 	header("Location: ../index.php?page=domains/records.php&id=". $obj_record->id);
