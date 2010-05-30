@@ -1,0 +1,30 @@
+NAMEDMANAGER
+------------
+
+A web-based application for managing DNS zones and generating configuration files
+for different DNS servers from this interface.
+
+This software is licensed under the GNU AGPL as detailed in docs/COPYRIGHT
+
+
+
+DIRECTORIES
+-----------
+
+* docs/
+	Documentation, authors file, copyright/license and other information.
+
+* htdocs/
+	Web application.
+
+* bind/
+	Scripts for integrating with the Bind nameserver.
+
+* resources/
+	Sample config files, spec files, packaging tools and other bits.
+
+* sql/
+	Database schemea install and upgrade components.
+
+
+

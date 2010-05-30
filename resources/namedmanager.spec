@@ -84,6 +84,8 @@ install -m 755 resources/namedmanager_logpush.rcsysinit $RPM_BUILD_ROOT/etc/init
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
 install -m 644 resources/namedmanager-bind.cron $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/namedmanager-bind
 
+# placeholder configuration file
+touch $RPM_BUILD_ROOT%{_sysconfdir}/named.namedmanager.conf
 
 %post www
 
@@ -183,6 +185,7 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/named.namedmanager.conf
 %config(noreplace) %{_sysconfdir}/namedmanager/config-bind.php
 %{_datadir}/namedmanager/bind
+/etc/init.d/namedmanager_logpush
 
 
 %changelog
