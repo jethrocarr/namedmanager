@@ -86,26 +86,35 @@ class soap_api
 		{
 			$this->client->log_write($timestamp, "server", $log_contents);
 		}
-		catch (SoapFault $exception)
-		{
-			if ($exception->getMessage() == "ACCESS_DENIED")
-			{
-				// no longer able to access API - perhaps the session has timed out?
-				if ($this->authenticate())
-				{
-					$this->client->log_write($timestamp, "server", $log_contents);
-				}
-				else
-				{
-					log_write("error", "script", "Unable to re-establish connection with NamedManager");
-					die("Fatal Error");
-				}
-			}
-			else
-			{	
-				log_write("error", "script", "Unknown failure whilst attempting to push log messages - ". $exception->getMessage() ."");
-				die("Fatal Error");
-			}
+                catch (SoapFault $exception)
+                {
+                        if ($exception->getMessage() == "ACCESS_DENIED")
+                        {
+                                // no longer able to access API - perhaps the session has timed out?
+                                if ($this->authenticate())
+                                {
+                                        $this->client->log_write($timestamp, "server", $log_contents);
+                                }
+                                else
+                                {
+                                        log_write("error", "script", "Unable to re-establish connection with NamedManager");
+                                        die("Fatal Error");
+                                }
+                        }
+                        elseif ($exception->getMessage() == "Could not connect to host")
+                        {
+                                // this can happen when restarted named.... sleep for 10 seconds and retry.
+                                log_write("error", "script", "Unable to connect to the host, most likely due to named not running.");
+
+                                sleep(5);
+
+                        }
+                        else
+                        {
+                                log_write("error", "script", "Unknown failure whilst attempting to push log messages - ". $exception->getMessage() ."");
+                                die("Fatal Error");
+                        }
+
 		}
 
 	}
