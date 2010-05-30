@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# namedmanager_logpush		Delivers logs from Named (via syslog) back to NamedManager
+#
+# chkconfig:	2345 87 9
+# description:	namedmanager_logpush process
+#
+
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+start()
+{
+	echo -n $"Starting namedmanager_logpush service:"
+	nohup php -q /usr/share/namedmanager/bind/namedmanager_logpush.php 2>&1 > /var/log/namedmanager_logpush &
+	echo -n $! > /var/run/namedmanager_bind_logpush.pid
+	echo ""
+}
+
+stop()
+{
+	echo -n "Stopping namedmanager_logpush services:"
+	kill `cat /var/run/namedmanager_bind_logpush.pid`
+	echo ""
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart|reload)
+        stop
+        start
+        ;;
+  status)
+	status php
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|status|restart|reload}"
+        exit 1
+	;;
+esac
+
+exit 0
+
+
