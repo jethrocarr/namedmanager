@@ -72,20 +72,19 @@ class soap_api
 
 		Fields
 		timestamp		UNIX timestamp
-		log_type		Category of logs
 		log_contents		Log contents
 
 		Results
 		0			Failure
 		1			Success
 	*/
-	function log_push($timestamp, $log_type, $log_contents)
+	function log_push($timestamp, $log_contents)
 	{
-		log_write("debug", "soap_api", "Executing log_push(timestamp, log_type, log_contents)");
+		log_write("debug", "script", "Executing log_push(timestamp, log_contents)");
 
 		try
 		{
-			$this->client->log_write($timestamp, $log_type, $log_contents);
+			$this->client->log_write($timestamp, "server", $log_contents);
 		}
 		catch (SoapFault $exception)
 		{
@@ -94,17 +93,17 @@ class soap_api
 				// no longer able to access API - perhaps the session has timed out?
 				if ($this->authenticate())
 				{
-					$this->client->log_write($timestamp, $log_type, $log_contents);
+					$this->client->log_write($timestamp, "server", $log_contents);
 				}
 				else
 				{
-					log_write("error", "soap_api", "Unable to re-establish connection with phpfreeradius");
+					log_write("error", "script", "Unable to re-establish connection with NamedManager");
 					die("Fatal Error");
 				}
 			}
 			else
 			{	
-				log_write("error", "soap_api", "Unknown failure whilst attempting to push log messages - ". $exception->getMessage() ."");
+				log_write("error", "script", "Unknown failure whilst attempting to push log messages - ". $exception->getMessage() ."");
 				die("Fatal Error");
 			}
 		}
