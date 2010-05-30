@@ -1,7 +1,7 @@
 Summary: A web-based management system for DNS, consisting of a PHP web interface and some PHP CLI components to hook into FreeRadius.
 Name: namedmanager
 Version: 1.0.0
-Release: 1.alpha.1%{dist}
+Release: 1.alpha.3%{dist}
 License: AGPLv3
 URL: http://www.amberdms.com/namedmanager
 Group: Applications/Internet
@@ -68,7 +68,7 @@ install -m0700 bind/include/sample-config.php $RPM_BUILD_ROOT%{_sysconfdir}/name
 ln -s %{_sysconfdir}/namedmanager/config-bind.php $RPM_BUILD_ROOT%{_datadir}/namedmanager/bind/include/config-settings.php
 
 # install linking config file
-install -m755 scripts/include/config.php $RPM_BUILD_ROOT%{_datadir}/namedmanager/scripts/include/config.php
+install -m755 bind/include/config.php $RPM_BUILD_ROOT%{_datadir}/namedmanager/bind/include/config.php
 
 
 
@@ -76,9 +76,9 @@ install -m755 scripts/include/config.php $RPM_BUILD_ROOT%{_datadir}/namedmanager
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d
 install -m 644 resources/namedmanager-httpdconfig.conf $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d/namedmanager.conf
 
-# install the bootscript
-#mkdir -p $RPM_BUILD_ROOT/etc/init.d/
-#install -m 755 resources/namedmanagerlogging.rcsysinit $RPM_BUILD_ROOT/etc/init.d/namedmanagerlogging
+# install the logpush bootscript
+mkdir -p $RPM_BUILD_ROOT/etc/init.d/
+install -m 755 resources/namedmanager_logpush.rcsysinit $RPM_BUILD_ROOT/etc/init.d/namedmanager_logpush
 
 # install the cronfile
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
@@ -106,11 +106,37 @@ fi
 
 %post bind
 
-if [$1 == 0];
+if [ $1 == 0 ];
 then
 	# upgrading existing rpm
-#	echo "Restarting logging process..."
-#	/etc/init.d/namedmanagerlogging restart
+	echo "Restarting logging process..."
+	/etc/init.d/namedmanager_logpush restart
+fi
+
+
+if [ $1 == 1 ];
+then
+	# instract about named
+	echo ""
+	echo "BIND/NAMED CONFIGURATION"
+	echo ""
+	echo "NamedManager BIND components have been installed, you will need to install"
+	echo "and configure bind/named to use the configuration file by adding the"
+	echo "following to /etc/named.conf:"
+	echo ""
+	echo "#"
+	echo "# Include NamedManager Configuration"
+	echo "#"
+	echo ""
+	echo "include \"/etc/named.namedmanager.conf\";"
+	echo ""
+
+	# instruct about config file
+	echo ""
+	echo "NAMEDMANAGER BIND CONFIGURATION"
+	echo ""
+	echo "You need to set the application configuration in %{_sysconfdir}/namedmanager/config-bind.php"
+	echo ""
 fi
 
 
@@ -128,7 +154,7 @@ fi
 %preun bind
 
 # stop running process
-#/etc/init.d/namedmanagerlogging stop
+/etc/init.d/namedmanager_logpush stop
 
 
 
@@ -144,15 +170,26 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/namedmanager/resources
 %{_datadir}/namedmanager/sql
 
-%files integration
+%doc %{_datadir}/namedmanager/README
+%doc %{_datadir}/namedmanager/docs/AUTHORS
+%doc %{_datadir}/namedmanager/docs/CONTRIBUTORS
+%doc %{_datadir}/namedmanager/docs/COPYING
+
+
+%files bind
 %defattr(-,root,root)
 %config %dir %{_sysconfdir}/namedmanager
 %config %dir %{_sysconfdir}/cron.d/namedmanager-bind
-%attr(770,root,apache) %config(noreplace) %{_sysconfdir}/namedmanager/config-bind.php
+%config(noreplace) %{_sysconfdir}/named.namedmanager.conf
+%config(noreplace) %{_sysconfdir}/namedmanager/config-bind.php
 %{_datadir}/namedmanager/bind
 
 
 %changelog
+* Sun May 30 2010 Jethro Carr <jethro.carr@amberdms.com> 1.0.0_alpha_3
+- Released version 1.0.0_alpha_3
+* Fri May 28 2010 Jethro Carr <jethro.carr@amberdms.com> 1.0.0_alpha_2
+- Released version 1.0.0_alpha_2
 * Mon May 24 2010 Jethro Carr <jethro.carr@amberdms.com> 1.0.0_alpha_1
 - Inital Application Release
 
