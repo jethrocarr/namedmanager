@@ -114,10 +114,11 @@ class api_namedmanager
 			}
 
 			// write log
-			$obj_log 		= New radius_logs;
-			$obj_log->id_server	= $this->auth_server;
+			$log 			= New changelog;
+			$log->id_server		= $this->auth_server;
 
-			$obj_log->log_push($timestamp, $log_type, $log_contents);
+			$log->log_post($log_type, $log_contents, $timestamp);
+
 		}
 		else
 		{
@@ -125,6 +126,7 @@ class api_namedmanager
 		}
 
 	} // end of log_write
+
 
 
 

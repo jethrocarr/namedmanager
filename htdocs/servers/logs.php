@@ -65,15 +65,13 @@ class page_output
 
 		// define all the columns and structure
 		$this->obj_table->add_column("timestamp", "timestamp", "");
-		$this->obj_table->add_column("standard", "server_name", "name_servers.server_name");
 		$this->obj_table->add_column("standard", "log_type", "");
 		$this->obj_table->add_column("standard", "log_contents", "");
 
 		// defaults
-		$this->obj_table->columns		= array("timestamp", "server_name", "log_type", "log_contents");
+		$this->obj_table->columns		= array("timestamp", "log_type", "log_contents");
 
 		$this->obj_table->sql_obj->prepare_sql_settable("logs");
-		$this->obj_table->sql_obj->prepare_sql_addjoin("LEFT JOIN name_servers ON name_servers.id = logs.id_server");
 		$this->obj_table->sql_obj->prepare_sql_addwhere("id_server='". $this->obj_name_server->id ."'");
 		$this->obj_table->sql_obj->prepare_sql_addorderby_desc("timestamp");
 
@@ -81,7 +79,7 @@ class page_output
 		$structure = NULL;
 		$structure["fieldname"] 	= "searchbox";
 		$structure["type"]		= "input";
-		$structure["sql"]		= "(server_name LIKE '%value%' OR log_type LIKE '%value%' OR log_contents LIKE '%value%')";
+		$structure["sql"]		= "(log_type LIKE '%value%' OR log_contents LIKE '%value%')";
 		$this->obj_table->add_filter($structure);
 
 		$structure = NULL;
