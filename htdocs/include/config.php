@@ -24,10 +24,10 @@ $GLOBALS["config"] = array();
 
 // define the application details
 $GLOBALS["config"]["app_name"]			= "NamedManager";
-$GLOBALS["config"]["app_version"]		= "1.0.0_alpha_1";
+$GLOBALS["config"]["app_version"]		= "1.0.0_alpha_3";
 
 // define the schema version required
-$GLOBALS["config"]["schema_version"]		= "20100520";
+$GLOBALS["config"]["schema_version"]		= "20100531";
 
 
 
