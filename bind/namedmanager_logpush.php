@@ -21,23 +21,13 @@ require("include/application/main.php");
 
 
 /*
-	Setup FIFO Pipe
+	VERIFY LOG FILE ACCESS
 */
 
-if (!file_exists($GLOBALS["config"]["log_pipe"]))
+if (!is_readable($GLOBALS["config"]["log_file"]))
 {
-	// create pipe for communicating log files from freeradius
-	if (!posix_mkfifo($GLOBALS["config"]["log_pipe"], 0770))
-	{
-		log_write("error", "Unable to create named pipe file ". $GLOBALS["config"]["log_pipe"] ."");
-		die("Fatal Error");
-	}
-
-	// set ownership
-	chmod($GLOBALS["config"]["log_pipe"], 0770);
-	chown($GLOBALS["config"]["log_pipe"], $GLOBALS["config"]["log_user"]);
-	chgrp($GLOBALS["config"]["log_pipe"], $GLOBALS["config"]["log_user"]);
-
+	log_write("error", "script", "Unable to read log file ". $GLOBALS["config"]["log_file"] ."");
+	die("Fatal Error");
 }
 
 
@@ -58,38 +48,39 @@ class app_main extends soap_api
 	/*
 		log_watch
 
-		Watch the FIFO pipe for new messages and send to log_push
+		Use tail to track the file and push any new log messages to NamedManager.
+
 	*/
 	function log_watch()
 	{
-		while (file_exists($GLOBALS["config"]["log_pipe"]))
+		while (true)
 		{
-			// read the next line
-			$fh		= fopen($GLOBALS["config"]["log_pipe"], "r");
-			$line_raw	= fread($fh, 8192);
+			// we have a while here to handle the unexpected termination of the tail command
+			// by restarting a new connection
 
-			$lines = explode("\n", $line_raw);
+			$handle = popen("tail -f ". $GLOBALS["config"]["log_file"] ." 2>&1", 'r');
 
-			foreach ($lines as $line)
+			while(!feof($handle))
 			{
-				if ($line != "\n")
+				$buffer = fgets($handle);
+
+				// process the log input
+				//
+				// example format: May 30 15:53:35 localhost named[14286]: Message
+				//
+				if (preg_match("/^\S*\s\S*\s\S*:\S*:\S*\s(\S*)\snamed\S*:\s([\S\s]*)$/", $buffer, $matches))
 				{
-					// process the log input
-					//
-					// example format: May 30 15:53:35 localhost named[14286]: Message
-					//
-					if (preg_match("/^\S*\s\S*\s\S*:\S*:\S*\s(\S*)\snamed\S*:\s([\S\s]*)$/", $line, $matches))
-					{
-						$this->log_push(time(), $matches[2]);
-					
-						log_write("debug", "script", "Log Recieved: $line");
-					}
-					else
-					{
-						log_write("debug", "script", "Unprocessable: $line");
-					}
+					$this->log_push(time(), $matches[2]);
+				
+					log_write("debug", "script", "Log Recieved: $buffer");
+				}
+				else
+				{
+					log_write("debug", "script", "Unprocessable: $buffer");
 				}
 			}
+
+			pclose($handle);
 		}
 	}
 

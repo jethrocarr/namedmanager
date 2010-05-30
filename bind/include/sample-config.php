@@ -17,10 +17,13 @@ $config["api_auth_key"]		= "ultrahighsecretkey";					// API authentication key
 
 
 /*
-	Log Pipe File
+	Log file to find messages from Named. Note that:
+
+	* File should be in syslog format
+	* Named Manager uses tail -f to read it, this can break with logrotate - make sure that either "copytruncate" mode is used, or tail processes are killed
 */
-$config["log_pipe"]		= "/var/run/namedmanager_bind_logpush";
-$config["log_user"]		= "named";
+
+$config["log_file"]		= "/var/log/messages";
 
 
 
