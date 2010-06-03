@@ -2,10 +2,24 @@ var message;
 
 $(document).ready(function()
 {
-	$(".helpmessage").click(function()
+	$(".helpmessage").live("click", function()
 	{
 		var message = $(this).val();
-		$(this).siblings("input[name$='helpmessagestatus']").val("false");
+		$(this).siblings("input[name$='helpmessagestatus']").val(message);
+		$(this).val("").removeClass("helpmessage").blur(function()
+		{
+			if ($(this).val().length == 0)
+			{
+				$(this).addClass("helpmessage").val(message);
+				$(this).siblings("input[name$='helpmessagestatus']").val("true");
+			}
+		});
+	});
+	
+	$(".helpmessage").live("select", function()
+	{
+		var message = $(this).val();
+		$(this).siblings("input[name$='helpmessagestatus']").val(message);
 		$(this).val("").removeClass("helpmessage").blur(function()
 		{
 			if ($(this).val().length == 0)

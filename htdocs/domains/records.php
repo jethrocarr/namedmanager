@@ -22,6 +22,7 @@ class page_output
 	var $num_records_mx;
 	var $num_records_ns;
 	var $num_records_custom;
+	var $is_standard;
 
 
 	function page_output()
@@ -72,7 +73,11 @@ class page_output
 
 		$this->obj_domain->load_data();
 		$this->obj_domain->load_data_record_all();
-
+		
+		if (strpos($this->obj_domain->data["domain_name"], "arpa"))
+		{
+			
+		}
 
 		/*
 			Define form structure
@@ -85,7 +90,6 @@ class page_output
 		$this->obj_form->method		= "post";
 		
 
-
 		/*
 			General Domain Info
 		*/
@@ -95,7 +99,6 @@ class page_output
  		$structure["options"]["css_row_class"]	= "table_highlight";
 		$structure["defaultvalue"]		= "<p><b>Domain ". $this->obj_domain->data["domain_name"] ." selected for adjustment</b></p>";
 		$this->obj_form->add_input($structure);
-
 
 		/*
 			Define Nameservers
@@ -149,6 +152,7 @@ class page_output
 			$structure["fieldname"]		 	= "record_ns_". $i ."_name";
 			$structure["type"]			= "input";
 			$structure["options"]["width"]		= "300";
+			$structure["options"]["help"]			= "Enter name here";
 			$this->obj_form->add_input($structure);
 
 			$structure = NULL;
@@ -267,6 +271,7 @@ class page_output
 			$structure = NULL;
 			$structure["fieldname"] 		= "record_mx_". $i ."_content";
 			$structure["type"]			= "input";
+			$structure["options"]["help"]		= "And another";
 			$structure["options"]["width"]		= "300";
 			$this->obj_form->add_input($structure);
 
@@ -354,15 +359,38 @@ class page_output
 			$structure["type"]			= "hidden";
 			$this->obj_form->add_input($structure);
 
-			$structure = form_helper_prepare_dropdownfromdb("record_custom_". $i ."_type", "SELECT type as label, type as id FROM `dns_record_types` WHERE user_selectable='1'");
-			$structure["defaultvalue"]		= "A";
-			$structure["options"]["width"]		= "100";
-			$this->obj_form->add_input($structure);
+
+			if (strpos($this->obj_domain->data["domain_name"], "arpa"))
+			{
+				$structure = NULL;
+				$structure["fieldname"] 		= "record_custom_". $i ."_type";
+				$structure["type"]			= "text";
+				$structure["defaultvalue"]		= "PTR";
+				$this->obj_form->add_input($structure);
+			}
+			else
+			{
+				$structure = form_helper_prepare_dropdownfromdb("record_custom_". $i ."_type", "SELECT type as label, type as id FROM `dns_record_types` WHERE user_selectable='1' AND is_standard='1'");
+				$structure["defaultvalue"]		= "A";
+				$structure["options"]["width"]		= "100";
+				$this->obj_form->add_input($structure);
+			}
 
 			$structure = NULL;
 			$structure["fieldname"]		 	= "record_custom_". $i ."_name";
 			$structure["type"]			= "input";
-			$structure["options"]["width"]		= "300";
+			
+			if (strpos($this->obj_domain->data["domain_name"], "arpa"))
+			{
+				$structure["options"]["width"]		= "50";
+				$structure["options"]["max_length"]	= "3";
+			}
+			else
+			{
+				$structure["options"]["width"]		= "300";
+				$structure["options"]["help"]		= "Help message";
+			}
+
 			$this->obj_form->add_input($structure);
 
 			$structure = NULL;
@@ -383,10 +411,20 @@ class page_output
 			$structure["type"]			= "hidden";
 			$structure["defaultvalue"]		= "false";
 			$this->obj_form->add_input($structure);
+			
+			if (!strpos($this->obj_domain->data["domain_name"], "arpa"))
+			{
+				$structure = NULL;
+				$structure["fieldname"]			= "record_custom_". $i ."_reverse_ptr";
+				$structure["type"]			= "checkbox"; 
+				$structure["options"]["label"]		= "";
+				$this->obj_form->add_input($structure);
+			}
 		}
 
 
 		// load in what data we have
+		//disable invalid fields
 		$i = 0;
 
 		foreach ($this->obj_domain->data["records"] as $record)
@@ -399,6 +437,12 @@ class page_output
 				$this->obj_form->structure["record_custom_". $i ."_name"]["defaultvalue"]		= $record["name"];
 				$this->obj_form->structure["record_custom_". $i ."_content"]["defaultvalue"]		= $record["content"];
 				$this->obj_form->structure["record_custom_". $i ."_ttl"]["defaultvalue"]		= $record["ttl"];
+				
+				if ($record["type"] == "CNAME")
+				{
+					$this->obj_form->structure["record_custom_". $i ."_ttl"]["options"]["disabled"]	= "yes";
+					$this->obj_form->structure["record_custom_". $i ."_reverse_ptr"]["options"]["disabled"] = "yes";
+				}
 
 				$i++;
 			}
@@ -638,13 +682,23 @@ class page_output
 
 		print "<tr class=\"table_highlight_info\">";
 			print "<td width=\"10%\"><b>". lang_trans("record_type") ."</b></td>";
-			print "<td width=\"15%\"><b>". lang_trans("record_ttl") ."</b></td>";
+			if (strpos($this->obj_domain->data["domain_name"], "arpa"))
+			{
+				print "<td width=\"15%\"><b>". lang_trans("record_ttl") ."</b></td>";
+			}
+			else
+			{
+				print "<td width=\"10%\"><b>". lang_trans("record_ttl") ."</b></td>";
+			}
 			print "<td width=\"35%\"><b>". lang_trans("record_name") ."</b></td>";
 			print "<td width=\"35%\"><b>". lang_trans("record_content") ."</b></td>";
+			if (!strpos($this->obj_domain->data["domain_name"], "arpa"))
+			{
+				print "<td width=\"5%\"><b>". lang_trans("reverse_ptr") ."</b></td>";
+			}
 			print "<td width=\"5%\">&nbsp;</td>";
 		print "</tr>";
 		
-
 		// display all the rows
 		for ($i = 0; $i < $this->num_records_custom; $i++)
 		{
@@ -662,7 +716,14 @@ class page_output
 			$this->obj_form->render_field("record_custom_". $i ."_id");
 			print "</td>";
 
-			print "<td width=\"15%\" valign=\"top\">";
+			if (strpos($this->obj_domain->data["domain_name"], "arpa"))
+			{
+				print "<td width=\"15%\" valign=\"top\">";
+			}
+			else
+			{
+				print "<td width=\"15%\" valign=\"top\">";
+			}
 			$this->obj_form->render_field("record_custom_". $i ."_ttl");
 			print "</td>";
 
@@ -674,7 +735,14 @@ class page_output
 			$this->obj_form->render_field("record_custom_". $i ."_content");
 			print "</td>";
 			
-			print "<td width=\"5%\" valign=\"top\">";
+			if (!strpos($this->obj_domain->data["domain_name"], "arpa"))
+			{
+				print "<td width=\"5%\" valign=\"top\" align=\"center\">";
+				$this->obj_form->render_field("record_custom_". $i ."_reverse_ptr");
+				print "</td>";
+			}
+			
+			print "<td width=\"5%\" valign=\"top\" align=\"center\">";
 			$this->obj_form->render_field("record_custom_". $i ."_delete_undo");
 			print "<strong class=\"delete_undo\"><a href=\"\">delete</a></strong>";
 			print "</td>";
