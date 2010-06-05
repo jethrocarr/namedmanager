@@ -74,9 +74,13 @@ class page_output
 		$this->obj_domain->load_data();
 		$this->obj_domain->load_data_record_all();
 		
+
+		// work out the IP for reverse domains, assuming IPv4
 		if (strpos($this->obj_domain->data["domain_name"], "arpa"))
 		{
-			
+			$ip = explode(".", $this->obj_domain->data["domain_name"]);
+
+			$this->obj_domain->data["domain_ip_prefix"] = $ip[2] .".". $ip[1] .".". $ip[0];
 		}
 
 		/*
@@ -384,6 +388,7 @@ class page_output
 			{
 				$structure["options"]["width"]		= "50";
 				$structure["options"]["max_length"]	= "3";
+				$structure["options"]["prelabel"]	= $this->obj_domain->data["domain_ip_prefix"] .". ";
 			}
 			else
 			{
