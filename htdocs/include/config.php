@@ -34,8 +34,7 @@ $GLOBALS["config"]["schema_version"]		= "20100531";
 /*
 	Apply required PHP settings
 */
-ini_set('memory_limit', '32M');			// note that Amberphplib doesn't need much RAM apart from when
-						// doing source diffs or graph generation.
+ini_set('memory_limit', '64M');			// NamedManager can be a bit RAM hungry when displaying logs
 
 
 
