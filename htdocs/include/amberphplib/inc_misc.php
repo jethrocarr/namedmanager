@@ -1270,4 +1270,33 @@ function ipv4_subnet_members($address_with_cidr, $include_network = FALSE)
 
 
 
+/*
+	ipv4_convert_arpa
+
+	Converts the provided IPv4 address into the arpa format typically
+	used for reverse DNS.
+
+	Fields
+	ipaddress
+
+	Returns
+	0		Invalid IP address
+	string		apra format eg 0.168.192.in-addr.arpa
+*/
+
+function ipv4_convert_arpa( $ipaddress )
+{
+	log_write("debug", "inc_misc", "Executing ipv4_convert_arpa( $ipaddress )");
+
+	$tmp_network = explode(".", $ipaddress);
+
+	$result = $tmp_network[2] .".". $tmp_network[1] .".". $tmp_network[0] .".in-addr.arpa";
+
+	return $result;
+
+} // end of ipv4_convert_arpa
+
+
+
+
 ?>

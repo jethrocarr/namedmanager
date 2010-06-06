@@ -54,13 +54,15 @@ $(document).ready(function()
 		{
 			$(this).parent().siblings().children("input[name$='_ttl']").attr("disabled", "disabled");
 			$(this).parent().siblings().children("input[name$='_reverse_ptr']").attr("disabled", "disabled");
-			change_help_message($(this).parent().siblings().children("input[name$='_name']"), "New message");
+			change_help_message($(this).parent().siblings().children("input[name$='_name']"), "Record name for CNAME, eg www");
+			change_help_message($(this).parent().siblings().children("input[name$='_content']"), "Hostname or FQDN of target record");
 		}
 		else
 		{
 			$(this).parent().siblings().children("input[name$='_ttl']").removeAttr("disabled");
 			$(this).parent().siblings().children("input[name$='_reverse_ptr']").removeAttr("disabled");
-			change_help_message($(this).parent().siblings().children("input[name$='_name']"), "Help message");
+			change_help_message($(this).parent().siblings().children("input[name$='_name']"), "Record name, eg www");
+			change_help_message($(this).parent().siblings().children("input[name$='_content']"), "Target IP, eg 192.168.0.1");
 		}
 	});
 
@@ -208,13 +210,15 @@ function add_recordrow_custom()
 				{
 					$(this).parent().siblings().children("input[name$='_ttl']").attr("disabled", "disabled");
 					$(this).parent().siblings().children("input[name$='_reverse_ptr']").attr("disabled", "disabled");
-					change_help_message($(this).parent().siblings().children("input[name$='_name']"), "New message");
+					change_help_message($(this).parent().siblings().children("input[name$='_name']"), "Record name for CNAME, eg www");
+					change_help_message($(this).parent().siblings().children("input[name$='_content']"), "Hostname or FQDN of target record eg webserver1");
 				}
 				else
 				{
 					$(this).parent().siblings().children("input[name$='_ttl']").removeAttr("disabled");
 					$(this).parent().siblings().children("input[name$='_reverse_ptr']").removeAttr("disabled");
-					change_help_message($(this).parent().siblings().children("input[name$='_name']"), "Help message");
+					change_help_message($(this).parent().siblings().children("input[name$='_name']"), "Record name, eg www");
+					change_help_message($(this).parent().siblings().children("input[name$='_content']"), "Target IP, eg 192.168.0.1");
 				}
 			});
 	$("input[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);

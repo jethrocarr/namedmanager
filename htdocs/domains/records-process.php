@@ -26,22 +26,24 @@ if (user_permissions_get("namedadmins"))
 
 	$obj_domain->id				= @security_form_input_predefined("int", "id_domain", 1, "");
 
-
-
-
-	/*
-		DNS records
-	*/
-
 	// determine number of rows
 	$data["ns"]["num_records"]		= @security_form_input_predefined("int", "num_records_ns", 0, "");
 	$data["mx"]["num_records"]		= @security_form_input_predefined("int", "num_records_mx", 0, "");
 	$data["custom"]["num_records"]		= @security_form_input_predefined("int", "num_records_custom", 0, "");
 
+	$data["records"]			= array();
+	$data["reverse"]			= array();
 
-	// add valid NS records
+
+	/*
+		Fetch & Verify NS record data
+	*/
+
 	for ($i = 0; $i < $data["ns"]["num_records"]; $i++)
 	{
+		/*
+			Fetch data
+		*/
 		$data_tmp			= array();
 		$data_tmp["id"]			= @security_form_input_predefined("int", "record_ns_". $i ."_id", 0, "");
 		$data_tmp["type"]		= "NS";
@@ -50,6 +52,10 @@ if (user_permissions_get("namedadmins"))
 		$data_tmp["content"]		= @security_form_input_predefined("any", "record_ns_". $i ."_content", 0, "");
 		$data_tmp["delete_undo"]	= @security_form_input_predefined("any", "record_ns_". $i ."_delete_undo", 0, "");
 		
+
+		/*
+			Process Raw Data
+		*/
 		if ($data_tmp["id"] && $data_tmp["delete_undo"] == "true")
 		{
 			$data_tmp["mode"] = "delete";
@@ -63,12 +69,24 @@ if (user_permissions_get("namedadmins"))
 		}
 
 		$data["records"][] = $data_tmp;
+
+
+		/*
+			Error Checking
+		*/
 	}
 
 
-	// add valid MX records
+
+	/*
+		Fetch & Verify MX record data
+	*/
+
 	for ($i = 0; $i < $data["mx"]["num_records"]; $i++)
-	{	
+	{
+		/*
+			Fetch Data
+		*/
 		$data_tmp			= array();
 		$data_tmp["id"]			= @security_form_input_predefined("int", "record_mx_". $i ."_id", 0, "");
 		$data_tmp["type"]		= "MX";
@@ -77,6 +95,10 @@ if (user_permissions_get("namedadmins"))
 		$data_tmp["content"]		= @security_form_input_predefined("any", "record_mx_". $i ."_content", 0, "");
 		$data_tmp["delete_undo"]	= @security_form_input_predefined("any", "record_mx_". $i ."_delete_undo", 0, "");
 		
+
+		/*
+			Process Raw Data
+		*/
 		if ($data_tmp["id"] && $data_tmp["delete_undo"] == "true")
 		{
 			$data_tmp["mode"] = "delete";
@@ -94,17 +116,30 @@ if (user_permissions_get("namedadmins"))
 
 
 
-	// add custom records
+
+	/*
+		Fetch and verify custom records
+	*/
+
 	for ($i = 0; $i < $data["custom"]["num_records"]; $i++)
 	{
+		/*
+			Fetch Data
+		*/
 		$data_tmp			= array();
 		$data_tmp["id"]			= @security_form_input_predefined("int", "record_custom_". $i ."_id", 0, "");
 		$data_tmp["type"]		= @security_form_input_predefined("any", "record_custom_". $i ."_type", 0, "");
 		$data_tmp["ttl"]		= @security_form_input_predefined("int", "record_custom_". $i ."_ttl", 0, "");
 		$data_tmp["name"]		= @security_form_input_predefined("any", "record_custom_". $i ."_name", 0, "");
 		$data_tmp["content"]		= @security_form_input_predefined("any", "record_custom_". $i ."_content", 0, "");
+		$data_tmp["reverse_ptr"]	= @security_form_input_predefined("checkbox", "record_custom_". $i ."_reverse_ptr", 0, "");
 		$data_tmp["delete_undo"]	= @security_form_input_predefined("any", "record_custom_". $i ."_delete_undo", 0, "");
 		
+
+
+		/*
+			Process Raw Data
+		*/
 		if ($data_tmp["id"] && $data_tmp["delete_undo"] == "true")
 		{
 			$data_tmp["mode"] = "delete";
@@ -118,6 +153,55 @@ if (user_permissions_get("namedadmins"))
 		}
 
 
+		/*
+			Error Handling
+		*/
+
+
+		// verify name syntax
+		if ($data_tmp["name"] != "@" && !preg_match("/^[A-Za-z0-9.]*$/", $data_tmp["name"]))
+		{
+			log_write("error", "process", "Sorry, the value you have entered fo record ". $data_tmp["name"] ." contains invalid charactors");
+
+			error_flag_field("record_custom_". $i ."");
+		}
+
+
+
+		// verify reverse PTR options
+		if ($data_tmp["reverse_ptr"])
+		{
+			// check if the appropiate reverse DNS domain exists
+			$obj_record = New domain_records;
+
+			if (!$obj_record->find_reverse_domain($data_tmp["content"]))
+			{
+				// no match
+				log_write("error", "process", "Sorry, we can't set a reverse PTR for ". $data_tmp["content"] ." --&gt; ". $data_tmp["name"] .", since there is no reverse domain record for that IP address");
+
+				error_flag_field("record_custom_". $i ."");
+
+			}
+			else
+			{
+				// match, record the domain ID and record ID to save a lookup
+				$data_tmp["reverse_ptr_id_domain"]	= $obj_record->id;
+				$data_tmp["reverse_ptr_id_record"]	= $obj_record->id_record;
+			}
+
+
+			// add to the reverse domain list - we use this list to avoid reloading for every record
+			if (!in_array($obj_record->id, $data["reverse"]))
+			{
+				$data["reverse"][] = $obj_record->id;
+			}
+
+			unset($obj_record);
+		}
+
+
+
+		// add to processing array
 		$data["records"][] = $data_tmp;
 	}
 
@@ -141,8 +225,19 @@ if (user_permissions_get("namedadmins"))
 
 
 	/*
-		Update Database
+		Transaction Start
 	*/
+
+	$sql_obj = New sql_query;
+	$sql_obj->trans_begin();
+
+
+
+	/*
+		Update Domain
+	*/
+
+	log_write("debug", "process", "Updating main domain");
 
 
 	// fetch all DNS records
@@ -175,15 +270,9 @@ if (user_permissions_get("namedadmins"))
 					|| $obj_record->data_record["prio"]	!= (int)$record["prio"]
 					)
 				{
-/*
-					print "<pre>OLD";
-					print_r($obj_record->data_record);
-					print "</pre>";
-					print "<pre>NEW";
-					print_r($record);
-					print "</pre>";
-					die("foo");
-*/
+					/*
+						Update record
+					*/
 					log_write("debug", "process", "Updating record ". $record["id"] ." due to changed details");
 			
 					$obj_record->data_record["name"]	= $record["name"];
@@ -196,6 +285,62 @@ if (user_permissions_get("namedadmins"))
 
 
 
+					/*
+						Update reverse PTR (if required)
+					*/
+					if ($record["reverse_ptr"])
+					{
+						log_write("debug", "process", "Updating reverse PTR record for ". $record["name"] ."--&gt; ". $record["content"] ."");
+
+
+						$obj_ptr		= New domain_records;
+
+						$obj_ptr->id		= $record["reverse_ptr_id_domain"];	// will always be set
+						$obj_ptr->id_record	= $record["reverse_ptr_id_record"];	// might be set, if not, a new record will be added
+
+						$obj_ptr->load_data();
+
+
+						if ($obj_ptr->id_record)
+						{
+							$obj_ptr->load_data_record();
+						}
+
+
+						// fetch host portion of IP address
+						$tmp					= explode(".", $record["content"]);
+
+						// standard reverse record details
+						$obj_ptr->data_record["type"]		= "PTR";
+						$obj_ptr->data_record["ttl"]		= $record["ttl"];
+						$obj_ptr->data_record["name"]		= $tmp["3"];
+
+
+						// make sure we are using the FQDN
+						if ($record["name"] == "@")
+						{
+							// @ is a special value, means set to the domain name
+							$obj_ptr->data_record["content"]	= $obj_domain->data["domain_name"];
+						}
+						elseif (strpos($record["name"], "."))
+						{
+							// already a FQDN, pass unaltered.
+							$obj_ptr->data_record["content"]	= $record["name"];
+						}
+						else
+						{
+							// standard A record
+							$obj_ptr->data_record["content"]	= $record["name"] .".". $obj_domain->data["domain_name"];
+						}
+
+
+						$obj_ptr->action_update_record();
+
+						unset($obj_ptr);
+					}
+
+
+
 				}
 				else
 				{
@@ -205,6 +350,8 @@ if (user_permissions_get("namedadmins"))
 			elseif ($record["mode"] == "delete")
 			{
 				$obj_record->action_delete_record();
+
+				// note: we intentionally don't delete the reverse PTR
 			}
 		}
 		else
@@ -218,8 +365,54 @@ if (user_permissions_get("namedadmins"))
 	$obj_domain->action_update_serial();
 	$obj_domain->action_update_ns();
 
+
 	// clear messages & replace with custom one
 	$_SESSION["notification"]["message"] = array("Domain updated successfully - name servers scheduled to reload with new domain configuration");
+
+
+
+	/*
+		Update reverse domains (if appropiate)
+
+		If there are any reverse domain PTR records set, we will need to update the 
+		serial on the domain to reflect the changes.
+	*/
+
+	log_write("debug", "process", "Updating serials for reverse domains");
+
+	if ($data["reverse"])
+	{
+		foreach ($data["reverse"] as $id_domain)
+		{
+			$obj_reverse			= New domain;
+			$obj_reverse->id		= $id_domain;
+
+			$obj_reverse->load_data();
+			$obj_reverse->action_update_serial();
+
+			log_write("notification", "process", "Updating serials for reverse domain ". $obj_reverse->data["domain_name"] ."");
+		}
+	}
+
+	
+	$data["reverse"][] = $obj_record->id;
+
+
+
+
+
+	if (!error_check())
+	{
+
+		$sql_obj->trans_commit();
+	}
+	else
+	{
+		// error encountered
+		log_write("error", "process", "An unexpected error occured, the domain remains unchanged");
+
+		$sql_obj->trans_rollback();
+	}
 
 	// display updated details
 	header("Location: ../index.php?page=domains/records.php&id=". $obj_record->id);

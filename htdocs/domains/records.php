@@ -393,7 +393,7 @@ class page_output
 			else
 			{
 				$structure["options"]["width"]		= "300";
-				$structure["options"]["help"]		= "Help message";
+				$structure["options"]["help"]		= "Record name, eg www";
 			}
 
 			$this->obj_form->add_input($structure);
@@ -402,6 +402,7 @@ class page_output
 			$structure["fieldname"] 		= "record_custom_". $i ."_content";
 			$structure["type"]			= "input";
 			$structure["options"]["width"]		= "300";
+			$structure["options"]["help"]		= "Target IP, eg 192.168.0.1";
 			$this->obj_form->add_input($structure);
 
 			$structure = NULL;

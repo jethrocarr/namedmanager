@@ -132,7 +132,6 @@ class domain
 
 
 
-
 	/*
 		load_data
 
@@ -763,6 +762,75 @@ class domain_records extends domain
 		return 0;
 
 	} // end of verify_id_record
+
+
+
+
+	/*
+		find_reverse_record
+
+		Takes the provided IP address and finds the matching domain and record
+		for that address.
+
+		Fields
+		ip_address	IPv4 address
+
+		Returns
+		0		No match
+		1		Valid domain or record exists.
+	*/
+
+	function find_reverse_domain($ip_address)
+	{
+		log_debug("domain_records", "Executing find_reverse_record($ip_address)");
+
+		// convert address
+		$ip_arpa = ipv4_convert_arpa( $ip_address );
+
+
+		// determine host extensions
+		$tmp				= explode(".", $ip_address);
+		$this->data_record["name"]	= $tmp[3];
+
+
+		// fetch domain
+		$this->sql_obj->string	= "SELECT id FROM `dns_domains` WHERE domain_name='". $ip_arpa ."' LIMIT 1";
+		$this->sql_obj->execute();
+
+		if ($this->sql_obj->num_rows())
+		{
+			// fetch domain ID
+			$this->sql_obj->fetch_array();
+
+			$this->id	= $this->sql_obj->data[0]["id"];
+
+			log_write("debug", "domain_records", "Found matching domain ". $ip_arpa ." with ID of ". $this->id ."");
+
+
+			// now fetch the ID for the record that belongs to this domain
+			$this->sql_obj->string	= "SELECT id FROM `dns_records` WHERE id_domain='". $this->id ."' AND name='". $this->data_record["name"] ."' LIMIT 1";
+			$this->sql_obj->execute();
+
+			if ($this->sql_obj->num_rows())
+			{
+				$this->sql_obj->fetch_array();
+
+				$this->id_record	= $this->sql_obj->data[0]["id"];
+
+				log_write("debug", "domain_records", "Found matching record with ID of ". $this->id_record ."");
+			}
+
+
+			return 1;
+		}
+		else
+		{
+			log_write("warning", "domain_records", "Unable to find domain $ip_arpa for address $ip_address");
+		}
+
+		return 0;
+
+	} // end of find_reverse_domain
 
 
 
