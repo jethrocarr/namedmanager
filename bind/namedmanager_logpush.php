@@ -68,7 +68,7 @@ class app_main extends soap_api
 				//
 				// example format: May 30 15:53:35 localhost named[14286]: Message
 				//
-				if (preg_match("/^\S*\s\S*\s\S*:\S*:\S*\s(\S*)\snamed\S*:\s([\S\s]*)$/", $buffer, $matches))
+				if (preg_match("/^\S*\s*\S*\s\S*:\S*:\S*\s(\S*)\snamed\S*:\s([\S\s]*)$/", $buffer, $matches))
 				{
 					$this->log_push(time(), $matches[2]);
 				
