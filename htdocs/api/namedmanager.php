@@ -23,6 +23,7 @@ class api_namedmanager
 {
 	var $auth_server;		// ID of the DNS server that has authenticated.
 	var $auth_online;		// set to 1 if authenticated
+	var $auth_admin;		// set to 1 if authenticated as admin
 
 
 	/*
@@ -32,6 +33,7 @@ class api_namedmanager
 	{
 		$this->auth_server	= $_SESSION["auth_server"];
 		$this->auth_online	= $_SESSION["auth_online"];
+		$this->auth_admin	= $_SESSION["auth_admin"];
 	}
 
 
@@ -39,7 +41,9 @@ class api_namedmanager
 	/*
 		authenticate
 
-		Authenticates a SOAP client call using the SOAP_API_KEY configuration option to enable/prevent access
+		Authenticates a SOAP API client using one of two methods:
+		* Against the server table with a specific auth key, used by the nameservers
+		* Against the admin API key, used by external applications such as phpfreeradius
 
 		Returns
 		0	Failure
@@ -59,26 +63,59 @@ class api_namedmanager
 		}
 
 
-		// verify input
-		$sql_obj		= New sql_query;
-		$sql_obj->string	= "SELECT id FROM name_servers WHERE server_name='$server_name' AND api_auth_key='$api_auth_key' LIMIT 1";
-		$sql_obj->execute();
-
-		if ($sql_obj->num_rows())
+		if ($server_name == "ADMIN_API")
 		{
-			$sql_obj->fetch_array();
+			// validate against admin key, if one has been set
+			if ($GLOBALS["config"]["ADMIN_API_KEY"])
+			{
+				if ($api_auth_key == $GLOBALS["config"]["ADMIN_API_KEY"])
+				{
+					log_write("debug", "api", "Authentication against API key successful");
 
-			$this->auth_online		= 1;
-			$this->auth_server		= $sql_obj->data[0]["id"];
+					$this->auth_online	= 1;
+					$this->auth_admin	= 1;
 
-			$_SESSION["auth_online"]	= $this->auth_online;
-			$_SESSION["auth_server"]	= $this->auth_server;
+					$_SESSION["auth_online"]	= $this->auth_online;
+					$_SESSION["auth_admin"]		= $this->auth_admin;
 
-			return $this->auth_server;
+					return 1;
+				}
+				else
+				{
+					throw new SoapFault("Sender", "ACCESS_DENIED");
+				}
+			}
+			else
+			{
+				throw new SoapFault("Sender", "AUTHENTICATION_DISABLED");
+			}
 		}
 		else
 		{
-			throw new SoapFault("Sender", "INVALID_ID");
+			// authenticate against servers table
+
+
+			// verify input
+			$sql_obj		= New sql_query;
+			$sql_obj->string	= "SELECT id FROM name_servers WHERE server_name='$server_name' AND api_auth_key='$api_auth_key' LIMIT 1";
+			$sql_obj->execute();
+
+			if ($sql_obj->num_rows())
+			{
+				$sql_obj->fetch_array();
+
+				$this->auth_online		= 1;
+				$this->auth_server		= $sql_obj->data[0]["id"];
+
+				$_SESSION["auth_online"]	= $this->auth_online;
+				$_SESSION["auth_server"]	= $this->auth_server;
+
+				return $this->auth_server;
+			}
+			else
+			{
+				throw new SoapFault("Sender", "ACCESS_DENIED");
+			}
 		}
 
 	} // end of authenticate
@@ -204,6 +241,210 @@ class api_namedmanager
 		}
 
 	} // end of set_update_version
+
+
+
+
+	/*
+		update_serial
+
+		Update the serial of the requested domain
+
+		Fields
+		id_domain	ID of the domain
+
+		Returns
+		0		Failure
+		#		New serial number
+	*/
+
+	function update_serial( $id_domain )
+	{
+		log_write("debug", "api_namedmanager", "Executing update_serial ( $id_domain )");
+
+		if ($this->auth_admin)
+		{
+			$obj_domain = New domain;
+
+			
+			// validate domain ID input
+			$id_domain	= @security_script_input_predefined("int", $id_domain);
+
+			if (!$id_domain || $id_domain == "error")
+			{
+				throw new SoapFault("Sender", "INVALID_INPUT");
+			}
+			
+
+			// verify domain ID
+			$obj_domain->id	= $id_domain;
+
+			if (!$obj_domain->verify_id())
+			{
+				throw new SoapFault("Sender", "INVALID_ID");
+			}
+
+
+			// apply changes
+
+			$obj_domain->load_data();
+
+			if ($serial = $obj_domain->action_update_serial())
+			{
+				return $serial;
+			}
+			else
+			{
+				throw new SoapFault("Sender", "UNKNOWN_ERROR");
+			}
+		}
+		else
+		{
+			throw new SoapFault("Sender", "ACCESS_DENIED");
+		}
+
+	} // end of update_serial
+
+
+
+	/*
+		update_record
+
+		Updates or creates a new domain record.
+
+		Note that once you have completed calling this function, you should execute update_serial so that the changes
+		will actually get rolled out to the nameservers.
+
+		TODO: this function doesn't perfom the level of validation that domains/records-process.php does, we should
+		take a look at improving it, however there aren't any security risks, just data corruption risks.
+
+		Fields
+		id_domain	ID of the domain
+		id_record	ID of the record
+		record_name	\
+		record_type	|
+		record_content	|-- refer to domain_records->action_update and domains/record-process.php for details
+		record_ttl	|
+		record_prio	/
+		
+		Returns
+		0		Failure
+		#		ID of the domain record
+	*/
+
+	function update_record( $id_domain, $id_record, $record_name, $record_type, $record_content, $record_ttl, $record_prio )
+	{
+		log_write("debug", "api_namedmanager", "Executing update_record( $id_domain, $id_record, $record_name, $record_type, $record_content, $record_ttl, $record_prio )");
+
+		if ($this->auth_admin)
+		{
+			$obj_record = New domain_records;
+
+			
+			// validate record inpit
+			$data			= array();
+			$data["id_domain"]	= @security_script_input_predefined("int", $id_domain);
+			$data["id_record"]	= @security_script_input_predefined("int", $id_record);
+			$data["record_name"]	= @security_script_input_predefined("any", $record_name);
+			$data["record_type"]	= @security_script_input_predefined("any", $record_type);
+			$data["record_content"]	= @security_script_input_predefined("any", $record_content);
+			$data["record_ttl"]	= @security_script_input_predefined("int", $record_ttl);
+			$data["record_prio"]	= @security_script_input_predefined("int", $record_prio);
+
+			foreach ($data as $value)
+			{
+				if ($value == "error" && $value != 0)
+				{
+					throw new SoapFault("Sender", "INVALID_INPUT");
+				}
+			}
+
+			if (!$data["id_domain"] || !$data["record_name"] || !$data["record_type"] || !$data["record_content"])
+			{
+				throw new SoapFault("Sender", "INVALID_INPUT");
+			}
+
+
+
+			// verify domain ID
+			$obj_record->id	= $data["id_domain"];
+
+			if (!$obj_record->verify_id())
+			{
+				throw new SoapFault("Sender", "INVALID_ID");
+			}
+
+
+			// load domain and record data
+			$obj_record->load_data();
+
+			if ($data["id_record"])
+			{
+				$obj_record->id_record = $data["id_record"];
+
+				if (!$obj_record->verify_id_record())
+				{
+					// ID is invalid
+					//
+					// blank the ID and create a new record - we do this for apps like
+					// phpfreeradius, but it might not be the best approach long-term
+					$data["id_record"]	= 0;
+				}
+				else
+				{
+					$obj_record->load_data_record();
+				}
+			}
+			else
+			{
+				// check if there is a record with the same values already - if so, we should
+				// take it's ID.
+				//
+				// TODO: turn this into a proper function
+				//
+				$sql_obj		= New sql_query;
+				$sql_obj->string	= "SELECT id FROM `dns_records` WHERE id_domain='". $data["id_domain"] ."' AND name='". $data["record_name"] ."' LIMIT 1";
+				$sql_obj->execute();
+
+				if ($sql_obj->num_rows())
+				{
+					$sql_obj->fetch_array();
+
+					$obj_record->id_record = $sql_obj->data[0]["id"];
+					$obj_record->load_data_record();
+				}
+			}
+
+
+
+			// apply changes
+			$obj_record->data_record["name"]		= $data["record_name"];
+			$obj_record->data_record["type"]		= $data["record_type"];
+			$obj_record->data_record["content"]		= $data["record_content"];
+			$obj_record->data_record["ttl"]			= $data["record_ttl"];
+			$obj_record->data_record["prio"]		= $data["record_prio"];
+
+			if (!$data["record_ttl"])
+			{
+				$obj_record->data_record["ttl"]		= $obj_record->data["soa_default_ttl"];
+			}
+
+
+			if ($obj_record->action_update_record())
+			{
+				return $obj_record->id_record;
+			}
+			else
+			{
+				throw new SoapFault("Sender", "UNKNOWN_ERROR");
+			}
+		}
+		else
+		{
+			throw new SoapFault("Sender", "ACCESS_DENIED");
+		}
+
+	} // end of update_record
 
 
 

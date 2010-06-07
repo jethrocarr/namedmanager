@@ -93,6 +93,31 @@
 	</message>
 
 
+	<message name='update_record_request'>
+		<part name="id_domain" type="xsd:int"/>
+		<part name="id_record" type="xsd:int"/>
+		<part name="record_name" type="xsd:string"/>
+		<part name="record_type" type="xsd:string"/>
+		<part name="record_content" type="xsd:string"/>
+		<part name="record_ttl" type="xsd:int"/>
+		<part name="record_prio" type="xsd:int"/>
+	</message>
+
+	<message name='update_record_response'>
+		<part name='return' type='xsd:int'/>
+	</message>
+
+
+	<message name='update_serial_request'>
+		<part name='id_domain' type='xsd:int'/>
+	</message>
+
+	<message name='update_serial_response'>
+		<part name='soa_serial' type='xsd:int'/>
+	</message>
+
+
+
 	<message name='fetch_domains_response'>
 		<part name='return' type='xsd1:fetch_domains'/>
 	</message>
@@ -128,6 +153,15 @@
 			<output message='tns:set_update_version_response'/>
 		</operation>
 
+		<operation name='update_record'>
+			<input message='tns:update_record_request'/>
+			<output message='tns:update_record_response'/>
+		</operation>
+
+		<operation name='update_serial'>
+			<input message='tns:update_serial_request'/>
+			<output message='tns:update_serial_response'/>
+		</operation>
 
 		<operation name='fetch_domains'>
 			<output message='tns:fetch_domains_response'/>
@@ -181,6 +215,28 @@
 				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
 			</output>
 		</operation>
+
+
+		<operation name='update_serial'>
+			<soap:operation soapAction='namedmanager'/>
+			<input>
+				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+			</input>
+			<output>
+				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+			</output>
+		</operation>
+
+		<operation name='update_record'>
+			<soap:operation soapAction='namedmanager'/>
+			<input>
+				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+			</input>
+			<output>
+				<soap:body use='encoded' namespace='urn:amberdms:namedmanager' encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'/>
+			</output>
+		</operation>
+
 
 
 		<operation name='fetch_domains'>

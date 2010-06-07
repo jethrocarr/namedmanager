@@ -413,7 +413,7 @@ class domain
 
 		Returns
 		0	failure
-		1	success
+		#	New serial value
 	*/
 	function action_update_serial()
 	{
@@ -497,9 +497,11 @@ class domain
 		/*
 			Update configuration status versions
 		*/
+
 		$sql_obj		= New sql_query;
 		$sql_obj->string	= "UPDATE `config` SET value='". time() ."' WHERE name='SYNC_STATUS_CONFIG' LIMIT 1";
 		$sql_obj->execute();
+
 
 
 		/*
@@ -527,7 +529,7 @@ class domain
 			$log->log_post("audit", "Domain ". $this->data["domain_name"] ." serial updated to ". $this->data["soa_serial"] ."");
 
 		
-			return 1;
+			return $this->data["soa_serial"];
 		}
 
 	} // end of action_update_serial

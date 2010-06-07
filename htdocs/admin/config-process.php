@@ -31,6 +31,8 @@ if (user_permissions_get("namedadmins"))
 	$data["DEFAULT_TTL_MX"]			= security_form_input_predefined("int", "DEFAULT_TTL_MX", 1, "");
 	$data["DEFAULT_TTL_OTHER"]		= security_form_input_predefined("int", "DEFAULT_TTL_OTHER", 1, "");
 
+	$data["ADMIN_API_KEY"]			= security_form_input_predefined("any", "ADMIN_API_KEY", 1, "");
+
 	$data["DATEFORMAT"]			= security_form_input_predefined("any", "DATEFORMAT", 1, "");
 	$data["TIMEZONE_DEFAULT"]		= security_form_input_predefined("any", "TIMEZONE_DEFAULT", 1, "");
 
