@@ -156,13 +156,14 @@ class page_output
 			$structure["fieldname"]		 	= "record_ns_". $i ."_name";
 			$structure["type"]			= "input";
 			$structure["options"]["width"]		= "300";
-			$structure["options"]["help"]			= "Enter name here";
+			$structure["options"]["help"]		= "Domain Name (usually ". $this->obj_domain->data["domain_name"] .")";
 			$this->obj_form->add_input($structure);
 
 			$structure = NULL;
 			$structure["fieldname"] 		= "record_ns_". $i ."_content";
 			$structure["type"]			= "input";
 			$structure["options"]["width"]		= "300";
+			$structure["options"]["help"]		= "FQDN of the name server";
 			$this->obj_form->add_input($structure);
 
 			$structure = NULL;
@@ -267,15 +268,9 @@ class page_output
 			$this->obj_form->add_input($structure);
 
 			$structure = NULL;
-			$structure["fieldname"]		 	= "record_mx_". $i ."_name";
-			$structure["type"]			= "input";
-			$structure["options"]["width"]		= "300";
-			$this->obj_form->add_input($structure);
-
-			$structure = NULL;
 			$structure["fieldname"] 		= "record_mx_". $i ."_content";
 			$structure["type"]			= "input";
-			$structure["options"]["help"]		= "And another";
+			$structure["options"]["help"]		= "FQDN or hostname of mail server";
 			$structure["options"]["width"]		= "300";
 			$this->obj_form->add_input($structure);
 
@@ -302,7 +297,6 @@ class page_output
 			{
 				$this->obj_form->structure["record_mx_". $i ."_id"]["defaultvalue"]		= $record["id_record"];
 				$this->obj_form->structure["record_mx_". $i ."_prio"]["defaultvalue"]		= $record["prio"];
-				$this->obj_form->structure["record_mx_". $i ."_name"]["defaultvalue"]		= $record["name"];
 				$this->obj_form->structure["record_mx_". $i ."_content"]["defaultvalue"]	= $record["content"];
 				$this->obj_form->structure["record_mx_". $i ."_ttl"]["defaultvalue"]		= $record["ttl"];
 
@@ -437,6 +431,7 @@ class page_output
 		{
 			if (in_array($record["type"], $dns_record_types))
 			{
+				// fetch data
 				$this->obj_form->structure["record_custom_". $i ."_id"]["defaultvalue"]			= $record["id_record"];
 				$this->obj_form->structure["record_custom_". $i ."_type"]["defaultvalue"]		= $record["type"];
 				$this->obj_form->structure["record_custom_". $i ."_prio"]["defaultvalue"]		= $record["prio"];
@@ -446,8 +441,33 @@ class page_output
 				
 				if ($record["type"] == "CNAME")
 				{
+					// disable inappropate values for CNAME fields
 					$this->obj_form->structure["record_custom_". $i ."_ttl"]["options"]["disabled"]	= "yes";
 					$this->obj_form->structure["record_custom_". $i ."_reverse_ptr"]["options"]["disabled"] = "yes";
+				}
+				elseif ($record["type"] != "PTR")
+				{
+					// check if this record has a reverse PTR value
+					$obj_ptr = New domain_records;
+
+					$obj_ptr->find_reverse_domain($record["content"]);
+
+					if ($obj_ptr->id_record)
+					{
+						$obj_ptr->load_data_record();
+
+						if ($record["name"] == "@")
+						{
+							$record["name"] = $this->obj_domain->data["domain_name"];
+						}
+
+						if ($obj_ptr->data_record["content"] == $record["name"] || $obj_ptr->data_record["content"] == ($record["name"] .".". $this->obj_domain->data["domain_name"]))
+						{
+							$this->obj_form->structure["record_custom_". $i ."_reverse_ptr"]["defaultvalue"] = "on";
+						}
+					}
+
+					unset($obj_ptr);
 				}
 
 				$i++;
