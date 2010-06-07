@@ -264,7 +264,9 @@ function dynamic_help_message(previous_string, new_string, is_ttl)
 			//if not true
 				//val becomes value of helpmessagestatus field
 				$("input[name='" + new_string + "']").val($("input[name='" + previous_string + "_helpmessagestatus']").val());
+				$("input[name='" + new_string + "_helpmessagestatus']").val("true");
 			}
+
 
 		//apply on click / blur functions
 		$("input[name='" + new_string + "']").click(function()
