@@ -622,3 +622,10 @@ div[class*='toggle']
 {
 	color:	#ABABAB;
 }
+
+/*logs page*/
+.new_row td
+{
+	display:		none;
+	background-color:	#c3e5f1;
+}

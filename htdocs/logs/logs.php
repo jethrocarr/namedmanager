@@ -12,6 +12,11 @@
 class page_output
 {
 	var $obj_table;
+	
+	function page_output()
+	{
+		$this->requires["javascript"][] = "include/javascript/logs.js";
+	}
 
 
 	function check_permissions()
@@ -121,7 +126,23 @@ class page_output
 			$this->obj_table->render_table_html();
 
 		}
-
+		
+		//hidden field to hold update interval
+		$update_interval = sql_get_singlevalue("SELECT value FROM config WHERE name = \"LOG_UPDATE_INTERVAL\"");
+		print "<input type=\"hidden\" value=\"" .$update_interval. "\" id=\"update_interval\" name=\"update_interval\">";
+		//hidden field to hold highest id
+		$highest_id = sql_get_singlevalue("SELECT id AS value FROM logs ORDER BY id DESC LIMIT 1");
+		print "<input type=\"hidden\" value=\"" .$highest_id. "\" id=\"highest_id\" name=\"highest_id\">";
+		
+		if($_SESSION["form"]["changelog"]["columns"])
+		{
+			$columns = implode(",", $_SESSION["form"]["changelog"]["columns"]);
+		}
+		else
+		{
+			$columns = "timestamp,server_name,domain_name,username,log_type,log_contents";
+		}
+		print "<input type=\"hidden\" value=\"" .$columns. "\" id=\"columns\" name=\"columns\">";
 	}
 
 }

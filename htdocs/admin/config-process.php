@@ -35,6 +35,9 @@ if (user_permissions_get("namedadmins"))
 
 	$data["DATEFORMAT"]			= security_form_input_predefined("any", "DATEFORMAT", 1, "");
 	$data["TIMEZONE_DEFAULT"]		= security_form_input_predefined("any", "TIMEZONE_DEFAULT", 1, "");
+	
+	$data["LOG_UPDATE_INTERVAL"]		= security_form_input_predefined("int", "LOG_UPDATE_INTERVAL", 1, "");
+	
 
 
 

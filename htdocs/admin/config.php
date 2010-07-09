@@ -135,6 +135,14 @@ class page_output
 		$structure["type"]					= "input";
 		$structure["options"]["no_translate_fieldname"]		= "yes";
 		$this->obj_form->add_input($structure);
+		
+		// miscellaneous configurations
+		$structure = NULL;
+		$structure["fieldname"]					= "LOG_UPDATE_INTERVAL";
+		$structure["type"]					= "input";
+		$structure["options"]["no_translate_fieldname"]		= "yes";
+		$structure["options"]["label"]				= " seconds";
+		$this->obj_form->add_input($structure);
 
 
 		$this->obj_form->add_action("ZONE_DB_TYPE", "default", "ZONE_DB_HOST", "hide");
@@ -172,6 +180,7 @@ class page_output
 		$this->obj_form->subforms["config_zone_database"]	= array("ZONE_DB_TYPE", "ZONE_DB_HOST","ZONE_DB_NAME", "ZONE_DB_USERNAME", "ZONE_DB_PASSWORD");
 		$this->obj_form->subforms["config_api"]			= array("ADMIN_API_KEY");
 		$this->obj_form->subforms["config_dateandtime"]		= array("DATEFORMAT", "TIMEZONE_DEFAULT");
+		$this->obj_form->subforms["config_miscellaneous"]	= array("LOG_UPDATE_INTERVAL");
 		$this->obj_form->subforms["submit"]			= array("submit");
 
 
