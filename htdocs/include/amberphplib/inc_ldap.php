@@ -68,6 +68,32 @@ class ldap_query
 		}
 
 
+		// initate LDAP version 3 connection if possible
+		if (ldap_set_option($this->ldapcon, LDAP_OPT_PROTOCOL_VERSION, 3))
+		{
+			log_debug("ldap_query", "Connecting using LDAP version 3");
+		}
+		else
+		{
+			log_debug("ldap_query", "Unable to establish version 3 connection, falling back to version 2. Note that TLS/SSL is not available with version 2.");
+		}
+
+
+		// if SSL/TLS is enabled, we need to use it
+		if ($GLOBALS["config"]["ldap_ssl"] == "enable")
+		{
+			if (ldap_start_tls($this->ldapcon))
+			{
+				log_debug("ldap_query", "Initated TLS/SSL connection to LDAP server.");
+			}
+			else
+			{
+				log_debug("ldap_query", "Unable to initate TLS/SSL connection - check that /etc/openldap/ldap.conf has the CA located for certificate validation.");
+				return 0;
+			}
+		}
+
+
 		// bind user
 		if (ldap_bind($this->ldapcon, $this->srvcfg["user"], $this->srvcfg["password"]))
 		{
@@ -170,6 +196,11 @@ class ldap_query
 		{
 			return 1;
 		}
+		else
+		{
+			log_write("warning", "ldap_query", "LDAP error: \"". ldap_error($this->ldapcon) ."\"");
+		}
+
 
 		return 0;
 
@@ -202,6 +233,10 @@ class ldap_query
 		{
 			return 1;
 		}
+		else
+		{
+			log_write("warning", "ldap_query", "LDAP error: \"". ldap_error($this->ldapcon) ."\"");
+		}
 
 		return 0;
 
@@ -231,6 +266,11 @@ class ldap_query
 		{
 			return 1;
 		}
+		else
+		{
+			log_write("warning", "ldap_query", "LDAP error: \"". ldap_error($this->ldapcon) ."\"");
+		}
+
 
 		return 0;
 
