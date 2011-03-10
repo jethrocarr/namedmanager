@@ -425,17 +425,157 @@ class user_auth
 					// make sure that both a UID and password exists
 					if ($obj_ldap->data[0]["userpassword"][0] && $obj_ldap->data[0]["uidnumber"][0])
 					{
-						if (preg_match("/^{SSHA}/", $obj_ldap->data[0]["userpassword"][0]))
-						{
-							// verify SSHA
-							$orig_hash	= base64_decode(substr($obj_ldap->data[0]["userpassword"][0], 6));
-							$orig_salt	= substr($orig_hash, 20);
-							$orig_hash	= substr($orig_hash, 0, 20);
-							$new_hash	= pack("H*", sha1($password . $orig_salt));
+						// fetch the hash type
+						preg_match("/^{(\S*)}/", $obj_ldap->data[0]["userpassword"][0], $matches);
 
-							if ($orig_hash == $new_hash)
+						if ($matches[1])
+						{
+							switch ($matches[1])
 							{
-								// successful authentication! :-D
+								case "SSHA":
+									//
+									// SSHA: Used by default by ldapauthmanager and is the default of slappasswd
+									//
+
+									log_debug("user_auth", "User password encrypted as SSHA format");
+
+									// verify SSHA
+									$orig_hash	= base64_decode(substr($obj_ldap->data[0]["userpassword"][0], 6));
+									$orig_salt	= substr($orig_hash, 20);
+									$orig_hash	= substr($orig_hash, 0, 20);
+									$new_hash	= pack("H*", sha1($password . $orig_salt));
+
+									if ($orig_hash == $new_hash)
+									{
+										// successful authentication! :-D
+										log_debug("user_auth", "Authentication successful");
+
+										return $obj_ldap->data[0]["uidnumber"][0];
+									}
+									else
+									{
+										// incorrect password supplied
+										log_debug("user_auth", "Authentication failed due to incorrect password/username combination");
+										return 0;
+									}
+								break;
+
+								case "crypt":
+
+									//
+									// CRYPT: Used as the default by Linux servers, often a MD5 hash rather than original crypt, however
+									// 	  the algorithm and salting method can vary, so we have to do some detection.
+									//
+									
+									log_debug("user_auth", "User password encrypted as CRYPT format");
+
+
+									// fetch the hash only (no header)
+									$orig_hash	= substr($obj_ldap->data[0]["userpassword"][0], 7);
+
+
+									// match the type of hash - it may or may not be MD5
+									if (substr($orig_hash, 0, 3) == '$1$')
+									{
+										// MD5
+										log_debug("user_auth", "Password algorithm is MD5");
+
+										// generate a hash with the salt
+										$orig_salt	= substr($orig_hash, 0, 12);
+										$new_hash	= crypt($password, $orig_salt);
+									}
+									else
+									{
+										// unsupported hash type
+										log_debug("user_auth", "Authentication failed due to unsupported hash \"$orig_hash\" with {crypt} header");
+										return -1;
+									}
+
+									// authenticate the hashes
+									if ($orig_hash == $new_hash)
+									{
+										// successful authentication! :-D
+										log_debug("user_auth", "Authentication successful");
+
+										return $obj_ldap->data[0]["uidnumber"][0];
+									}
+									else
+									{
+										// incorrect password supplied
+										log_debug("user_auth", "Authentication failed due to incorrect password/username combination");
+										return 0;
+									}
+								break;
+
+
+								case "MD5":
+								case "SHA":
+									
+									// unknown password crypt format
+									log_debug("user_auth", "Passwords in crypt format \"". $matches[1] ."\" are intentionally unsupported due to lack of salting - use SSHA or SMD5 instead");
+									return -1;
+
+								break;
+
+
+								case "{clear}":
+								case "{cleartext}":
+									
+									//
+									//	Plaintext LDAP Passwords
+									//
+									//	Plaintext passwords are a pretty nasty thing from the POV of a web-based application developer, however
+									//	are still somewhat common in the telco user space, with technologies like CHAP relying on plaintext
+									//	passwords in order for their on-wire encryption to work.
+									//
+									//	We support them here for this reason alone.
+									//
+
+									log_debug("user_auth", "User password NOT ENCRYPTED, using plaintext WITH header");
+
+
+									if ($obj_ldap->data[0]["userpassword"][0] == $password)
+									{
+										log_debug("user_auth", "Authentication successful");
+
+										return $obj_ldap->data[0]["uidnumber"][0];
+									}
+									else
+									{
+										// incorrect password supplied
+										log_debug("user_auth", "Authentication failed due to incorrect password/username combination");
+										return 0;
+									}
+
+								break;
+
+
+								default:
+									
+									// unknown password crypt format
+									log_debug("user_auth", "Unknown password crypt format \"". $matches[1] ."\"");
+									return -1;
+
+								break;
+							}
+						}
+						else
+						{
+							/*
+								Plaintext LDAP Passwords
+
+								Plaintext passwords are a pretty nasty thing from the POV of a web-based application developer, however
+								are still somewhat common in the telco user space, with technologies like CHAP relying on plaintext
+								passwords in order for their on-wire encryption to work.
+
+								We support them here for this reason alone.
+							*/
+
+							log_debug("user_auth", "User password NOT ENCRYPTED, using plaintext WITHOUT header");
+
+
+							if ($obj_ldap->data[0]["userpassword"][0] == $password)
+							{
 								log_debug("user_auth", "Authentication successful");
 
 								return $obj_ldap->data[0]["uidnumber"][0];
@@ -446,11 +586,8 @@ class user_auth
 								log_debug("user_auth", "Authentication failed due to incorrect password/username combination");
 								return 0;
 							}
-						}
-						else
-						{
-							// unknown password crypt format
-							log_debug("user_auth", "Unknown password crypt format!");
+
+
 							return -1;
 						}
 					}
@@ -731,9 +868,20 @@ class user_auth
 		This function is automatically executed when required by the permissions_get(type)
 		function.
 
-		The lookup occurs once for each page load, whilst this does place a bit more load
-		on the server, it's better than caching for the entire session, since otherwise
-		that cache could become stale if the user permissions get changed.
+		By default the caching is only during the duration of the page load, however if
+		the AUTH_PERMS_CACHE value is set to enabled in the config database, the caching
+		will last across the session.
+
+		Typically you want to only cache for the duration of the page rather than the entire
+		session, since any user permission changes will take immediate effect and the impact on
+		the database should be minimal.
+
+		However there are something circumstances where loading the permissions for every page
+		load can cause annoyances, for example when using LDAP authentication it will cause a request
+		against the LDAP session for every page load.
+
+		Of course, session caching means that the user permissions can become stale and users must then
+		logout and back in to get new permissions.
 
 		Returns
 		0		Failure
@@ -746,6 +894,20 @@ class user_auth
 		// erase any existing cache
 		$GLOBALS["cache"]["user"]["perms"] = array();
 
+
+		// check permissions cache option - should we cache over a session or not?
+		if ($GLOBALS["config"]["AUTH_PERMS_CACHE"] == "enabled")
+		{
+			// check for cache
+			if ($_SESSION["user"]["cache"]["perms"])
+			{
+				log_write("debug", "user_auth", "Loading user permissions from session cache");
+
+				$GLOBALS["cache"]["user"]["perms"] = $_SESSION["user"]["cache"]["perms"];
+
+				return 1;
+			}
+		}
 
 		// make sure the user is logged in
 		if (!$this->check_online())
@@ -806,8 +968,6 @@ class user_auth
 							}
 						}
 					} // end of loop through groups
-
-					return 1;
 				}
 				else
 				{
@@ -838,6 +998,7 @@ class user_auth
 						// save the permissions that the user has access to, to the cache
 						$GLOBALS["cache"]["user"]["perms"][ $data_perms["type"] ] = 1;
 					}
+	
 				}
 				else
 				{
@@ -848,6 +1009,12 @@ class user_auth
 
 		} // end of method processing.
 
+
+		// if enabled, save in session cache
+		if ($GLOBALS["config"]["AUTH_PERMS_CACHE"] == "enabled")
+		{
+			$_SESSION["user"]["cache"]["perms"] = $GLOBALS["cache"]["user"]["perms"];
+		}
 
 		// complete without error
 		return 1;
