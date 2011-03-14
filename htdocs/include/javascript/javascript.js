@@ -16,7 +16,7 @@ $(document).ready(function()
 		});
 	});
 	
-	$(".helpmessage").live("select", function()
+	$(".helpmessage").live("focusin", function()
 	{
 		var message = $(this).val();
 		$(this).siblings("input[name$='helpmessagestatus']").val(message);

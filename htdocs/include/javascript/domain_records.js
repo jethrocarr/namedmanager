@@ -269,6 +269,7 @@ function dynamic_help_message(previous_string, new_string, is_ttl)
 
 
 		//apply on click / blur functions
+		/*
 		$("input[name='" + new_string + "']").click(function()
 		{
 			var message = $(this).val();
@@ -282,7 +283,7 @@ function dynamic_help_message(previous_string, new_string, is_ttl)
 				}
 			});
 		});
-		
+	*/	
 		$("input[name='" + new_string + "']").select(function()
 		{
 			var message = $(this).val();
