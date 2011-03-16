@@ -1098,6 +1098,12 @@ class form_input
 			break;
 
 			case "message":
+
+				// sometimes message data is coming directly out of the SQL database, we should run HTML entities
+				// conversion on it.
+				$this->structure[$fieldname]["defaultvalue"]	= nl2br($this->structure[$fieldname]["defaultvalue"]);
+				//$this->structure[$fieldname]["defaultvalue"]	= htmlentities($this->structure[$fieldname]["defaultvalue"]);
+
 				print $this->structure[$fieldname]["defaultvalue"];
 			break;
 
