@@ -1,0 +1,473 @@
+<?php
+/*
+	domains/import.php
+
+	access:
+		namedadmins
+
+	Imports existing zonefiles from an external source into 
+	NamedManager. This form is a little clever and runs in
+	a two stage process, storing the data in the session and then
+	passing back as content to process before uploading.
+
+	1. File Upload
+	2. Basic Domain Processing
+
+*/
+
+class page_output
+{
+	var $mode;
+	var $obj_form;
+
+
+	function page_output()
+	{
+		$this->mode	= security_script_input('/^[0-9]*$/', $_GET["mode"]);
+
+		if (!$this->mode)
+		{
+			$this->mode = 1;
+		}
+	}
+
+
+	function check_permissions()
+	{
+		return user_permissions_get("namedadmins");
+	}
+
+
+	function check_requirements()
+	{
+		// nothing todo
+		return 1;
+	}
+
+
+
+	function execute()
+	{
+		if ($this->mode == 1)
+		{
+			/*
+				MODE 1: INITAL FILE UPLOAD
+			*/
+
+			$this->obj_form 		= New form_input;
+
+			$this->obj_form->formname 	= "domain_import";
+			$this->obj_form->language 	= $_SESSION["user"]["lang"];
+
+			$this->obj_form->action 	= "domains/import-process.php";
+			$this->obj_form->method 	= "post";
+	
+			// import type
+			$structure			= NULL;
+			$structure["fieldname"]		= "import_upload_type";
+			$structure["type"]		= "radio";
+			$structure["values"]		= array("file_bind_8");
+			$structure["defaultvalue"]	= "file_bind_8";
+			$this->obj_form->add_input($structure);
+
+			// file upload
+			$structure 			= NULL;
+			$structure["fieldname"]		= "import_upload_file";
+			$structure["type"]		= "file";
+			$this->obj_form->add_input($structure);
+
+			
+
+			// submit section
+			$structure = NULL;
+			$structure["fieldname"] 	= "submit";
+			$structure["type"]		= "submit";
+			$structure["defaultvalue"]	= "Save Changes";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"]		= "mode";
+			$structure["type"]		= "hidden";
+			$structure["defaultvalue"]	= $this->mode;
+			$this->obj_form->add_input($structure);
+
+
+			// define subforms
+			$this->obj_form->subforms["upload"]		= array("import_upload_type", "import_upload_file");
+			$this->obj_form->subforms["hidden"]		= array("mode");
+			$this->obj_form->subforms["submit"]		= array("submit");
+
+
+			// import data
+			if (error_check())
+			{
+				$this->obj_form->load_data_error();
+			}
+	
+		}
+		elseif ($this->mode == 2)
+		{
+			/*
+				MODE 2: DOMAIN RECORD ASSIGNMENT
+
+				Information from the imported zone file under mode 1 has been converted and loaded into
+				the session variables, from here we can now enter all that information into a form and
+				the user can correct/complete before we push through to the database.
+
+				We also need to address issues like over-writing of existing domains here.
+			*/
+		
+
+
+
+			/*
+				Define form structure
+			*/
+			$this->obj_form			= New form_input;
+			$this->obj_form->formname	= "domain_import";
+			$this->obj_form->language	= $_SESSION["user"]["lang"];
+
+			$this->obj_form->action		= "domains/import-process.php";
+			$this->obj_form->method		= "post";
+
+
+
+			/*
+				General domain & SOA information
+			*/
+
+			$structure = NULL;
+			$structure["fieldname"] 	= "domain_type";
+			$structure["type"]		= "radio";
+			$structure["values"]		= array("domain_standard", "domain_reverse_ipv4");
+			$structure["options"]["req"]	= "yes";
+			$structure["defaultvalue"]	= "domain_standard";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 	= "domain_name";
+			$structure["type"]		= "input";
+			$structure["options"]["req"]	= "yes";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 		= "ipv4_help";
+			$structure["type"]			= "text";
+			$structure["options"]["req"]		= "yes";
+			$structure["defaultvalue"]		= "help_ipv4_help";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 	= "ipv4_network";
+			$structure["type"]		= "input";
+			$structure["options"]["help"]	= "eg: 192.168.0.0";
+			$structure["options"]["label"]	= " /24";
+			$structure["options"]["req"]	= "yes";
+			$this->obj_form->add_input($structure);
+	/*
+			$structure = NULL;
+			$structure["fieldname"] 	= "ipv4_subnet";
+			$structure["type"]		= "radio";
+			$structure["values"]		= array("24", "16", "8");
+			$structure["options"]["req"]	= "yes";
+			$this->obj_form->add_input($structure);
+	*/
+			$structure = NULL;
+			$structure["fieldname"] 	= "ipv4_autofill";
+			$structure["type"]		= "checkbox";
+			$structure["options"]["label"]	= lang_trans("help_ipv4_autofill");
+			$structure["options"]["req"]	= "yes";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 	= "ipv4_autofill_domain";
+			$structure["type"]		= "input";
+			$structure["options"]["help"]	= "eg: static.example.com";
+			$structure["options"]["req"]	= "yes";
+			$this->obj_form->add_input($structure);
+
+
+			$this->obj_form->add_action("domain_type", "default", "domain_name", "show");
+			$this->obj_form->add_action("domain_type", "default", "ipv4_help", "hide");
+			$this->obj_form->add_action("domain_type", "default", "ipv4_network", "hide");
+	//		$this->obj_form->add_action("domain_type", "default", "ipv4_subnet", "hide");
+			$this->obj_form->add_action("domain_type", "default", "ipv4_autofill", "hide");
+
+			$this->obj_form->add_action("domain_type", "domain_standard", "domain_name", "show");
+
+			$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "domain_name", "hide");
+			$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_help", "show");
+			$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_network", "show");
+	//		$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_subnet", "show");
+			$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_autofill", "show");
+		
+
+			$this->obj_form->add_action("ipv4_autofill", "default", "ipv4_autofill_domain", "hide");
+			$this->obj_form->add_action("ipv4_autofill", "1", "ipv4_autofill_domain", "show");
+
+
+			$structure = NULL;
+			$structure["fieldname"] 	= "domain_description";
+			$structure["type"]		= "textarea";
+			$this->obj_form->add_input($structure);
+
+
+
+			// SOA configuration
+			$structure = NULL;
+			$structure["fieldname"] 	= "soa_hostmaster";
+			$structure["type"]		= "input";
+			$structure["options"]["req"]	= "yes";
+			$structure["defaultvalue"]	= $GLOBALS["config"]["DEFAULT_HOSTMASTER"];
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 	= "soa_serial";
+			$structure["type"]		= "input";
+			$structure["options"]["req"]	= "yes";
+			$structure["defaultvalue"]	= date("Ymd") ."01";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 	= "soa_refresh";
+			$structure["type"]		= "input";
+			$structure["options"]["req"]	= "yes";
+			$structure["defaultvalue"]	= "21600";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 	= "soa_retry";
+			$structure["type"]		= "input";
+			$structure["options"]["req"]	= "yes";
+			$structure["defaultvalue"]	= "3600";
+			$this->obj_form->add_input($structure);
+
+			$structure["fieldname"] 	= "soa_expire";
+			$structure["type"]		= "input";
+			$structure["options"]["req"]	= "yes";
+			$structure["defaultvalue"]	= "604800";
+			$this->obj_form->add_input($structure);
+
+			$structure["fieldname"] 	= "soa_default_ttl";
+			$structure["type"]		= "input";
+			$structure["options"]["req"]	= "yes";
+			$structure["defaultvalue"]	= $GLOBALS["config"]["DEFAULT_TTL_SOA"];
+			$this->obj_form->add_input($structure);
+
+
+
+			// define main domain subforms
+			$this->obj_form->subforms["domain_details"]	= array("domain_type", "domain_name", "ipv4_help", "ipv4_network", "ipv4_autofill", "ipv4_autofill_domain", "domain_description");
+			$this->obj_form->subforms["domain_soa"]		= array("soa_hostmaster", "soa_serial", "soa_refresh", "soa_retry", "soa_expire", "soa_default_ttl");
+
+
+
+			/*
+				Imported Records
+
+				The record import logic is not as advanced as the regular record handling
+				page, it's primarily intended to display the import and allow correction
+				before submission.
+
+				For more advanced configuration and addition of rows, the user should
+				import the domain and then adjust like normal.
+			*/
+
+
+			// subform header
+			$this->obj_form->subforms["domain_records"]	= array("record_import_guide");
+
+			$structure = NULL;
+			$structure["fieldname"]		= "record_import_guide";
+			$structure["type"]		= "message";
+			$structure["defaultvalue"]	= "<p>". lang_trans("record_import_guide") ."</p>";
+			$this->obj_form->add_input($structure);
+
+
+			if (empty($_SESSION["error"]["num_records"]))
+			{
+				// no records returned
+				$structure = NULL;
+				$structure["fieldname"]				= "record_import_notice";
+				$structure["type"]				= "message";
+				$structure["defaultvalue"]			= "<p>". lang_trans("records_not_imported")  ."</p>";
+				$structure["options"]["css_row_class"]		= "table_highlight_important";
+				$this->obj_form->add_input($structure);
+			
+				$this->obj_form->subforms["domain_records"][]	= "record_import_notice";
+			}
+			else
+			{
+				// headers
+				$this->obj_form->subforms["domain_records"][]				= "record_header";
+
+				$this->obj_form->subforms_grouped["domain_records"]["record_header"][]	= "record_header_type";
+				$this->obj_form->subforms_grouped["domain_records"]["record_header"][]	= "record_header_ttl";
+				$this->obj_form->subforms_grouped["domain_records"]["record_header"][]	= "record_header_prio";
+				$this->obj_form->subforms_grouped["domain_records"]["record_header"][]	= "record_header_name";
+				$this->obj_form->subforms_grouped["domain_records"]["record_header"][]	= "record_header_content";
+				$this->obj_form->subforms_grouped["domain_records"]["record_header"][]	= "record_header_import";
+
+				$structure = NULL;
+				$structure["fieldname"]				= "record_header_type";
+				$structure["type"]				= "text";
+				$structure["defaultvalue"]			= lang_trans("record_header_type");
+				$this->obj_form->add_input($structure);
+
+				$structure = NULL;
+				$structure["fieldname"]				= "record_header_ttl";
+				$structure["type"]				= "text";
+				$structure["defaultvalue"]			= lang_trans("record_header_ttl");
+				$this->obj_form->add_input($structure);
+
+				$structure = NULL;
+				$structure["fieldname"]				= "record_header_prio";
+				$structure["type"]				= "text";
+				$structure["defaultvalue"]			= lang_trans("record_header_prio");
+				$this->obj_form->add_input($structure);
+
+				$structure = NULL;
+				$structure["fieldname"]				= "record_header_name";
+				$structure["type"]				= "text";
+				$structure["defaultvalue"]			= lang_trans("record_header_name");
+				$this->obj_form->add_input($structure);
+
+				$structure = NULL;
+				$structure["fieldname"]				= "record_header_content";
+				$structure["type"]				= "text";
+				$structure["defaultvalue"]			= lang_trans("record_header_content");
+				$this->obj_form->add_input($structure);
+
+				$structure = NULL;
+				$structure["fieldname"]				= "record_header_import";
+				$structure["type"]				= "text";
+				$structure["defaultvalue"]			= lang_trans("record_header_import");
+				$this->obj_form->add_input($structure);
+
+
+
+
+
+				// loop through imported records and create form structure
+				for ($i=0; $i < $_SESSION["error"]["num_records"]; $i++)
+				{
+					$record = $_SESSION["error"]["records"][$i];
+
+					// record form items
+					$structure 					= form_helper_prepare_dropdownfromdb("record_". $i ."_type", "SELECT type as label, type as id FROM `dns_record_types` WHERE type!='SOA'");
+					$structure["options"]["width"]			= "100";
+					$structure["defaultvalue"]			= $record["type"];
+					$this->obj_form->add_input($structure);
+
+
+					if (!$record["ttl"])
+					{
+						$record["ttl"]				= $GLOBALS["config"]["DEFAULT_TTL_OTHER"];
+					}
+
+					$structure = NULL;
+					$structure["fieldname"]				= "record_". $i ."_ttl";
+					$structure["type"]				= "input";
+					$structure["options"]["width"]			= "100";
+					$structure["defaultvalue"]			= $record["ttl"];
+					$this->obj_form->add_input($structure);
+
+					$structure = NULL;
+					$structure["fieldname"]				= "record_". $i ."_prio";
+					$structure["type"]				= "input";
+					$structure["options"]["width"]			= "100";
+					$structure["defaultvalue"]			= $record["prio"];
+					$this->obj_form->add_input($structure);
+
+					$structure = NULL;
+					$structure["fieldname"]				= "record_". $i ."_name";
+					$structure["type"]				= "input";
+					$structure["defaultvalue"]			= $record["name"];
+					$this->obj_form->add_input($structure);
+
+					$structure = NULL;
+					$structure["fieldname"]				= "record_". $i ."_content";
+					$structure["type"]				= "input";
+					$structure["defaultvalue"]			= $record["content"];
+					$this->obj_form->add_input($structure);
+
+					$structure = NULL;
+					$structure["fieldname"]				= "record_". $i ."_import";
+					$structure["type"]				= "checkbox";
+					$structure["defaultvalue"]			= "on";
+					$structure["options"]["label"]			= "Import";
+					$this->obj_form->add_input($structure);
+
+		
+					// domain records
+					$this->obj_form->subforms["domain_records"][]				= "record_".$i;
+
+					$this->obj_form->subforms_grouped["domain_records"]["record_".$i ][]	= "record_". $i ."_type";
+					$this->obj_form->subforms_grouped["domain_records"]["record_".$i ][]	= "record_". $i ."_ttl";
+					$this->obj_form->subforms_grouped["domain_records"]["record_".$i ][]	= "record_". $i ."_prio";
+					$this->obj_form->subforms_grouped["domain_records"]["record_".$i ][]	= "record_". $i ."_name";
+					$this->obj_form->subforms_grouped["domain_records"]["record_".$i ][]	= "record_". $i ."_content";
+					$this->obj_form->subforms_grouped["domain_records"]["record_".$i ][]	= "record_". $i ."_import";
+
+				}
+			}
+
+
+
+
+			/*
+				Submission
+			*/
+
+			// submit section
+			$structure = NULL;
+			$structure["fieldname"] 	= "submit";
+			$structure["type"]		= "submit";
+			$structure["defaultvalue"]	= "Save Changes";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"]		= "mode";
+			$structure["type"]		= "hidden";
+			$structure["defaultvalue"]	= $this->mode;
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"]		= "num_records";
+			$structure["type"]		= "hidden";
+			$structure["defaultvalue"]	= $_SESSION["error"]["num_records"];
+			$this->obj_form->add_input($structure);
+
+
+
+			// define submit subforms
+			$this->obj_form->subforms["hidden"]		= array("mode");
+			$this->obj_form->subforms["submit"]		= array("submit");
+
+
+			// import data
+			if (error_check())
+			{
+				$this->obj_form->load_data_error();
+			}
+
+
+		} // end of mode
+
+	} // end of execute()
+
+
+	function render_html()
+	{
+		// title + summary
+		print "<h3>ADD NEW DOMAIN</h3><br>";
+		print "<p>Use this page to import a domain from a legacy DNS platform. Upload the zonefile and NamedManager will match records as best as it can to allow them to be imported.</p>";
+
+	
+		// display the form
+		$this->obj_form->render_form();
+	}
+
+}
+
+?>
