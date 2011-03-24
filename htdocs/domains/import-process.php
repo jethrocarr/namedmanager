@@ -92,8 +92,6 @@ if (user_permissions_get("namedadmins"))
 					http://tools.ietf.org/html/rfc1035
 				*/
 
-				// fetch the file type if we can't get it from elsewhere
-// TODO					$filetype = format_file_extension($_FILES["BANK_STATEMENT"]["name"]);
 
 
 				// open the file and read data
@@ -110,7 +108,7 @@ if (user_permissions_get("namedadmins"))
 						$line = preg_replace("/\s\s*/", " ", $line);
 
 						// strip prefix whitespace
-						$line = ltrim($line);
+						//$line = ltrim($line);
 
 						// ignore comment only lines
 						if (preg_match("/^;/", $line))
@@ -215,11 +213,11 @@ if (user_permissions_get("namedadmins"))
 									$data["soa_hostmaster"]		= rtrim($matches[3], ".");
 
 									// SOA record information
-									$data["soa_serial"]		= $matches[4];
-									$data["soa_refresh"]		= $matches[5];
-									$data["soa_retry"]		= $matches[6];
-									$data["soa_expire"]		= $matches[7];
-									$data["soa_default_ttl"]	= $matches[8];
+									$data["soa_serial"]		= time_bind_to_seconds($matches[4]);
+									$data["soa_refresh"]		= time_bind_to_seconds($matches[5]);
+									$data["soa_retry"]		= time_bind_to_seconds($matches[6]);
+									$data["soa_expire"]		= time_bind_to_seconds($matches[7]);
+									$data["soa_default_ttl"]	= time_bind_to_seconds($matches[8]);
 
 									// TODO: handle alpha-date formations (eg: 15H, 1W, etc)
 								}
@@ -358,6 +356,7 @@ if (user_permissions_get("namedadmins"))
 										eg:
 										example.org. IN MX 10 mail1.example.com
 										@ IN MX 10 mail1.example.com
+										IN MX 10 mail1.example.com
 									*/
 
 									$data_tmp = array();
@@ -527,17 +526,75 @@ if (user_permissions_get("namedadmins"))
 
 						} // end if domain record
 
-						// TODO
-//						print "$line<br>";
-
 					} // end of zonefile line loop
 
-					// TODO
+
+
+					/*
+						Domain Type Handling
+
+						We need to determine the type of the domain - whether it's standard/reverse.
+
+						// TODO: is this working?
+					*/
+
+					$data["domain_type"] == "domain_standard";
+
+					foreach ($data["records"] as $record)
+					{
+						if ($record["type"] == "PTR")
+						{
+							$data["domain_type"] = "domain_reverse_ipv4";
+
+							break;
+						}
+					}
+
+
+
+					
+					/*
+						If no domain name could be determined (this can happen with some
+						zonefiles depending on the way origin has been setup) we should
+						query the filename to determine the needs.
+					*/
+
+					if (empty($data["domain_name"]))
+					{
+						// strip the filename, minus extensions
+						$extension = format_file_extension($_FILES["import_upload_file"]["name"]);
+
+						if ($extension == "zone" || $extension == "arpa" || $extension == "rev")
+						{
+							$data["domain_name"]	= $_FILES["import_upload_file"]["name"];
+							$data["domain_name"]	= str_replace(".$extension", "", $data["domain_name"]);
+						}
+						else
+						{
+							$data["domain_name"]	= $_FILES["import_upload_file"]["name"];
+						}
+
+
+						// handle reverse domains
+						if ($data["domain_type"] == "domain_reverse_ipv4")
+						{
+							if (preg_match("/([0-9][0-9]*.[0-9][0-9]*.[0-9][0-9]*.[0-9][0-9]*)/", $data["domain_name"], $matches))
+							{
+								$data["ipv4_network"] = $matches[1];
+							}
+						}
+					}
+
+
+					/*
+						Enable for detailed import debugging
+					*/
+
 //					print "<pre>";
 //					print_r($data);
 //					print "</pre>";
 
-//					die("die a horrible, horrible death");
+//					die("debugging break");
 				}
 				else
 				{
@@ -553,25 +610,6 @@ if (user_permissions_get("namedadmins"))
 				// catch all, should never be executed
 				log_write("error", "process", "Internal application failure");
 			break;
-		}
-
-
-		/*
-			Domain Type Handling
-
-			We need to determine the type of the domain - whether it's standard/reverse.
-		*/
-
-		$data["domain_type"] == "domain_standard";
-
-		foreach ($data["records"] as $record)
-		{
-			if ($record["type"] == "PTR")
-			{
-				$data["domain_type"] = "domain_reverse_ipv4";
-
-				break;
-			}
 		}
 
 
@@ -613,6 +651,263 @@ if (user_permissions_get("namedadmins"))
 			After records have been validated, they are posted back to this page for final processing and importing into the database.
 		*/
 
+
+			
+
+		/*
+			Domain Object Init
+		*/
+
+		$obj_domain		= New domain;
+		$obj_domain->id		= security_form_input_predefined("int", "id_domain", 0, "");
+
+
+
+		/*
+			Domain Details Validation
+		*/
+
+
+		// new domain, can have some special input like IPV4 reverse
+		$obj_domain->data["domain_type"]	= security_form_input_predefined("any", "domain_type", 1, "");
+
+		if ($obj_domain->data["domain_type"] == "domain_standard")
+		{
+			$obj_domain->data["domain_name"]		= security_form_input_predefined("any", "domain_name", 1, "");
+			$obj_domain->data["domain_description"]		= security_form_input_predefined("any", "domain_description", 0, "");
+		}
+		else
+		{
+			// fetch domain data
+//			$obj_domain->data["ipv4_help"]			= security_form_input_predefined("any", "ipv4_help", 1, "");
+			$obj_domain->data["ipv4_network"]		= security_form_input_predefined("ipv4", "ipv4_network", 1, "Must supply full IPv4 network address");
+//			$obj_domain->data["ipv4_subnet"]		= security_form_input_predefined("int", "ipv4_subnet", 1, "");
+			$obj_domain->data["domain_description"]		= security_form_input_predefined("any", "domain_description", 0, "");
+
+
+			// calculate domain name
+			if ($obj_domain->data["ipv4_network"])
+			{	
+				$tmp_network = explode(".", $obj_domain->data["ipv4_network"]);
+					
+				$obj_domain->data["domain_name"]	= $tmp_network[2] .".". $tmp_network[1] .".". $tmp_network[0] .".in-addr.arpa";
+			}
+
+
+			// if no description, set to original IP
+			if (!$obj_domain->data["domain_description"])
+			{
+				$obj_domain->data["domain_description"] = "Reverse domain for range ". $obj_domain->data["ipv4_network"] ." with subnet of /". $obj_domain->data["ipv4_subnet"] ."";
+			}
+		}
+
+
+
+		/*
+			Domain Record Validation
+		*/
+		
+		$data["num_records"]	= @security_form_input_predefined("int", "num_records", 0, "");
+
+		for ($i = 0; $i < $data["num_records"]; $i++)
+		{
+			/*
+				Fetch Data
+			*/
+			$data_tmp			= array();
+			$data_tmp["type"]		= @security_form_input_predefined("any", "record_". $i ."_type", 0, "");
+			$data_tmp["prio"]		= @security_form_input_predefined("int", "record_". $i ."_prio", 0, "");
+			$data_tmp["ttl"]		= @security_form_input_predefined("int", "record_". $i ."_ttl", 0, "");
+			$data_tmp["name"]		= @security_form_input_predefined("any", "record_". $i ."_name", 0, "");
+			$data_tmp["content"]		= @security_form_input_predefined("any", "record_". $i ."_content", 0, "");
+			$data_tmp["import"]		= @security_form_input_predefined("checkbox", "record_". $i ."_import", 0, "");
+			
+
+			// only process records that are to be imported
+			if (!$data_tmp["import"])
+			{
+				// record to be ignored
+				continue;
+			}
+
+
+
+			/*
+				Error Handling
+			*/
+
+			// verify name syntax
+			if ($data_tmp["name"] != "@" && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp["name"]))
+			{
+				log_write("error", "process", "Sorry, the value you have entered for record ". $data_tmp["name"] ." contains invalid charactors");
+
+				error_flag_field("record_custom_". $i ."");
+			}
+
+
+			// add to processing array
+			$data["records"][] = $data_tmp;
+		}
+
+
+		/*
+			SOA Fields
+		*/
+	
+		// standard fields
+		$obj_domain->data["soa_hostmaster"]			= security_form_input_predefined("email", "soa_hostmaster", 1, "");
+		$obj_domain->data["soa_serial"]				= security_form_input_predefined("int", "soa_serial", 1, "");
+		$obj_domain->data["soa_refresh"]			= security_form_input_predefined("int", "soa_refresh", 1, "");
+		$obj_domain->data["soa_retry"]				= security_form_input_predefined("int", "soa_retry", 1, "");
+		$obj_domain->data["soa_expire"]				= security_form_input_predefined("int", "soa_expire", 1, "");
+		$obj_domain->data["soa_default_ttl"]			= security_form_input_predefined("int", "soa_default_ttl", 1, "");
+
+
+
+		/*
+			Verify Data
+		*/
+
+		if (!$obj_domain->verify_domain_name())
+		{
+			if (isset($obj_domain->data["ipv4_network"]))
+			{
+				log_write("error", "process", "The requested IP range already has reverse DNS entries!");
+
+				error_flag_field("ipv4_network");
+			}
+			else
+			{
+				log_write("error", "process", "The requested domain you are trying to add already exists!");
+
+				error_flag_field("domain_name");
+			}
+		}
+
+
+
+
+		/*
+			Process Data
+		*/
+
+		if (error_check())
+		{
+			$_SESSION["error"]["form"]["domain_import"]	= "failed";
+
+			header("Location: ../index.php?page=domains/import.php&mode=2");
+			exit(0);
+		}
+		else
+		{
+			// clear error data
+			error_clear();
+
+		
+			/*
+				Transaction Start
+			*/
+
+			$sql_obj = New sql_query;
+			$sql_obj->trans_begin();
+
+
+
+			/*
+				Update/Create Domain
+			*/
+
+			// update domain details
+			$obj_domain->action_update();
+
+
+
+
+			/*
+				Update/Create Domain Records
+			*/
+
+
+			// fetch all DNS records
+			$obj_domain->load_data();
+			$obj_domain->load_data_record_all();
+
+			// update records
+			foreach ($data["records"] as $record)
+			{
+				$obj_record		= New domain_records;
+					
+				$obj_record->id		= $obj_domain->id;
+				$obj_record->data	= $obj_domain->data;		// copy domain data from existing object to save time & SQL queries
+
+
+				/*
+					Update record
+				*/
+
+				log_write("debug", "process", "Updating record ". $record["id"] ." due to changed details");
+		
+				$obj_record->data_record["name"]	= $record["name"];
+				$obj_record->data_record["type"]	= $record["type"];
+				$obj_record->data_record["content"]	= $record["content"];
+				$obj_record->data_record["ttl"]		= $record["ttl"];
+				$obj_record->data_record["prio"]	= $record["prio"];
+
+				$obj_record->action_update_record();
+
+			} // end for records
+
+
+			/*
+				Update serial & NS records
+			*/
+			$obj_domain->action_update_serial();
+			$obj_domain->action_update_ns();
+
+
+			// clear messages & replace with custom one
+			$_SESSION["notification"]["message"] = array("Domain imported successfully, configured nameservers will recieve the new configuration shortly.");
+
+
+
+			if (!error_check())
+			{
+				$sql_obj->trans_commit();
+			}
+			else
+			{
+				// error encountered
+				log_write("error", "process", "An unexpected error occured, the domain remains unchanged");
+
+				$sql_obj->trans_rollback();
+			}
+
+
+
+			/*
+				Handle Processing Errors
+			*/
+
+			if (error_check())
+			{
+				$_SESSION["error"]["form"]["domain_import"]	= "failed";
+
+				header("Location: ../index.php?page=domains/import.php&mode=2");
+				exit(0);
+			}
+
+
+
+			/*
+				Take the user to the domain page
+			*/
+
+			// return
+			header("Location: ../index.php?page=domains/view.php&id=". $obj_domain->id ."");
+			exit(0);
+
+			
+		} // if verification passed
 
 
 	} // end of mode 1 or 2

@@ -119,7 +119,6 @@ class page_output
 		
 
 
-
 			/*
 				Define form structure
 			*/
@@ -441,15 +440,26 @@ class page_output
 
 
 			// define submit subforms
-			$this->obj_form->subforms["hidden"]		= array("mode");
+			$this->obj_form->subforms["hidden"]		= array("mode", "num_records");
 			$this->obj_form->subforms["submit"]		= array("submit");
 
 
 			// import data
-			if (error_check())
+//			if (error_check())
+//			{
+//				$_SESSION["error"]["form"]["domain_import"] = "error";
+//				$this->obj_form->load_data_error();
+//			}
+
+			foreach (array_keys($this->obj_form->structure) as $fieldname)
 			{
-				$this->obj_form->load_data_error();
+				if (isset($_SESSION["error"][$fieldname]))
+				{
+					$this->obj_form->structure[$fieldname]["defaultvalue"] = $_SESSION["error"][$fieldname];
+				}
 			}
+
+
 
 
 		} // end of mode
@@ -460,7 +470,7 @@ class page_output
 	function render_html()
 	{
 		// title + summary
-		print "<h3>ADD NEW DOMAIN</h3><br>";
+		print "<h3>IMPORT DOMAIN</h3><br>";
 		print "<p>Use this page to import a domain from a legacy DNS platform. Upload the zonefile and NamedManager will match records as best as it can to allow them to be imported.</p>";
 
 	
