@@ -159,7 +159,7 @@ if (user_permissions_get("namedadmins"))
 
 
 		// verify name syntax
-		if ($data_tmp["name"] != "@" && !preg_match("/^[A-Za-z0-9.-]*$/", $data_tmp["name"]))
+		if ($data_tmp["name"] != "@" && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp["name"]))
 		{
 			log_write("error", "process", "Sorry, the value you have entered fo record ". $data_tmp["name"] ." contains invalid charactors");
 
