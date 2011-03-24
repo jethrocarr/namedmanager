@@ -489,6 +489,63 @@ function time_date_to_timestamp($date)
 
 
 /*
+	time_bind_to_seconds($bindtime)
+
+	Converts bind formatted time strings into seconds.
+
+	Values
+	bindtime	Format of:
+			#S == seconds
+			#M == minutes	60 seconds
+			#H == Hours	3600 seconds
+			#D == Days	86400 seconds
+			#W == Weeks	604800 seconds
+
+	Returns
+	int		number of seconds
+*/
+
+function time_bind_to_seconds($bindtime)
+{
+	log_write("debug", "misc", "Executing time_bind_to_seconds($bindtime)");
+
+	$bindtime = strtoupper($bindtime);
+
+	// this works by multiplying by the appropate amount and converting
+	// to an integer to strip the alpha characters.
+	//
+	switch (substr($bindtime, -1))
+	{
+		case "M":
+			$bindtime = intval($bindtime) * 60;
+		break;
+
+		case "H":
+			$bindtime = intval($bindtime) * 3600;
+		break;
+
+		case "D":
+			$bindtime = intval($bindtime) * 86400;
+		break;
+
+		case "W":
+			$bindtime = intval($bindtime) * 604800;
+		break;
+
+		case "S":
+		default:
+			intval($bindtime);
+		break;
+	}
+
+	return $bindtime;
+
+} // end of time_bind_to_seconds
+
+
+
+
+/*
 	time_format_hourmins($seconds)
 	
 	returns the number of hours, and the number of minutes in the form of H:MM
@@ -578,6 +635,7 @@ function time_format_humandate($date = NULL)
 		break;
 	}
 }
+
 
 
 /*
