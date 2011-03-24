@@ -34,7 +34,8 @@ $GLOBALS["config"]["schema_version"]		= "20100608";
 /*
 	Apply required PHP settings
 */
-ini_set('memory_limit', '64M');			// NamedManager can be a bit RAM hungry when displaying logs
+ini_set('memory_limit', '256M');		// NamedManager can be a bit RAM hungry, especially if debugging is enabled 
+						// (debugging == about 2-4x normal memory usage)
 
 
 
