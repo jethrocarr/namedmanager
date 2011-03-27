@@ -92,6 +92,7 @@ if (user_permissions_get("namedadmins"))
 		$data_tmp["type"]		= "MX";
 		$data_tmp["ttl"]		= @security_form_input_predefined("int", "record_mx_". $i ."_ttl", 0, "");
 		$data_tmp["prio"]		= @security_form_input_predefined("any", "record_mx_". $i ."_prio", 0, "");
+		$data_tmp["name"]		= @security_form_input_predefined("any", "record_mx_". $i ."_name", 0, "");
 		$data_tmp["content"]		= @security_form_input_predefined("any", "record_mx_". $i ."_content", 0, "");
 		$data_tmp["delete_undo"]	= @security_form_input_predefined("any", "record_mx_". $i ."_delete_undo", 0, "");
 		
@@ -99,6 +100,11 @@ if (user_permissions_get("namedadmins"))
 		/*
 			Process Raw Data
 		*/
+		if (empty($data_tmp["name"]))
+		{
+			$data_tmp["name"] = "@";
+		}
+
 		if ($data_tmp["id"] && $data_tmp["delete_undo"] == "true")
 		{
 			$data_tmp["mode"] = "delete";

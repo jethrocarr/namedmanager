@@ -268,6 +268,13 @@ class page_output
 			$this->obj_form->add_input($structure);
 
 			$structure = NULL;
+			$structure["fieldname"]		 	= "record_mx_". $i ."_name";
+			$structure["type"]			= "input";
+			$structure["options"]["width"]		= "300";
+			$structure["options"]["help"]		= "Origin (usually ". $this->obj_domain->data["domain_name"] .")";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
 			$structure["fieldname"] 		= "record_mx_". $i ."_content";
 			$structure["type"]			= "input";
 			$structure["options"]["help"]		= "FQDN or hostname of mail server";
@@ -297,6 +304,7 @@ class page_output
 			{
 				$this->obj_form->structure["record_mx_". $i ."_id"]["defaultvalue"]		= $record["id_record"];
 				$this->obj_form->structure["record_mx_". $i ."_prio"]["defaultvalue"]		= $record["prio"];
+				$this->obj_form->structure["record_mx_". $i ."_name"]["defaultvalue"]		= $record["name"];
 				$this->obj_form->structure["record_mx_". $i ."_content"]["defaultvalue"]	= $record["content"];
 				$this->obj_form->structure["record_mx_". $i ."_ttl"]["defaultvalue"]		= $record["ttl"];
 
@@ -570,7 +578,7 @@ class page_output
 		print "<tr class=\"table_highlight_info\">";
 			print "<td width=\"10%\"><b>". lang_trans("record_type") ."</b></td>";
 			print "<td width=\"15%\"><b>". lang_trans("record_ttl") ."</b></td>";
-			print "<td width=\"35%\"><b>". lang_trans("record_name") ."</b></td>";
+			print "<td width=\"35%\"><b>". lang_trans("record_origin") ."</b></td>";
 			print "<td width=\"35%\"><b>". lang_trans("record_content") ."</b></td>";
 			print "<td width=\"5%\">&nbsp;</td>";
 		print "</tr>";
@@ -643,7 +651,8 @@ class page_output
 		print "<tr class=\"table_highlight_info\">";
 			print "<td width=\"10%\"><b>". lang_trans("record_type") ."</b></td>";
 			print "<td width=\"15%\"><b>". lang_trans("record_ttl") ."</b></td>";
-			print "<td width=\"35%\"><b>". lang_trans("record_prio") ."</b></td>";
+			print "<td width=\"10%\"><b>". lang_trans("record_prio") ."</b></td>";
+			print "<td width=\"25%\"><b>". lang_trans("record_origin") ."</b></td>";
 			print "<td width=\"35%\"><b>". lang_trans("record_content") ."</b></td>";
 			print "<td width=\"5%\">&nbsp;</td>";
 		print "</tr>";
@@ -670,8 +679,12 @@ class page_output
 			$this->obj_form->render_field("record_mx_". $i ."_ttl");
 			print "</td>";
 
-			print "<td width=\"35%\" valign=\"top\">";
+			print "<td width=\"10%\" valign=\"top\">";
 			$this->obj_form->render_field("record_mx_". $i ."_prio");
+			print "</td>";
+
+			print "<td width=\"25%\" valign=\"top\">";
+			$this->obj_form->render_field("record_mx_". $i ."_name");
 			print "</td>";
 
 			print "<td width=\"35%\" valign=\"top\">";

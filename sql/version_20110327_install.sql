@@ -522,6 +522,7 @@ INSERT INTO `language` (`id`, `language`, `label`, `translation`) VALUES (NULL, 
 INSERT INTO `dns_record_types` (`id`, `type`, `user_selectable`, `is_standard`) VALUES (NULL, 'SRV', '1', '1');
 INSERT INTO `dns_record_types` (`id`, `type`, `user_selectable`, `is_standard`) VALUES (NULL, 'SPF', '1', '1');
 
+UPDATE dns_records SET name='@' WHERE type='MX' AND name='';
 
 --
 -- Set Schema Version
