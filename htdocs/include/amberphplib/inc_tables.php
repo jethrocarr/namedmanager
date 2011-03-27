@@ -735,7 +735,7 @@ class table
 				// label as Y or N. The render functions may perform further work such
 				// as displaying icons instead
 
-				if ($this->data[$row][$column])
+				if (!empty($this->data[$row][$column]))
 				{
 					$result = "Y";
 				}
@@ -799,11 +799,11 @@ class table
 			{
 				print "<div id=\"". $this->tablename ."_link\">";
 
-				print "<table width=\"100%\" class=\"table_options_dropdown\">";
-				print "<tr bgcolor=\"#666666\">";
+				print "<table class=\"table_options_dropdown\">";
+				print "<tr>";
 
-					print "<td width=\"100%\" onclick=\"obj_show('". $this->tablename ."_form'); obj_hide('". $this->tablename ."_link');\">";
-					print "<b style=\"color: #ffffff; text-decoration: none\">ADJUST TABLE OPTIONS &gt;&gt;</b>";
+					print "<td onclick=\"obj_show('". $this->tablename ."_form'); obj_hide('". $this->tablename ."_link');\">";
+					print "ADJUST TABLE OPTIONS &gt;&gt;";
 					print "</td>";
 
 				print "</tr>";
@@ -816,7 +816,7 @@ class table
 
 		// border table / div object
 		print "<div id=\"". $this->tablename ."_form\">";
-		print "<table width=\"100%\" style=\"border: 1px solid #666666;\" bgcolor=\"#e7e7e7\"><tr><td>";
+		print "<table class=\"table_options\"><tr><td>";
 
 
 		
@@ -907,7 +907,7 @@ class table
 		print "<table width=\"100%\"><tr>";
 	
 	
-		print "<td width=\"50%\" valign=\"top\"  style=\"padding: 4px; background-color: #e7e7e7;\">";
+		print "<td width=\"50%\" valign=\"top\"  style=\"padding: 4px;\">";
 			print "<b>Fields to display:</b><br><br>";
 
 			print "<table width=\"100%\">";
@@ -939,7 +939,7 @@ class table
 		*/
 		
 		
-		print "<td width=\"50%\" valign=\"top\" style=\"padding: 4px; background-color: #e7e7e7;\">";
+		print "<td width=\"50%\" valign=\"top\" style=\"padding: 4px;\">";
 			print "<b>Filter/Search Options:</b><br><br>";
 
 			print "<table width=\"100%\">";
@@ -968,7 +968,7 @@ class table
 		/* Order By Options */
 		if ($this->columns_order_options)
 		{
-			print "<td width=\"100%\" colspan=\"4\" valign=\"top\" style=\"padding: 4px; background-color: #e7e7e7;\">";
+			print "<td width=\"100%\" colspan=\"4\" valign=\"top\" style=\"padding: 4px;\">";
 
 				print "<br><b>Order By:</b><br>";
 
@@ -1013,7 +1013,7 @@ class table
 			Submit Row
 		*/
 		print "<tr>";
-		print "<td colspan=\"4\" valign=\"top\" style=\"padding: 4px; background-color: #e7e7e7;\">";
+		print "<td colspan=\"4\" valign=\"top\" style=\"padding: 4px;\">";
 	
 			print "<table>";
 			print "<tr><td>";
@@ -1134,7 +1134,8 @@ class table
 		// translate the column labels
 		$this->render_column_names();
 
-
+		$total_rows_incrementing = 0;
+		
 		// format data rows
 		for ($i=0; $i < $this->data_num_rows; $i++)
 		{
@@ -1379,7 +1380,7 @@ class table
 					*/
 
 					// if statements
-					if ($this->links[$link]["options"]["logic"]["if"])
+					if (!empty($this->links[$link]["options"]["logic"]["if"]))
 					{
 						foreach (array_keys($this->links[$link]["options"]["logic"]["if"]) as $logic)
 						{
@@ -1399,7 +1400,7 @@ class table
 					}
 
 					// if not statements
-					if ($this->links[$link]["options"]["logic"]["if_not"])
+					if (!empty($this->links[$link]["options"]["logic"]["if_not"]))
 					{
 						foreach (array_keys($this->links[$link]["options"]["logic"]["if_not"]) as $logic)
 						{
@@ -1548,7 +1549,7 @@ class table
 						*/
 
 						// if statements
-						if ($this->links[$link]["options"]["logic"]["if"])
+						if (isset($this->links[$link]["options"]["logic"]["if"]) && ($this->links[$link]["options"]["logic"]["if"] != NULL))
 						{
 							foreach (array_keys($this->links[$link]["options"]["logic"]["if"]) as $logic)
 							{
@@ -1568,7 +1569,7 @@ class table
 						}
 
 						// if not statements
-						if ($this->links[$link]["options"]["logic"]["if_not"])
+						if (isset($this->links[$link]["options"]["logic"]["if_not"]) && ($this->links[$link]["options"]["logic"]["if_not"] != NULL))
 						{
 							foreach (array_keys($this->links[$link]["options"]["logic"]["if_not"]) as $logic)
 							{
@@ -1725,14 +1726,14 @@ class table
 			// content for columns
 			foreach ($this->columns as $columns)
 			{
-				print "\"". $this->data_render[$i][$columns] ."\",";
+				print "\"". str_replace('"', '""',$this->data_render[$i][$columns]) ."\",";
 			}
 
 
 			// optional: row totals column
 			if ($this->total_rows)
 			{
-				print "\"". $this->data_render[$i]["total"] ."\",";
+				print "\"". str_replace('"', '""',$this->data_render[$i]["total"]) ."\",";
 			}
 	
 		}
@@ -1748,7 +1749,7 @@ class table
 				
 				if (in_array($column, $this->total_columns))
 				{
-					print $this->data_render["total"][$column];
+					print str_replace('"', '""',$this->data_render["total"][$column]);
 				}
 
 				print "\",";
@@ -1757,7 +1758,7 @@ class table
 			// optional: totals for rows
 			if ($this->total_rows)
 			{
-				print "\"". $this->data_render["total"]["total"] ."\",";
+				print "\"". str_replace('"', '""',$this->data_render["total"]["total"]) ."\",";
 			}
 
 			print "\n";
@@ -1960,10 +1961,6 @@ class table
 
 		// company logo
 		$template_pdf->prepare_add_file("company_logo", "png", "COMPANY_LOGO", 0);
-
-		// options
-		$template_pdf->prepare_add_field("", time_format_humandate($this->date_start));
-
 
 		// table name
 		$template_pdf->prepare_add_field("table_name", language_translate_string($this->language, $this->tablename));

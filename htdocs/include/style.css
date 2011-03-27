@@ -114,21 +114,29 @@ a:active {
 	Defines the style of the options dropdown
 */
 
-.table_options_dropdown {
-	border: 1px solid #000000;
-	border-spacing: 4px;
-	font-size: 12px;
+.table_options_dropdown 
+{
+	border-style: solid;
+	border-width: 1px;
+	border-color: #ffffff;
+	background-color: #fff298;
+	color: #000000
 }
 
-	.table_options_dropdown td {
-		padding: 8px;
-	}
+.table_options_dropdown:hover 
+{
+	background-color: #92dd90;
+}
 
+.table_options
+{
+	background-color: #e7e7e7;
+	border-style: solid;
+	border-width: 1px;
+	border-color: #666666;
+	width: 100%;
+}
 
-	.table_options_dropdown tr:hover {
-		padding: 8px;
-		background-color: #92dd90;
-	}
 
 
 
@@ -618,14 +626,11 @@ div[class*='toggle']
 	text-align:	center;
 }
 
-.helpmessage
-{
-	color:	#ABABAB;
-}
 
 /*logs page*/
 .new_row td
 {
-	display:		none;
+	display:        	none;
 	background-color:	#c3e5f1;
 }
+

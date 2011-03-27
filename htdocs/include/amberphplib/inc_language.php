@@ -42,7 +42,7 @@ function lang_trans($label)
 	{
 		// return cached label
 		//if user can edit translations, surround in {{}}
-		if ($_SESSION["user"]["translation"]=="show_all_translatable_fields")
+		if(isset($_SESSION["user"]["translation"]) && ($_SESSION["user"]["translation"] == "show_all_translatable_fields"))
 		{
 			return "{{".$GLOBALS["cache"]["lang"][$label]."}} (".$label.")";
 		}
@@ -65,7 +65,7 @@ function lang_trans($label)
 
 			$GLOBALS["cache"]["lang"][ $label ] = $label;
 			//if translation mode is turned on, surround non-translated field with [[]]
-			if($_SESSION["user"]["translation"]=="show_all_translatable_fields" || $_SESSION["user"]["translation"]=="show_only_non-translated_fields")
+			if(isset($_SESSION["user"]["translation"]) && ($_SESSION["user"]["translation"]=="show_all_translatable_fields" || $_SESSION["user"]["translation"]=="show_only_non-translated_fields"))
 			{
 				return "[[".$label."]]";
 			}
@@ -161,7 +161,7 @@ function language_translate($language, $label_array)
 		if (isset($GLOBALS["cache"]["lang"][$label]))
 		{
 			//if user can edit translations, surround in {{}}
-			if ($_SESSION["user"]["translation"]=="show_all_translatable_fields")
+			if ( isset($_SESSION["user"]["translation"]) && ( $_SESSION["user"]["translation"]=="show_all_translatable_fields"))
 			{			
 				$result[$label] = "{{".$GLOBALS["cache"]["lang"][$label]."}} (".$label.")";
 			}
@@ -183,7 +183,7 @@ function language_translate($language, $label_array)
 				$GLOBALS["cache"]["lang"][ $label ] = $label;
 				
 				//if translation mode is turned on, surround non-translated field with [[]]
-				if($_SESSION["user"]["translation"]=="show_all_translatable_fields" || $_SESSION["user"]["translation"]=="show_only_non-translated_fields")
+				if ( isset($_SESSION["user"]["translation"]) && ($_SESSION["user"]["translation"]=="show_all_translatable_fields" || $_SESSION["user"]["translation"]=="show_only_non-translated_fields"))
 				{
 					$result[$label] = "[[".$label."]]";
 				}
@@ -263,7 +263,7 @@ function language_translate($language, $label_array)
 		if (!$result[$label])
 		{
 			//if translation mode is turned on, surround non-translated field with [[]]
-			if($_SESSION["user"]["translation"]=="show_all_translatable_fields" || $_SESSION["user"]["translation"]=="show_only_non-translated_fields")
+			if( isset($_SESSION["user"]["translation"]) && ($_SESSION["user"]["translation"]=="show_all_translatable_fields" || $_SESSION["user"]["translation"]=="show_only_non-translated_fields"))
 			{
 				$result[$label]			= "[[".$label."]]";
 			}
@@ -300,7 +300,7 @@ function language_translate_string($language, $label)
 	{
 		// return cached label
 		//if user can edit translations, surround in {{}}
-		if ($_SESSION["user"]["translation"]=="show_all_translatable_fields")
+		if (isset($_SESSION["user"]["translation"]) && ($_SESSION["user"]["translation"]=="show_all_translatable_fields"))
 		{
 			return "{{".$GLOBALS["cache"]["lang"][$label]."}} (".$label.")";
 		}
@@ -322,7 +322,7 @@ function language_translate_string($language, $label)
 			$GLOBALS["cache"]["lang"][ $label ] = $label;
 			
 			//if translation mode is turned on, surround non-translated field with [[]]
-			if($_SESSION["user"]["translation"]=="show_all_translatable_fields" || $_SESSION["user"]["translation"]=="show_only_non-translated_fields")
+			if(isset($_SESSION["user"]["translation"]) && ($_SESSION["user"]["translation"] == "show_all_translatable_fields" || $_SESSION["user"]["translation"] == "show_only_non-translated_fields"))
 			{
 				return "[[".$label."]]";
 			}

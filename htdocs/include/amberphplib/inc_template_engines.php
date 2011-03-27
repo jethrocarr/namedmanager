@@ -15,7 +15,7 @@
 
 
 /*
-	CLASS TEMPLATE_ENGINE
+	CLASS TEMPLATE_ENGINE 
 
 	Base clase used by all other render classes. Provides basic template loading
 	options as well as field replacement.
@@ -41,7 +41,7 @@ class template_engine
 		
 		// make sure we call the destructor on shutdown to cleanup all the tmp files.
 		register_shutdown_function(array(&$this, 'destructor'));
-        }
+    }
 
 	function destructor()
 	{
@@ -155,7 +155,7 @@ class template_engine
 		// we have to do this, since latex will not tolerate file extensions in the filename when
 		// the file is referenced in the tex data.
 		//
-		preg_match("/\S*\/(\S*).$file_extension$/", $tmp_filename, $matches);
+		preg_match("/\S*\/(\S*)$/", $tmp_filename, $matches);
 				
 		$tmp_filename_short = $matches[1];
 		
@@ -220,9 +220,6 @@ class template_engine
 	function process_template_loops($line, $data, $fieldname, $fieldnames, $level) {
 		// first loop through the parent fields
 		$line_array = array();
-		//if($fieldname == 'invoice_items') {
-		//	echo "<pre>".htmlentities(print_r($data, true), ENT_QUOTES)."</pre>";
-		//}
 		
 		for ($j=0; $j < count($data); $j++)
 		{	
@@ -231,7 +228,6 @@ class template_engine
 			{	
 				foreach($current_level[$fieldname] as $key => $current_level_part)
 				{
-					
 				 	if (preg_match("/^\S*\sif\s(\S*)\sne\sprevious\s-->/", $line, $matches))
 				 	{
 				 		$line_tmp = '';
@@ -246,7 +242,21 @@ class template_engine
 					 		$line_tmp = stristr($line, "<!-- endif -->");
 				 		}
 				 		$line_tmp = str_replace("<!-- endif -->", '', $line_tmp);
-						//echo "<pre>".htmlentities(print_r($line_tmp, true), ENT_QUOTES)."</pre>";
+				 	}
+				 	else if (preg_match("/^\S*\sif\s(\S*)/", $line, $matches))
+				 	{
+				 		$line_tmp = '';
+				 		$match = $matches[1];
+				 		if($current_level_part[$match] != '')
+				 		{
+						 	$line_tmp = str_replace($matches[0], '', $line);
+						 	
+				 		}
+				 		else
+				 		{	// only print what is after the endif
+					 		$line_tmp = stristr($line, "<!-- endif -->");
+				 		}
+				 		$line_tmp = str_replace("<!-- endif -->", '', $line_tmp);
 				 	}
 				 	else
 				 	{
@@ -266,16 +276,22 @@ class template_engine
 					{
 						$line_tmp = str_replace("($var)", $this->data[$var], $line_tmp);
 					}
+					
+				
+					// And we also need to match any files, as well.
+					foreach (array_keys($this->data_files) as $var)
+					{
+						$line_tmp = str_replace("($var)", $this->data_files[$var]["filename_short"], $line_tmp);
+					}
+					
 					$line_array[$j][] = $line_tmp;
 				}
-			//echo "<pre>".htmlentities(print_r($line_array, true), ENT_QUOTES)."</pre>";
 			}
 			else
 			{	
 				if(isset($current_level[$fieldnames[$level]]))
 				{
 					$inner_line_array = $this->process_template_loops($line, $current_level[$fieldnames[$level]], $fieldname, $fieldnames, $level+1);
-					//echo "<pre>".htmlentities(print_r($inner_line_array, true), ENT_QUOTES)."</pre>";
 					$line_array[$j][] = implode("\n",$inner_line_array);
 				}
 			}
@@ -298,6 +314,7 @@ class template_engine
 	{
 		log_debug("template_engine", "Executing prepare_filltemplate()");
 
+
 		$fieldname	= "";
 		$fieldnames = array(0 => '');
 		$repeated_processed_lines = array();
@@ -313,7 +330,6 @@ class template_engine
 			if ($in_foreach)
 			{
 				$current_fieldname = $fieldnames[$in_foreach];
-				//echo htmlentities($line, ENT_QUOTES)." - $in_foreach<br />";
 				
 				// check for loop end
 				if (preg_match("/^\S*\send\s($current_fieldname)/", $line))
@@ -364,7 +380,16 @@ class template_engine
 						$repeated_processed_line_sections = $this->process_template_loops($line, $this->data_array[$parent_fieldname], $fieldname, $fieldnames, 2);
 						for ($j=0; $j < count($this->data_array[$parent_fieldname]); $j++)
 						{
-							$repeated_processed_lines[$j] = array_merge($repeated_processed_lines[$j], $repeated_processed_line_sections[$j]);
+							if(empty($repeated_processed_lines[$j]))
+							{
+								$repeated_processed_lines[$j] = array();
+							}
+						
+							if(empty($repeated_processed_line_sections[$j]))
+							{
+								$repeated_processed_line_sections[$j] = array();
+							}
+							$repeated_processed_lines[$j] = array_merge((array)$repeated_processed_lines[$j], (array)$repeated_processed_line_sections[$j]);
 						}
 					
 					}
@@ -373,8 +398,25 @@ class template_engine
 						for ($j=0; $j < count($this->data_array[$fieldname]); $j++)
 						{
 							$line_tmp = $line;
+						
+						
+						 	if (preg_match("/^\S*\sif\s(\S*)\s-->/", $line, $matches))
+						 	{
+						 		$line_tmp = '';
+						 		$match = $matches[1];
+						 		if(($this->data[$match] != '') || ($this->data_array[$match][$j] != ''))
+						 		{
+								 	$line_tmp = str_replace($matches[0], '', $line);
+								 	
+						 		}
+						 		else
+						 		{	// only print what is after the endif
+							 		$line_tmp = stristr($line, "<!-- endif -->");
+						 		}
+						 		$line_tmp = str_replace("<!-- endif -->", '', $line_tmp);
+						 	}
 
-							$line_tmp = preg_replace("/^\S*\s/", "", $line);
+							$line_tmp = preg_replace("/^\S*\s/", "", $line_tmp);
 							// run through the loop items
 							foreach (array_keys($this->data_array[$fieldname][$j]) as $var)
 							{
@@ -387,6 +429,14 @@ class template_engine
 							{
 								$line_tmp = str_replace("($var)", $this->data[$var], $line_tmp);
 							}
+						
+						
+							// And we also need to match any files, as well.
+							foreach (array_keys($this->data_files) as $var)
+							{
+								$line_tmp = str_replace("($var)", $this->data_files[$var]["filename_short"], $line_tmp);
+							}
+							
 							
 							// append the rows to the processed item array
 							$repeated_processed_lines[$j][] = $line_tmp; 
@@ -404,8 +454,9 @@ class template_engine
 				if (preg_match("/^\S*\send/", $line))
 				{
 					$in_if = 0;
+					$execute_if = 0;
 				}
-				else
+				else if($execute_if == 1)
 				{
 					// remove commenting from the front of the line
 					$line_tmp = preg_replace("/^\S*\s/", "", $line);
@@ -451,17 +502,19 @@ class template_engine
 				{
 					// check for if loop
 					$fieldname = $matches[1];
-
 					log_debug("template_engine","Processing if field $fieldname");
 
-					if ($this->data[$fieldname] || $this->data_files[$fieldname])
+					if (!empty($this->data[$fieldname]) && (trim($this->data[$fieldname]) != '') || (!empty($this->data_files[$fieldname]) && (trim($this->data_files[$fieldname]) != '')))
 					{
-						log_debug("template_engine", "File $fieldname has been set, processing optional lines.");
+						log_debug("template_engine", "Value or file $fieldname has been set, processing optional lines.");
 						$in_if = 1;
+						$execute_if = 1;
 					}
 					else
 					{
-						log_debug("template_engine", "File $fieldname has not been set, so will not display if section of template");
+						log_debug("template_engine", "File $fieldname has not been set, so will not display if section of template");	
+						$in_if = 1;
+						$execute_if = 0;					
 					}
 				}
 				else
@@ -473,7 +526,7 @@ class template_engine
 					{
 						foreach (array_keys($this->data) as $var)
 						{
-							$line_tmp = str_replace("($var)", $this->data[$var], $line_tmp);
+							$line_tmp = str_replace("($var)", trim($this->data[$var]), $line_tmp);
 						}
 					}
 
@@ -523,12 +576,11 @@ class template_engine_latex extends template_engine
 	*/
 	function prepare_escape_fields()
 	{
-		log_debug("template_engine_latex", "Executing prepare_escape_fields()");
+		log_debug("template_engine_latex", "Executing prepare_escape_fields()");  
 
-		$target		= array('/%/', '/_/', '/\$/', '/&/', '/#/', '/€/');
-		$replace	= array('\%', '\_', '\\\$', '/\&/', '/\#/', '\euro{}');
-
-
+		$target		= array('/\\\/','/\{/','/\}/','/\^/', '/%/', '/_/', '/\$/', '/&/', '/#/','/~/', '/€/');
+		$replace	= array('\textbackslash','\{','\}','\textasciicircum','\%', '\_', '\\\$', '\&', '\#','\textasciitilde', '\euro{}');
+ 
 		// escape single fields
 		if ($this->data)
 		{
@@ -566,9 +618,66 @@ class template_engine_latex extends template_engine
 				}
 			}
 		}
-			
+		//exit("<pre>".print_r($this->data_array, true)."</pre>");
 	} // end of prepare_escape_fields
 
+	/*
+		prepare_add_file
+
+		Add a new file to the template. Latex version, returns filename with no extension
+
+		Values
+		fieldname		name of the field to replace with the tmp filename
+		file_extension		extension of the file to create
+		
+		file_type		type of the file in the file_uploads table
+		file_id			ID of the file in the file_uploads table
+
+		Return
+		0			failure
+		1			success
+	*/
+	function prepare_add_file($fieldname, $file_extension, $file_type, $file_id)
+	{
+		log_debug("template_engine", "Executing prepare_add_file($fieldname, $file_extension, $file_type, $file_id)");
+		
+		
+		$tmp_filename = file_generate_name("/tmp/$fieldname", $file_extension);
+
+		
+		// output file data
+		$file_obj			= New file_storage;
+		$file_obj->data["type"]		= $file_type;
+		$file_obj->data["customid"]	= $file_id;
+
+		if (!$file_obj->load_data_bytype())
+		{
+			log_write("error", "template_engine", "Unable to find company logo image - use the administration config page to upload a company logo");
+			return 0;
+		}
+
+		$file_obj->filedata_write($tmp_filename);
+
+
+		// work out the filename without path or extension
+		//
+		// we have to do this, since latex will not tolerate file extensions in the filename when
+		// the file is referenced in the tex data.
+		//
+		preg_match("/\S*\/(\S*).$file_extension$/", $tmp_filename, $matches);
+				
+		$tmp_filename_short = $matches[1];
+		
+
+		// map fieldname to filename
+		$this->data_files[$fieldname]["filename"]	= $tmp_filename;
+		$this->data_files[$fieldname]["filename_short"]	= $tmp_filename_short;
+
+		log_debug("template_engine", "Wrote tempory file $tmp_filename with shortname of $tmp_filename_short");
+		
+		return 1;
+	}
+	
 
 	/*
 		generate_pdf()
@@ -755,7 +864,7 @@ class template_engine_htmltopdf extends template_engine
 			foreach (array_keys($this->data) as $var)
 			{
 				$this->data[$var] = htmlentities($this->data[$var], ENT_QUOTES, "UTF-8");
-				$this->data[$var] = nl2br($this->data[$var], true);
+				$this->data[$var] = str_replace("\n", "<br />", $this->data[$var]);
 			}
 		}
 
@@ -767,12 +876,10 @@ class template_engine_htmltopdf extends template_engine
 			{
 				for ($j=0; $j < count($this->data_array[$fieldname]); $j++)
 				{
-					$line_tmp = $line;
-						
 					foreach (array_keys($this->data_array[$fieldname][$j]) as $var)
 					{
 						$this->data_array[$fieldname][$j][$var] = htmlentities($this->data_array[$fieldname][$j][$var], ENT_QUOTES, "UTF-8");
-						$this->data_array[$fieldname][$j][$var] = nl2br($this->data_array[$fieldname][$j][$var], true);
+						$this->data_array[$fieldname][$j][$var] = str_replace("\n", "<br />", $this->data_array[$fieldname][$j][$var]); 
 					}
 				}
 			}
@@ -801,7 +908,7 @@ class template_engine_htmltopdf extends template_engine
 
 	function fillter_template_data()
 	{
-		$page_row_count = 32;
+		$page_row_count = 30;
 		
 		$i = 0;
 		$this->data_array['invoice_pages'] = array();
@@ -871,7 +978,7 @@ class template_engine_htmltopdf extends template_engine
 	function generate_pdf()
 	{
 		log_debug("template_engine_htmltopdf", "Executing generate_pdf()");
-
+		//unset($_SESSION);
 
 		/*
 			Generate temporary file for template
@@ -879,7 +986,8 @@ class template_engine_htmltopdf extends template_engine
 
 		// generate unique tmp filename
 		$tmp_filename = file_generate_name("/tmp/amberdms_billing_system");
-
+		
+		
 		// write out template data
 		if (!$handle = fopen("$tmp_filename.html", "w"))
 		{	
@@ -887,18 +995,16 @@ class template_engine_htmltopdf extends template_engine
 			return 0;
 		}
 		
-		$directory_prefix = $tmp_filename."_";
-		//$directory_prefix = "https://devel-web-tom.local.amberdms.com/development/amberdms/billing_system/htdocs/templates/ar_invoice/ar_invoice_htmltopdf_telcosolarix/";
+		$directory_prefix = $tmp_filename."_"; 
+		//$directory_prefix = "https://devel-web-tom.local.amberdms.com/development/amberdms/oss-amberdms-bs/trunk/templates/ar_invoice/ar_invoice_htmltopdf_telcostyle/";
 		
 		foreach((array)$this->processed as $key => $processed_row)
 		{	
 			$this->processed[$key] = str_replace("(tmp_filename)", $directory_prefix, $processed_row);
 		}
-		
-		
-		//exit("<pre>".print_r($this->data_array,true)."</pre>");
-		//exit(implode("",$this->processed));
-
+		//print(implode("",$this->processed));
+		//log_debug_render();
+		//exit();
 		foreach ($this->processed as $line)
 		{
 			if (fwrite($handle, $line) === FALSE)
@@ -907,7 +1013,7 @@ class template_engine_htmltopdf extends template_engine
 				return 0;
 			}
 		}
-
+ 
 		fclose($handle);
 
 
@@ -925,13 +1031,8 @@ class template_engine_htmltopdf extends template_engine
 		foreach((array) $data_directory_items as $data_dir_file) {
 			$filename = basename($data_dir_file);
 			$new_file_path =  $tmp_data_directory."/".$filename;
-			//echo $new_file_path."<br />";
 			copy($data_dir_file, $new_file_path);
 		}
-				
-		//print("<pre>".print_r($data_directory_items,true)."</pre>");
-		//exit("<pre>".print_r(glob($tmp_data_directory."/*"),true)."</pre>");
-		
 																				
 
 		/*
@@ -970,11 +1071,11 @@ class template_engine_htmltopdf extends template_engine
 			$this->output = file_get_contents("$tmp_filename.pdf");
 
 			// remove temporary files from disk
-			unlink("$tmp_filename");
-			unlink("$tmp_filename.aux");
-			unlink("$tmp_filename.log");
-			unlink("$tmp_filename.html");
-			unlink("$tmp_filename.pdf");
+			@ unlink("$tmp_filename");
+			@ unlink("$tmp_filename.aux");
+			@ unlink("$tmp_filename.log");
+			@ unlink("$tmp_filename.html");
+			@ unlink("$tmp_filename.pdf");
 
 			// cleanup texlive home directory
 			system("rm -rf ". $tmp_filename ."_html_data");

@@ -366,11 +366,6 @@ class sql_query
 		
 		if ($this->db_resource)
 		{
-			// clear out data fields to prevent problems when re-using sessions
-			$this->data		= array();
-			$this->data_num_rows	= NULL;
-
-			// fetch data
 			while ($mysql_data = mysql_fetch_array($this->db_resource))
 			{
 				$this->data[] = $mysql_data;
@@ -602,6 +597,7 @@ class sql_query
 		for ($i=0; $i < $num_values; $i++)
 		{
 			$fieldname = $this->sql_structure["fields"][$i];
+			
 
 			if (isset($this->sql_structure["field_dbnames"][$fieldname]))
 			{
@@ -743,6 +739,7 @@ class sql_query
 		
 		$this->sql_structure["fields"][] = "$fieldname";
 	}
+	
 
 	/*
 		prepare_sql_addjoin($joinquery)
@@ -973,11 +970,6 @@ function sql_get_singlerow($string)
 
 	// so many bugs are caused by forgetting to request fields from the DB as "value", so
 	// this function has been added.
-	if (!strstr($string, 'value'))
-	{
-		die("Error: SQL queries to sql_get_singlevalue must request the field with the name of \"value\". Eg: \"SELECT name as value FROM mytable WHERE id=foo\"");
-	}
-
 	if (isset($GLOBALS["cache"]["sql"][$string]))
 	{
 		log_write("sql", "sql_query", "Fetching results from cache");
@@ -998,9 +990,7 @@ function sql_get_singlerow($string)
 		else
 		{
 			$sql_obj->fetch_array();
-
 			$GLOBALS["cache"]["sql"][$string] = $sql_obj->data[0];
-
 			return $sql_obj->data[0];
 		}
 	}
@@ -1010,14 +1000,15 @@ function sql_get_singlerow($string)
 
 /*
 	sql_get_singlecol($string)
-	
-	Fetches a single column from the database and returns it an an array
 
-	This function has inbuilt caching and will record all values returned in the $GLOBALS array.
+	Fetches a single value from the database and returns it. This function has inbuilt caching
+	and will record all values returned in the $GLOBALS array.
+
+	This function is ideal for fetching a single row of a table.
 
 	Return codes:
 	0	failure
-	array	single-level array of results
+	?	data desired
 */
 function sql_get_singlecol($string)
 {
@@ -1025,11 +1016,6 @@ function sql_get_singlecol($string)
 
 	// so many bugs are caused by forgetting to request fields from the DB as "value", so
 	// this function has been added.
-	if (!strstr($string, 'value'))
-	{
-		die("Error: SQL queries to sql_get_singlecol must request the field with the name of \"value\". Eg: \"SELECT name as value FROM mytable WHERE id=foo\"");
-	}
-
 	if (isset($GLOBALS["cache"]["sql"][$string]))
 	{
 		log_write("sql", "sql_query", "Fetching results from cache");
@@ -1049,17 +1035,13 @@ function sql_get_singlecol($string)
 		}
 		else
 		{
-			$sql_obj->fetch_array();
-
+		
+			$sql_obj->fetch_array($sql_obj->data);
 			$column = array();
-
-			foreach($sql_obj->data as $row)
-			{
-				$column[] = $row["value"];
+			foreach($sql_obj->data as $row) {
+				$column[] = $row['col'];
 			}
-
 			$GLOBALS["cache"]["sql"][$string] = $column;
-
 			return $column;
 		}
 	}
