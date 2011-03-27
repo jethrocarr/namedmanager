@@ -1000,15 +1000,14 @@ function sql_get_singlerow($string)
 
 /*
 	sql_get_singlecol($string)
+	
+	Fetches a single column from the database and returns it an an array
 
-	Fetches a single value from the database and returns it. This function has inbuilt caching
-	and will record all values returned in the $GLOBALS array.
-
-	This function is ideal for fetching a single row of a table.
+	This function has inbuilt caching and will record all values returned in the $GLOBALS array.
 
 	Return codes:
 	0	failure
-	?	data desired
+	array	single-level array of results
 */
 function sql_get_singlecol($string)
 {
@@ -1016,6 +1015,11 @@ function sql_get_singlecol($string)
 
 	// so many bugs are caused by forgetting to request fields from the DB as "value", so
 	// this function has been added.
+	if (!strstr($string, 'value'))
+	{
+		die("Error: SQL queries to sql_get_singlecol must request the field with the name of \"value\". Eg: \"SELECT name as value FROM mytable WHERE id=foo\"");
+	}
+
 	if (isset($GLOBALS["cache"]["sql"][$string]))
 	{
 		log_write("sql", "sql_query", "Fetching results from cache");
@@ -1035,13 +1039,17 @@ function sql_get_singlecol($string)
 		}
 		else
 		{
-		
-			$sql_obj->fetch_array($sql_obj->data);
+			$sql_obj->fetch_array();
+
 			$column = array();
-			foreach($sql_obj->data as $row) {
-				$column[] = $row['col'];
+
+			foreach($sql_obj->data as $row)
+			{
+				$column[] = $row["value"];
 			}
+
 			$GLOBALS["cache"]["sql"][$string] = $column;
+
 			return $column;
 		}
 	}
