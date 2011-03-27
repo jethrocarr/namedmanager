@@ -341,18 +341,20 @@ class bind_api extends soap_api
 		{
 			if ($record["record_type"] == "NS")
 			{
-				fwrite($fh, "@\t\t\t". $record["record_ttl"] ." IN NS ". $record["record_content"] );
+				// handle origin and content format
+				if (preg_match("/\./", $record["record_content"]))
+				{
+					$record["record_content"]	= $record["record_content"] .".";
+				}
 
-				if (preg_match("/./", $record["record_content"]))
+				if (preg_match("/\./", $record["record_name"]))
 				{
-					// FQDN
-					fwrite($fh, ".\n");
+					$record["record_name"]		= $record["record_name"] .".";
 				}
-				else
-				{
-					// non-FQND
-					fwrite($fh, "\n");
-				}
+
+
+				// write line
+				fwrite($fh, "". $record["record_name"] ."\t". $record["record_ttl"] ." IN NS ". $record["record_content"] ."\n");
 			}
 		}
 
@@ -366,18 +368,19 @@ class bind_api extends soap_api
 		{
 			if ($record["record_type"] == "MX")
 			{
-				fwrite($fh, "@\t\t\t". $record["record_ttl"] ." IN MX ". $record["record_prio"] ." ". $record["record_content"] ."");
+				// handle origin and content format
+				if (preg_match("/\./", $record["record_content"]))
+				{
+					$record["record_content"]	= $record["record_content"] .".";
+				}
 
-				if (preg_match("/./", $record["record_content"]))
+				if (preg_match("/\./", $record["record_name"]))
 				{
-					// FQDN
-					fwrite($fh, ".\n");
+					$record["record_name"]		= $record["record_name"] .".";
 				}
-				else
-				{
-					// non-FQND
-					fwrite($fh, "\n");
-				}
+
+				// write line
+				fwrite($fh, "".$record["record_name"] ."\t". $record["record_ttl"] ." IN MX ". $record["record_prio"] ." ". $record["record_content"] ."\n");
 			}
 		}
 
