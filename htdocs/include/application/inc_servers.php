@@ -164,17 +164,6 @@ class name_server
 
 		$this->id = $sql_obj->fetch_insert_id();
 
-
-		// add entry for the server to the versions table for all domains
-		$obj_domain			= New domain;
-		$obj_domain->load_data_all();
-
-		foreach ($obj_domain->data as $data_domain)
-		{
-			$sql_obj->string	= "INSERT INTO `api_domains_versions` (id_domain, id_name_server, status, serial_domain) VALUES ('". $data_domain["id"] ."', '". $this->id ."', 'active', '". $data_domain["soa_serial"] ."')";
-			$sql_obj->execute();
-		}
-
 		// assign the server to the domains
 		return $this->id;
 
