@@ -292,7 +292,7 @@ if (user_permissions_get("namedadmins"))
 									if (preg_match("/^(\S*)\s(\S*)\s*IN/", $line, $matches))
 									{
 										// orgin/name
-										$data_tmp["name"]		= $matches[1];
+										$data_tmp["name"]		= rtrim($matches[1], ".");
 
 										// TTL
 										if ($matches[2])
@@ -322,10 +322,11 @@ if (user_permissions_get("namedadmins"))
 
 											if ($obj_sql->num_rows())
 											{
-												// matches - nothing TODO here
+												// nameserver matches one of the standard nameservers, we
+												// should not import this to prevent duplication.
 												log_write("debug", "process", "NS record matches domain orgin, no need to add it as a custom record");
 
-												next;
+												continue;
 											}
 										}
 									}
@@ -364,13 +365,9 @@ if (user_permissions_get("namedadmins"))
 
 									if (preg_match("/^(\S*)\s(\S*)\s*IN/", $line, $matches))
 									{
-										//
-										// we don't care about the origin, as this is always
-										// going to be the same as the domain itself.
-										//
-										// (from a NamedManager POV at least)
-										//
-										// $data_tmp["origin"]		= $matches[1];
+										// usually the origin will be for the same domain, but
+										// this is not always the case.
+										$data_tmp["name"]		= rtrim($matches[1], ".");
 
 										// TTL
 										if ($matches[2])
@@ -820,6 +817,8 @@ if (user_permissions_get("namedadmins"))
 			// update domain details
 			$obj_domain->action_update();
 
+			// update nameserver
+			$obj_domain->action_update_ns();
 
 
 
@@ -859,10 +858,9 @@ if (user_permissions_get("namedadmins"))
 
 
 			/*
-				Update serial & NS records
+				Update domain serial
 			*/
 			$obj_domain->action_update_serial();
-			$obj_domain->action_update_ns();
 
 
 			// clear messages & replace with custom one

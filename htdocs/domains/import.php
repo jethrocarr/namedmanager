@@ -345,6 +345,75 @@ class page_output
 
 
 
+				// draw pre-defined nameserver records
+				$obj_sql		= New sql_query;
+				$obj_sql->string	= "SELECT server_name FROM name_servers";
+				$obj_sql->execute();
+
+				if ($obj_sql->num_rows())
+				{
+					$obj_sql->fetch_array();
+
+					$i = 0;
+
+					foreach ($obj_sql->data as $data_ns)
+					{
+						$i++;
+
+						// record form items
+						$structure = NULL;
+						$structure["fieldname"]				= "ns_". $i ."_type";
+						$structure["type"]				= "text";
+						$structure["defaultvalue"]			= "NS";
+						$this->obj_form->add_input($structure);
+
+						$structure = NULL;
+						$structure["fieldname"]				= "ns_". $i ."_ttl";
+						$structure["type"]				= "text";
+						$structure["defaultvalue"]			= $GLOBALS["config"]["DEFAULT_TTL_NS"];
+						$this->obj_form->add_input($structure);
+
+						$structure = NULL;
+						$structure["fieldname"]				= "ns_". $i ."_prio";
+						$structure["type"]				= "text";
+						$structure["defaultvalue"]			= "";
+						$this->obj_form->add_input($structure);
+
+						$structure = NULL;
+						$structure["fieldname"]				= "ns_". $i ."_name";
+						$structure["type"]				= "text";
+						$structure["defaultvalue"]			= "@";
+						$this->obj_form->add_input($structure);
+
+						$structure = NULL;
+						$structure["fieldname"]				= "ns_". $i ."_content";
+						$structure["type"]				= "text";
+						$structure["defaultvalue"]			= $data_ns["server_name"];
+						$this->obj_form->add_input($structure);
+
+						$structure = NULL;
+						$structure["fieldname"]				= "ns_". $i ."_import";
+						$structure["type"]				= "checkbox";
+						$structure["defaultvalue"]			= "on";
+						$structure["options"]["disabled"]		= "yes";
+						$structure["options"]["label"]			= "Import";
+						$this->obj_form->add_input($structure);
+
+			
+						// domain records
+						$this->obj_form->subforms["domain_records"][]				= "ns_".$i;
+
+						$this->obj_form->subforms_grouped["domain_records"]["ns_".$i ][]	= "ns_". $i ."_type";
+						$this->obj_form->subforms_grouped["domain_records"]["ns_".$i ][]	= "ns_". $i ."_ttl";
+						$this->obj_form->subforms_grouped["domain_records"]["ns_".$i ][]	= "ns_". $i ."_prio";
+						$this->obj_form->subforms_grouped["domain_records"]["ns_".$i ][]	= "ns_". $i ."_name";
+						$this->obj_form->subforms_grouped["domain_records"]["ns_".$i ][]	= "ns_". $i ."_content";
+						$this->obj_form->subforms_grouped["domain_records"]["ns_".$i ][]	= "ns_". $i ."_import";
+
+					}
+
+				} // end of pre-defined nameserver loop
+
 
 
 				// loop through imported records and create form structure
@@ -455,7 +524,7 @@ class page_output
 			{
 				if (isset($_SESSION["error"][$fieldname]))
 				{
-					$this->obj_form->structure[$fieldname]["defaultvalue"] = $_SESSION["error"][$fieldname];
+					$this->obj_form->structure[$fieldname]["defaultvalue"] = stripslashes($_SESSION["error"][$fieldname]);
 				}
 			}
 
