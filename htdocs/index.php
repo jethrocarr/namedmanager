@@ -111,7 +111,7 @@ else
 <head>
 	<title>NamedManager</title>
 	<meta name="copyright" content="(C)Copyright 2010 Amberdms Ltd">
-
+	<link rel="shortcut icon" href="images/namedmanager.ico" />
 
 <?php
 	// include base CSS file
