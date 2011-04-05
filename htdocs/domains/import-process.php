@@ -423,22 +423,21 @@ if (user_permissions_get("namedadmins"))
 									}
 
 									// content information
-									if (preg_match("/\sCNAME\s([0-9]*)\s(\S*)$/", $line, $matches))
+									if (preg_match("/\sCNAME\s(\S*)$/", $line, $matches))
 									{
-										$data_tmp["prio"]		= $matches[1];
-										$data_tmp["content"]		= rtrim($matches[2], ".");
+										$data_tmp["content"]		= rtrim($matches[1], ".");
 									}
 
 
 									// verify required fields provided
-									if (!$data_tmp["prio"] || !$data_tmp["content"])
+									if (!$data_tmp["name"] || !$data_tmp["content"])
 									{
 										log_write("warning", "process", "Unable to process line \"$line\"");
 									}
 									else
 									{
 										// success
-										log_write("debug", "process", "Added new MX record");
+										log_write("debug", "process", "Added new CNAME record");
 
 										// add to data structure
 										$data["records"][] = $data_tmp;
