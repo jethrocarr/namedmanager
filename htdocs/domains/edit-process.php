@@ -98,7 +98,7 @@ if (user_permissions_get('namedadmins'))
 			// if no description, set to original IP
 			if (!$obj_domain->data["domain_description"])
 			{
-				$obj_domain->data["domain_description"] = "Reverse domain for range ". $obj_domain->data["ipv4_network"] ." with subnet of /". $obj_domain->data["ipv4_subnet"] ."";
+				$obj_domain->data["domain_description"] = "Reverse domain for range ". $obj_domain->data["ipv4_network"] ."";
 			}
 		}
 

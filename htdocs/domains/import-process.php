@@ -76,7 +76,12 @@ if (user_permissions_get("namedadmins"))
 
 		// store all the domain information in the data array to be
 		// passed back to the user form.
-		$data = array();
+		$data				= array();	// valid record rows
+		$data["unmatched"]		= array();	// unmatched record rows
+
+
+		// pre-load dns record types
+		$domain_record_types		= sql_get_singlecol("SELECT type as value FROM dns_record_types");
 
 
 		switch ($import_upload_type)
@@ -103,6 +108,9 @@ if (user_permissions_get("namedadmins"))
 					{
 						// strip newline
 						$line = rtrim($line);
+
+						// retain orig
+						$line_orig = $line;
 
 						// strip whitespace to 1 char
 						$line = preg_replace("/\s\s*/", " ", $line);
@@ -145,7 +153,16 @@ if (user_permissions_get("namedadmins"))
 						{
 							log_write("debug", "process", "Header: TTL: ". $matches[1] ."");
 
-							$data["domain_ttl"] = $matches[1];
+
+							if (empty($data["domain_ttl"]))
+							{
+								// set domain TTL
+								$data["domain_ttl"] = $matches[1];
+							}
+							
+							// there is already a domain TTL, any other TTL is the current TTL
+							// which applies to any records being added
+							$data["domain_ttl_current"] = $matches[1];
 						}
 
 
@@ -212,14 +229,15 @@ if (user_permissions_get("namedadmins"))
 									// fetch the administrator's email address
 									$data["soa_hostmaster"]		= rtrim($matches[3], ".");
 
+									// do a common guess that the first period should be converted to @
+									$data["soa_hostmaster"]		= preg_replace("/\./", "@", $data["soa_hostmaster"], 1);
+
 									// SOA record information
 									$data["soa_serial"]		= time_bind_to_seconds($matches[4]);
 									$data["soa_refresh"]		= time_bind_to_seconds($matches[5]);
 									$data["soa_retry"]		= time_bind_to_seconds($matches[6]);
 									$data["soa_expire"]		= time_bind_to_seconds($matches[7]);
 									$data["soa_default_ttl"]	= time_bind_to_seconds($matches[8]);
-
-									// TODO: handle alpha-date formations (eg: 15H, 1W, etc)
 								}
 								else
 								{
@@ -229,6 +247,28 @@ if (user_permissions_get("namedadmins"))
 						}
 
 
+						/*
+							Fix structure of zonefiles
+
+							We often see zone files lacking IN keyword which makes parsing more
+							difficult.
+
+							eg:
+							> something A 192.168.1.1
+							rather than
+							> something IN A 192.168.1.1
+
+							This bit of code tries to standardise the lines a bit more to make them
+							easier to parse.
+						*/
+
+						foreach ($domain_record_types as $domain_type)
+						{
+							if (preg_match("/\s$domain_type\s/", $line) && !preg_match("/\sIN\s/", $line))
+							{
+								$line = preg_replace("/\s$domain_type\s/", " IN $domain_type ", $line);
+							}
+						}
 
 
 						/*
@@ -254,10 +294,7 @@ if (user_permissions_get("namedadmins"))
 								www IN A 192.168.0.6
 						*/
 
-						if (preg_match("/\sIN\s(\S*)/", $line, $matches)
-							|| preg_match("/\s(CNAME)\s/", $line, $matches)
-							|| preg_match("/\s(PTR)\s/", $line, $matches)
-							|| preg_match("/^(NS)\s/", $line, $matches))
+						if (preg_match("/\sIN\s(\S*)/", $line, $matches))
 						{
 							switch ($matches[1])
 							{
@@ -278,6 +315,7 @@ if (user_permissions_get("namedadmins"))
 										eg:								
 										@ 86400 IN NS ns1.example.com
 										@ 86400 IN NS ns2.example.com.
+										IN NS ns1.example.com
 
 										There may also be NS entries for subdomains, for example:
 
@@ -299,6 +337,12 @@ if (user_permissions_get("namedadmins"))
 										{
 											$data_tmp["ttl"]	= $matches[2];
 										}
+									}
+
+									// default name if unspecified
+									if (!$data_tmp["name"])
+									{
+										$data_tmp["name"] = "@";
 									}
 
 
@@ -333,9 +377,11 @@ if (user_permissions_get("namedadmins"))
 
 
 									// verify required fields provided
-									if (!$data_tmp["name"] || !$data_tmp["content"])
+									if (!$data_tmp["content"])
 									{
 										log_write("warning", "process", "Unable to process line \"$line\"");
+
+										$data["unmatched"][] = "$line_orig";
 									}
 									else
 									{
@@ -376,6 +422,11 @@ if (user_permissions_get("namedadmins"))
 										}
 									}
 
+									if (!$data_tmp["name"])
+									{
+										$data_tmp["name"] = "@";
+									}
+
 
 									// content information
 									if (preg_match("/IN\s\MX\s([0-9]*)\s(\S*)$/", $line, $matches))
@@ -389,6 +440,8 @@ if (user_permissions_get("namedadmins"))
 									if (!$data_tmp["prio"] || !$data_tmp["content"])
 									{
 										log_write("warning", "process", "Unable to process line \"$line\"");
+										
+										$data["unmatched"][] = "$line_orig";
 									}
 									else
 									{
@@ -416,7 +469,7 @@ if (user_permissions_get("namedadmins"))
 									$data_tmp = array();
 									$data_tmp["type"]	= "CNAME";
 
-									if (preg_match("/^(\S*)\sCNAME/", $line, $matches))
+									if (preg_match("/^(\S*)\sIN\sCNAME/", $line, $matches))
 									{
 										// name
 										$data_tmp["name"]		= $matches[1];
@@ -433,6 +486,8 @@ if (user_permissions_get("namedadmins"))
 									if (!$data_tmp["name"] || !$data_tmp["content"])
 									{
 										log_write("warning", "process", "Unable to process line \"$line\"");
+										
+										$data["unmatched"][] = "$line_orig";
 									}
 									else
 									{
@@ -487,6 +542,13 @@ if (user_permissions_get("namedadmins"))
 									}
 
 
+									// TTL
+									if (empty($data_tmp["ttl"]))
+									{
+										$data_tmp["ttl"] = $data["domain_ttl_current"];
+									}
+
+
 									// content information
 									if (preg_match("/IN\s\S*\s([\S\s]*)$/", $line, $matches))
 									{
@@ -499,6 +561,8 @@ if (user_permissions_get("namedadmins"))
 									if (!$data_tmp["name"] || !$data_tmp["content"])
 									{
 										log_write("warning", "process", "Unable to process line \"$line\"");
+										
+										$data["unmatched"][] = "$line_orig";
 									}
 									else
 									{
@@ -516,6 +580,8 @@ if (user_permissions_get("namedadmins"))
 								default:
 									// unknown type
 									log_write("warning", "process", "Sorry, unable to process DNS record, type \"". $matches[1] ."\" is unknown.");
+									
+									$data["unmatched"][] = "$line_orig";
 								break;
 
 							} // end of record type processing
@@ -530,8 +596,6 @@ if (user_permissions_get("namedadmins"))
 						Domain Type Handling
 
 						We need to determine the type of the domain - whether it's standard/reverse.
-
-						// TODO: is this working?
 					*/
 
 					$data["domain_type"] == "domain_standard";
@@ -560,7 +624,7 @@ if (user_permissions_get("namedadmins"))
 						// strip the filename, minus extensions
 						$extension = format_file_extension($_FILES["import_upload_file"]["name"]);
 
-						if ($extension == "zone" || $extension == "arpa" || $extension == "rev")
+						if ($extension == "zone" || $extension == "rev")
 						{
 							$data["domain_name"]	= $_FILES["import_upload_file"]["name"];
 							$data["domain_name"]	= str_replace(".$extension", "", $data["domain_name"]);
@@ -569,15 +633,29 @@ if (user_permissions_get("namedadmins"))
 						{
 							$data["domain_name"]	= $_FILES["import_upload_file"]["name"];
 						}
+					}
 
 
-						// handle reverse domains
-						if ($data["domain_type"] == "domain_reverse_ipv4")
+					/*
+						Handle reverse domains network range determination
+
+						We can take the domain name and take the IPv4 information from it if possible.
+					*/
+					if ($data["domain_type"] == "domain_reverse_ipv4")
+					{
+						if (preg_match("/in-addr.arpa/", $data["domain_name"]))
 						{
-							if (preg_match("/([0-9][0-9]*.[0-9][0-9]*.[0-9][0-9]*.[0-9][0-9]*)/", $data["domain_name"], $matches))
-							{
-								$data["ipv4_network"] = $matches[1];
-							}
+							// in-addr.apra domains have the IP address in reverse, we need to flip.
+
+							$tmp	= str_replace('.in-addr.arpa', '', $data["domain_name"]);
+							$tmp	= explode(".", $tmp);
+
+							$data["ipv4_network"] = $tmp[2] .".". $tmp[1] .".". $tmp[0] .".0";
+						}
+						else
+						{
+							// default to assigning the network address to the domain name
+							$data["ipv4_network"] = $data["domain_name"];
 						}
 					}
 
@@ -693,9 +771,32 @@ if (user_permissions_get("namedadmins"))
 			// if no description, set to original IP
 			if (!$obj_domain->data["domain_description"])
 			{
-				$obj_domain->data["domain_description"] = "Reverse domain for range ". $obj_domain->data["ipv4_network"] ." with subnet of /". $obj_domain->data["ipv4_subnet"] ."";
+				$obj_domain->data["domain_description"] = "Reverse domain for range ". $obj_domain->data["ipv4_network"] ."";
 			}
 		}
+
+
+		/*
+			Verify domain name/IP
+		*/
+
+		if (!$obj_domain->verify_domain_name())
+		{
+			if (isset($obj_domain->data["ipv4_network"]))
+			{
+				log_write("error", "process", "The requested IP range already has reverse DNS entries!");
+
+				error_flag_field("ipv4_network");
+			}
+			else
+			{
+				log_write("error", "process", "The requested domain you are trying to add already exists!");
+
+				error_flag_field("domain_name");
+			}
+		}
+
+
 
 
 
@@ -757,28 +858,6 @@ if (user_permissions_get("namedadmins"))
 		$obj_domain->data["soa_retry"]				= security_form_input_predefined("int", "soa_retry", 1, "");
 		$obj_domain->data["soa_expire"]				= security_form_input_predefined("int", "soa_expire", 1, "");
 		$obj_domain->data["soa_default_ttl"]			= security_form_input_predefined("int", "soa_default_ttl", 1, "");
-
-
-
-		/*
-			Verify Data
-		*/
-
-		if (!$obj_domain->verify_domain_name())
-		{
-			if (isset($obj_domain->data["ipv4_network"]))
-			{
-				log_write("error", "process", "The requested IP range already has reverse DNS entries!");
-
-				error_flag_field("ipv4_network");
-			}
-			else
-			{
-				log_write("error", "process", "The requested domain you are trying to add already exists!");
-
-				error_flag_field("domain_name");
-			}
-		}
 
 
 

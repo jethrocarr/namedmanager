@@ -482,6 +482,62 @@ class page_output
 
 
 
+			/*
+				Unmatched Lines Report
+
+				Sadly it's not always possible to import *every* line of ever zone file out there - the styles can vary
+				by far too much to match at times.
+
+				We have a section of the form to display the records which do not match so that users are notified and thus
+				able to make corrections if needed.
+			*/
+
+			// subform header
+			$this->obj_form->subforms["unmatched_import"]	= array("unmatched_import_help", "unmatched_import_notice");
+
+			$structure = NULL;
+			$structure["fieldname"]		= "unmatched_import_help";
+			$structure["type"]		= "message";
+			$structure["defaultvalue"]	= "<p>". lang_trans("unmatched_import_help") ."</p>";
+			$this->obj_form->add_input($structure);
+
+
+			if (empty($_SESSION["error"]["unmatched"]))
+			{
+				// no unmatched rows
+				$structure = NULL;
+				$structure["fieldname"]				= "unmatched_import_notice";
+				$structure["type"]				= "message";
+				$structure["defaultvalue"]			= "<p>". lang_trans("import_notice_no_unmatched_rows")  ."</p>";
+				$structure["options"]["css_row_class"]		= "table_highlight_open";
+				$this->obj_form->add_input($structure);
+			}
+			else
+			{
+				// import notice
+				$structure = NULL;
+				$structure["fieldname"]				= "unmatched_import_notice";
+				$structure["type"]				= "message";
+				$structure["defaultvalue"]			= "<p>". lang_trans("import_notice_unmatched_rows")  ."</p>";
+				$structure["options"]["css_row_class"]		= "table_highlight_important";
+				$this->obj_form->add_input($structure);
+
+
+				// add all the unmatched rows
+				for ($i=0; $i < count($_SESSION["error"]["unmatched"]); $i++)
+				{
+					$this->obj_form->subforms["unmatched_import"][]	= "unmatched_row_$i";
+
+					$structure = NULL;
+					$structure["fieldname"]				= "unmatched_row_$i";
+					$structure["type"]				= "message";
+					$structure["defaultvalue"]			= "\"". $_SESSION["error"]["unmatched"][$i] ."\"";
+					$this->obj_form->add_input($structure);
+				}
+
+			} // end of unmatched lines loop
+
+
 
 			/*
 				Submission
