@@ -450,11 +450,47 @@ class bind_api extends soap_api
 		{
 			if (!in_array($record["record_type"], array("NS", "MX", "PTR", "CNAME", "SOA")))
 			{
-				if (preg_match("/\./", $record["record_name"]))
+				switch($record["record_type"])
 				{
-					$record["record_name"] .= ".";	// append . as FQDN
-				}
+					case "A":
+					case "AAAA":
+					case "SPF":
 
+						// Adjust to handle FQDN in name/origin
+						if (preg_match("/\./", $record["record_name"]))
+						{
+							$record["record_name"] .= ".";	// append . as FQDN
+						}
+
+					break;
+					
+					
+					case "SRV":
+
+						// Adjust to handle FQDN in name/origin
+						if (preg_match("/\./", $record["record_name"]))
+						{
+							$record["record_name"] .= ".";		// append . as FQDN
+						}
+
+						// Adjust to handle FQDN in server target
+						if (preg_match("/\./", $record["record_content"]))
+						{
+							$record["record_content"] .= ".";	// append . as FQDN
+						}
+					break;
+
+
+					case "TXT":
+						// nothing to do
+					break;
+
+					default:
+						// nothing to do
+					break;
+				}
+			
+				// write record
 				fwrite($fh, $record["record_name"] . "\t". $record["record_ttl"] ." IN ". $record["record_type"] ." ". $record["record_content"] ."\n");
 			}
 		}
@@ -462,45 +498,6 @@ class bind_api extends soap_api
 
 		// footer
 		fclose($fh);
-
-/*
-$ORIGIN .
-$TTL 1800	; 30 minutes
-
-local.jethrocarr.com	IN SOA	ns1.amberdms.com. support.local.amberdms.com. (
-				2010040301 ; serial
-				10800      ; refresh (3 hours)
-				900        ; retry (15 minutes)
-				604800     ; expire (1 week)
-				1800       ; minimum (30 minutes)
-				)
-
-			NS	ns1.amberdms.com.
-			NS	ns2.amberdms.com.
-
-			MX	10 pub-v1n1.local.jethrocarr.com.
-			MX	20 pub-v1n2.local.jethrocarr.com.
-
-bob			A	192.168.0.1
-christine		A	10.8.5.129
-crystal			A	10.8.5.134
-jessie			A	10.8.5.135
-lisa			A	10.8.5.136
-mitchell-bob		A	10.8.5.147
-mitchell-desktop	A	10.8.5.145
-mitchell-laptop		A	10.8.5.146
-phone-mobile-jethro1	A	10.8.5.150
-phone-mobile-jethro2	A	10.8.5.151
-phone-mobile-tom	A	10.8.5.152
-ps3			A	10.8.5.140
-sophie			A	10.8.5.201
-tim-desktop		A	10.8.5.137
-tom-desktop		A	10.8.5.138
-tom-laptop		A	10.8.5.139
-wifi-netgear		A	10.8.5.130
-*/
-
-
 
 		return 1;
 
