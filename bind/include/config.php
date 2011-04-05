@@ -1,10 +1,10 @@
 <?php
 /*
-	This is the master application configuration file for phpfreeradius
-	you should not make any changes here unless you are a developer.
+	This configuration file is the main configuration file for the bind
+	module of the NamedManager application.
 
-	For normal configuration, please see config-settings.php or copy
-	sample-config.php into place if it doesn't already exist.
+	No adjustments should be made here, all adustments should be made in the
+	associated config-settings.php file (or sometimes called config-bind.php)
 */
 
 $GLOBALS["config"] = array();
@@ -16,8 +16,8 @@ $GLOBALS["config"] = array();
 */
 
 // define the application details
-$GLOBALS["config"]["app_name"]			= "phpfreeradius";
-$GLOBALS["config"]["app_version"]		= "1.0.0_alpha_1";
+$GLOBALS["config"]["app_name"]			= "NamedManager";
+$GLOBALS["config"]["app_version"]		= "1.0.0_beta_1";
 
 
 /*
