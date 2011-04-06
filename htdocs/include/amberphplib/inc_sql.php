@@ -257,6 +257,11 @@ class sql_query
 		log_debug("sql_query", "Executing execute()");
 
 
+		// clear the object values to ensure clean operation if the
+		// object is re-used.
+		$this->data		= NULL;
+		$this->data_num_rows	= NULL;
+
 		// check whether or not to display transaction number
 		if (isset($GLOBALS["sql"]["transaction"]))
 		{
