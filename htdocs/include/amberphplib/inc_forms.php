@@ -1555,9 +1555,27 @@ class form_input
 							// grouped field
 							$num_fields = count ($this->subforms_grouped["domain_records"][$fieldname]);
 
+							// check for errors
+							$error = 0;
+
+							foreach ($this->subforms_grouped[$form_label][$fieldname] as $fieldname2)
+							{
+								if (isset($_SESSION["error"]["$fieldname2-error"]))
+								{
+									$error = 1;
+								}
+							}
+
 
 							// run through group members
-							print "<tr>";
+							if ($error)
+							{
+								print "<tr class=\"form_error\">";
+							}
+							else
+							{
+								print "<tr>";
+							}
 
 							foreach ($this->subforms_grouped["domain_records"][$fieldname] as $fieldname2)
 							{

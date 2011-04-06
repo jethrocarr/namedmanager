@@ -838,8 +838,123 @@ if (user_permissions_get("namedadmins"))
 			{
 				log_write("error", "process", "Sorry, the value you have entered for record ". $data_tmp["name"] ." contains invalid charactors");
 
-				error_flag_field("record_custom_". $i ."");
+				error_flag_field("record_". $i ."");
 			}
+
+			// validate content and name formatting per domain type
+			if (!empty($data_tmp["name"]))
+			{
+				switch ($data_tmp["type"])
+				{
+					case "A":
+						// validate IPv4
+						if (!preg_match("/^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:[.](?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$/", $data_tmp["content"]))
+						{
+							// invalid IP address
+							log_write("error", "process", "A record for ". $data_tmp["name"] ." did not validate as an IPv4 address");
+							error_flag_field("record_". $i ."_content");
+						}
+					break;
+
+					case "AAAA":
+						// validate IPv6
+						if (filter_var($data_tmp["content"], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) == FALSE)
+						{
+							// invalid IP address
+							log_write("error", "process", "AAAA record for ". $data_tmp["name"] ." did not validate as an IPv6 address");
+							error_flag_field("record_". $i ."_content");
+						}
+					break;
+
+					case "CNAME":
+						// validate CNAME
+						if ($data_tmp["content"] != "@" && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp["content"]))
+						{
+							// invalid CNAME
+							log_write("error", "process", "CNAME record for ". $data_tmp["name"] ." contains invalid characters.");
+							error_flag_field("record_". $i ."_name");
+						}
+
+						// make sure it's not an IP
+						if (filter_var($data_tmp["content"], FILTER_VALIDATE_IP) == $data_tmp["content"])
+						{
+							// CNAME is pointing at an IP
+							log_write("error", "process", "CNAME record for ". $data_tmp["name"] ." is incorrectly referencing an IP address.");
+							error_flag_field("record_". $i ."_content");
+						}
+					break;
+
+					case "SRV":
+						// validate SRV name (_service._proto.name)
+						if (!preg_match("/^_[A-Za-z0-9.-]*\._[A-Za-z]*\.[A-Za-z0-9.-]*$/", $data_tmp["name"]))
+						{
+							log_write("error", "process", "SRV record for ". $data_tmp["name"] ." is not correctly formatted - name must be: _service._proto.name");
+							error_flag_field("record_". $i ."_name");
+						}
+
+						// validate SRV content (priority, weight, port, target/host)
+						if (!preg_match("/^[0-9]*\s[0-9]*\s[0-9]*\s[A-Za-z0-9.-]*$/", $data_tmp["content"]))
+						{
+							log_write("error", "process", "SRV record for ". $data_tmp["name"] ." is not correctly formatted - content must be: priority weight port target/hostname");
+							error_flag_field("record_". $i ."_content");
+						}
+					break;
+
+					case "SPF":
+					case "TXT":
+						// TXT string could be almost anything, just make sure it's quoted.
+						$data_tmp["content"] = str_replace("'", "", $data_tmp["content"]);
+						$data_tmp["content"] = str_replace('"', "", $data_tmp["content"]);
+
+						$data_tmp["content"] = '"'. $data_tmp["content"] .'"';
+					break;
+
+					case "PTR":
+						// validate PTR
+						if (!preg_match("/^[0-9]*$/", $data_tmp["name"]))
+						{
+							log_write("error", "process", "PTR reverse record for ". $data_tmp["content"] ." should be a single octet.");
+							error_flag_field("record_". $i ."_name");
+						}
+
+						if (!preg_match("/^[A-Za-z0-9.-]*$/", $data_tmp["content"]))
+						{
+							log_write("error", "process", "PTR reverse record for ". $data_tmp["name"] ." is not correctly formatted.");
+							error_flag_field("record_". $i ."_content");
+						}
+					break;
+
+					case "NS":
+					case "MX":
+						// validate origin
+						if ($data_tmp["name"] != "@" && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp["name"]))
+						{
+							// invalid
+							log_write("error", "process", $data_tmp["type"] ." origin of ". $data_tmp["name"] ." contains invalid characters.");
+							error_flag_field("record_". $i ."_name");
+						}
+
+						// validate content/record as IP or hostname
+						if (filter_var($data_tmp["content"], FILTER_VALIDATE_IP) == FALSE && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp["content"]))
+						{
+							// invalid target host
+							log_write("error", "process", $data_tmp["type"] ." target/host for ". $data_tmp["name"] ." contains invalid characters.");
+							error_flag_field("record_". $i ."_content");
+						}
+					break;
+
+					default:
+						log_write("error", "process", "Unknown record type ". $data_tmp["type"] ."");
+
+					break;
+				}
+
+			} // end if name
+
+
+			// remove excess "." which might have been added
+			$data_tmp["name"]	= rtrim($data_tmp["name"], ".");
+			$data_tmp["content"]	= rtrim($data_tmp["content"], ".");
 
 
 			// add to processing array

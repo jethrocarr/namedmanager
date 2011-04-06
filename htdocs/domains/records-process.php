@@ -167,50 +167,146 @@ if (user_permissions_get("namedadmins"))
 		// verify name syntax
 		if ($data_tmp["name"] != "@" && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp["name"]))
 		{
-			log_write("error", "process", "Sorry, the value you have entered fo record ". $data_tmp["name"] ." contains invalid charactors");
+			log_write("error", "process", "Sorry, the value you have entered for record ". $data_tmp["name"] ." contains invalid charactors");
 
 			error_flag_field("record_custom_". $i ."");
 		}
 
 
-
-		// verify reverse PTR options
-		if ($data_tmp["reverse_ptr"])
+		// validate content and name formatting per domain type
+		if (!empty($data_tmp["name"]))
 		{
-			// check if the appropiate reverse DNS domain exists
-			$obj_record = New domain_records;
-
-			if (!$obj_record->find_reverse_domain($data_tmp["content"]))
+			switch ($data_tmp["type"])
 			{
-				// no match
-				log_write("error", "process", "Sorry, we can't set a reverse PTR for ". $data_tmp["content"] ." --&gt; ". $data_tmp["name"] .", since there is no reverse domain record for that IP address");
+				case "A":
+					// validate IPv4
+					if (!preg_match("/^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:[.](?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$/", $data_tmp["content"]))
+					{
+						// invalid IP address
+						log_write("error", "process", "A record for ". $data_tmp["name"] ." did not validate as an IPv4 address");
+						error_flag_field("record_custom_". $i ."");
+					}
+				break;
 
-				error_flag_field("record_custom_". $i ."");
+				case "AAAA":
+					// validate IPv6
+					if (filter_var($data_tmp["content"], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) == FALSE)
+					{
+						// invalid IP address
+						log_write("error", "process", "AAAA record for ". $data_tmp["name"] ." did not validate as an IPv6 address");
+						error_flag_field("record_custom_". $i ."");
+					}
+				break;
 
+				case "CNAME":
+					// validate CNAME
+					if ($data_tmp["content"] != "@" && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp["content"]))
+					{
+						// invalid CNAME
+						log_write("error", "process", "CNAME record for ". $data_tmp["name"] ." contains invalid characters.");
+						error_flag_field("record_custom_". $i ."");
+					}
+
+					// make sure it's not an IP
+					if (filter_var($data_tmp["content"], FILTER_VALIDATE_IP) == $data_tmp["content"])
+					{
+						// CNAME is pointing at an IP
+						log_write("error", "process", "CNAME record for ". $data_tmp["name"] ." is incorrectly referencing an IP address.");
+						error_flag_field("record_custom_". $i ."");
+					}
+				break;
+
+				case "SRV":
+					// validate SRV name (_service._proto.name)
+					if (!preg_match("/^_[A-Za-z0-9.-]*\._[A-Za-z]*\.[A-Za-z0-9.-]*$/", $data_tmp["name"]))
+					{
+						log_write("error", "process", "SRV record for ". $data_tmp["name"] ." is not correctly formatted - name must be: _service._proto.name");
+						error_flag_field("record_custom_". $i ."");
+					}
+
+					// validate SRV content (priority, weight, port, target/host)
+					if (!preg_match("/^[0-9]*\s[0-9]*\s[0-9]*\s[A-Za-z0-9.-]*$/", $data_tmp["content"]))
+					{
+						log_write("error", "process", "SRV record for ". $data_tmp["name"] ." is not correctly formatted - content must be: priority weight port target/hostname");
+						error_flag_field("record_custom_". $i ."");
+					}
+				break;
+
+				case "SPF":
+				case "TXT":
+					// TXT string could be almost anything, just make sure it's quoted.
+					$data_tmp["content"] = str_replace("'", "", $data_tmp["content"]);
+					$data_tmp["content"] = str_replace('"', "", $data_tmp["content"]);
+
+					$data_tmp["content"] = '"'. $data_tmp["content"] .'"';
+				break;
+
+				case "PTR":
+					// validate PTR
+					if (!preg_match("/^[0-9]*$/", $data_tmp["name"]))
+					{
+						log_write("error", "process", "PTR reverse record for ". $data_tmp["content"] ." should be a single octet.");
+						error_flag_field("record_custom_". $i ."");
+					}
+
+					if (!preg_match("/^[A-Za-z0-9.-]*$/", $data_tmp["content"]))
+					{
+						log_write("error", "process", "PTR reverse record for ". $data_tmp["name"] ." is not correctly formatted.");
+						error_flag_field("record_custom_". $i ."");
+					}
+				break;
+
+
+				default:
+					log_write("error", "process", "Unknown record type ". $data_tmp["type"] ."");
+
+				break;
 			}
-			else
+
+
+			// remove excess "." which might have been added
+			$data_tmp["name"]	= rtrim($data_tmp["name"], ".");
+			$data_tmp["content"]	= rtrim($data_tmp["content"], ".");
+
+
+			// verify reverse PTR options
+			if ($data_tmp["reverse_ptr"])
 			{
-				// match, record the domain ID and record ID to save a lookup
-				$data_tmp["reverse_ptr_id_domain"]	= $obj_record->id;
-				$data_tmp["reverse_ptr_id_record"]	= $obj_record->id_record;
+				// check if the appropiate reverse DNS domain exists
+				$obj_record = New domain_records;
+
+				if (!$obj_record->find_reverse_domain($data_tmp["content"]))
+				{
+					// no match
+					log_write("error", "process", "Sorry, we can't set a reverse PTR for ". $data_tmp["content"] ." --&gt; ". $data_tmp["name"] .", since there is no reverse domain record for that IP address");
+
+					error_flag_field("record_custom_". $i ."");
+
+				}
+				else
+				{
+					// match, record the domain ID and record ID to save a lookup
+					$data_tmp["reverse_ptr_id_domain"]	= $obj_record->id;
+					$data_tmp["reverse_ptr_id_record"]	= $obj_record->id_record;
+				}
+
+
+				// add to the reverse domain list - we use this list to avoid reloading for every record
+				if (!in_array($obj_record->id, $data["reverse"]))
+				{
+					$data["reverse"][] = $obj_record->id;
+				}
+
+				unset($obj_record);
 			}
 
 
-			// add to the reverse domain list - we use this list to avoid reloading for every record
-			if (!in_array($obj_record->id, $data["reverse"]))
-			{
-				$data["reverse"][] = $obj_record->id;
-			}
 
-			unset($obj_record);
+			// add to processing array
+			$data["records"][] = $data_tmp;
 		}
 
-
-
-		// add to processing array
-		$data["records"][] = $data_tmp;
-	}
-
+	} // end of named record 
 
 
 
