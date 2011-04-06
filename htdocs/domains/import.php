@@ -170,7 +170,7 @@ class page_output
 			$structure["values"]		= array("24", "16", "8");
 			$structure["options"]["req"]	= "yes";
 			$this->obj_form->add_input($structure);
-	*/
+
 			$structure = NULL;
 			$structure["fieldname"] 	= "ipv4_autofill";
 			$structure["type"]		= "checkbox";
@@ -184,13 +184,13 @@ class page_output
 			$structure["options"]["help"]	= "eg: static.example.com";
 			$structure["options"]["req"]	= "yes";
 			$this->obj_form->add_input($structure);
-
+	*/
 
 			$this->obj_form->add_action("domain_type", "default", "domain_name", "show");
 			$this->obj_form->add_action("domain_type", "default", "ipv4_help", "hide");
 			$this->obj_form->add_action("domain_type", "default", "ipv4_network", "hide");
 	//		$this->obj_form->add_action("domain_type", "default", "ipv4_subnet", "hide");
-			$this->obj_form->add_action("domain_type", "default", "ipv4_autofill", "hide");
+	//		$this->obj_form->add_action("domain_type", "default", "ipv4_autofill", "hide");
 
 			$this->obj_form->add_action("domain_type", "domain_standard", "domain_name", "show");
 
@@ -198,11 +198,11 @@ class page_output
 			$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_help", "show");
 			$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_network", "show");
 	//		$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_subnet", "show");
-			$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_autofill", "show");
+	//		$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_autofill", "show");
 		
 
-			$this->obj_form->add_action("ipv4_autofill", "default", "ipv4_autofill_domain", "hide");
-			$this->obj_form->add_action("ipv4_autofill", "1", "ipv4_autofill_domain", "show");
+	//		$this->obj_form->add_action("ipv4_autofill", "default", "ipv4_autofill_domain", "hide");
+	//		$this->obj_form->add_action("ipv4_autofill", "1", "ipv4_autofill_domain", "show");
 
 
 			$structure = NULL;
@@ -256,7 +256,7 @@ class page_output
 
 
 			// define main domain subforms
-			$this->obj_form->subforms["domain_details"]	= array("domain_type", "domain_name", "ipv4_help", "ipv4_network", "ipv4_autofill", "ipv4_autofill_domain", "domain_description");
+			$this->obj_form->subforms["domain_details"]	= array("domain_type", "domain_name", "ipv4_help", "ipv4_network", "domain_description");
 			$this->obj_form->subforms["domain_soa"]		= array("soa_hostmaster", "soa_serial", "soa_refresh", "soa_retry", "soa_expire", "soa_default_ttl");
 
 
