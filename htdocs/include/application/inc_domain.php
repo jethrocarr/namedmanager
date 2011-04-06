@@ -112,7 +112,7 @@ class domain
 	function verify_domain_name()
 	{
 		log_debug("domain", "Executing verify_domain_name()");
-
+		
 		$this->sql_obj->string		= "SELECT id FROM `dns_domains` WHERE domain_name='". $this->data["domain_name"] ."' ";
 
 		if ($this->id)
@@ -247,7 +247,7 @@ class domain
 		log_debug("domain", "Executing load_data_record_all()");
 
 
-		$this->sql_obj->string	= "SELECT id as id_record, name, type, content, ttl, prio FROM `dns_records` WHERE id_domain='". $this->id ."'";
+		$this->sql_obj->string	= "SELECT id as id_record, name, type, content, ttl, prio FROM `dns_records` WHERE id_domain='". $this->id ."' ORDER BY type, name";
 		$this->sql_obj->execute();
 
 		if ($this->sql_obj->num_rows())
