@@ -18,6 +18,8 @@ if (user_permissions_get("namedadmins"))
 	/*
 		Fetch Configuration Data
 	*/
+	
+	$data					= array();
 
 	$data["ZONE_DB_TYPE"]			= @security_form_input_predefined("any", "ZONE_DB_TYPE", 1, "");
 	$data["ZONE_DB_HOST"]			= @security_form_input_predefined("any", "ZONE_DB_HOST", 0, "");
