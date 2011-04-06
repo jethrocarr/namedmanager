@@ -144,7 +144,22 @@ if (user_permissions_get("namedadmins"))
 						{
 							log_write("debug", "process", "Header: ORIGIN: ". $matches[1] ."");
 
-							$data["domain_name"] = rtrim($matches[1], ".");
+							if (empty($data["domain_name"]))
+							{
+								// set origin
+								$data["domain_name"] = rtrim($matches[1], ".");
+							}
+
+							// there is already a domain name/origin, anything else is the currently
+							// selected origin field.
+
+							$data["domain_origin_current"] = rtrim($matches[1], ".");
+							$data["domain_origin_current"] = str_replace($data["domain_name"], "", $data["domain_origin_current"]);
+
+							if (!empty($data["domain_origin_current"]))
+							{
+								$data["domain_origin_current"] = ".". rtrim($data["domain_origin_current"], ".");
+							}
 						}
 
 
@@ -525,7 +540,7 @@ if (user_permissions_get("namedadmins"))
 									if (preg_match("/^(\S*)\s(\S*)\s*IN/", $line, $matches))
 									{
 										// name
-										$data_tmp["name"]		= rtrim($matches[1], ".");
+										$data_tmp["name"]		= rtrim($matches[1], ".") . $data["domain_origin_current"];
 
 // TODO: should we default to "@" ?
 //										if ($data_tmp["name"] == $data["domain_name"])
