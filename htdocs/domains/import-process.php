@@ -903,8 +903,8 @@ if (user_permissions_get("namedadmins"))
 					case "SPF":
 					case "TXT":
 						// TXT string could be almost anything, just make sure it's quoted.
-						$data_tmp["content"] = str_replace("'", "", $data_tmp["content"]);
-						$data_tmp["content"] = str_replace('"', "", $data_tmp["content"]);
+						$data_tmp["content"] = str_replace("'", "", stripslashes($data_tmp["content"]));
+						$data_tmp["content"] = str_replace('"', "", stripslashes($data_tmp["content"]));
 
 						$data_tmp["content"] = '"'. $data_tmp["content"] .'"';
 					break;
