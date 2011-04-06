@@ -342,15 +342,16 @@ class bind_api extends soap_api
 			if ($record["record_type"] == "NS")
 			{
 				// handle origin and content format
-				if (preg_match("/\./", $record["record_content"]))
+				if (preg_match("/\./", $record["record_content"]) && preg_match("/". $domain_name ."$/", $record["record_content"]))
 				{
 					$record["record_content"]	= $record["record_content"] .".";
 				}
 
-				if (preg_match("/\./", $record["record_name"]))
+				if (preg_match("/\./", $record["record_name"]) && preg_match("/". $domain_name ."$/", $record["record_name"]))
 				{
 					$record["record_name"]		= $record["record_name"] .".";
 				}
+
 
 
 				// write line
@@ -369,12 +370,12 @@ class bind_api extends soap_api
 			if ($record["record_type"] == "MX")
 			{
 				// handle origin and content format
-				if (preg_match("/\./", $record["record_content"]))
+				if (preg_match("/\./", $record["record_content"]) && preg_match("/". $domain_name ."$/", $record["record_content"]))
 				{
 					$record["record_content"]	= $record["record_content"] .".";
 				}
 
-				if (preg_match("/\./", $record["record_name"]))
+				if (preg_match("/\./", $record["record_name"]) && preg_match("/". $domain_name ."$/", $record["record_name"]))
 				{
 					$record["record_name"]		= $record["record_name"] .".";
 				}
@@ -420,7 +421,7 @@ class bind_api extends soap_api
 		{
 			if ($record["record_type"] == "CNAME")
 			{
-				if (preg_match("/\./", $record["record_name"]))
+				if (preg_match("/\./", $record["record_name"]) && preg_match("/". $domain_name ."$/", $record["record_name"]))
 				{
 					$record["record_name"] .= ".";	// append . as FQDN
 				}
@@ -457,7 +458,7 @@ class bind_api extends soap_api
 					case "SPF":
 
 						// Adjust to handle FQDN in name/origin
-						if (preg_match("/\./", $record["record_name"]))
+						if (preg_match("/\./", $record["record_name"]) && preg_match("/". $domain_name ."$/", $record["record_name"]))
 						{
 							$record["record_name"] .= ".";	// append . as FQDN
 						}
@@ -468,7 +469,7 @@ class bind_api extends soap_api
 					case "SRV":
 
 						// Adjust to handle FQDN in name/origin
-						if (preg_match("/\./", $record["record_name"]))
+						if (preg_match("/\./", $record["record_name"]) && preg_match("/". $domain_name ."$/", $record["record_name"]))
 						{
 							$record["record_name"] .= ".";		// append . as FQDN
 						}
