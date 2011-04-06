@@ -342,7 +342,7 @@ class bind_api extends soap_api
 			if ($record["record_type"] == "NS")
 			{
 				// handle origin and content format
-				if (preg_match("/\./", $record["record_content"]) && preg_match("/". $domain_name ."$/", $record["record_content"]))
+				if (preg_match("/\./", $record["record_content"]))
 				{
 					$record["record_content"]	= $record["record_content"] .".";
 				}
@@ -370,7 +370,7 @@ class bind_api extends soap_api
 			if ($record["record_type"] == "MX")
 			{
 				// handle origin and content format
-				if (preg_match("/\./", $record["record_content"]) && preg_match("/". $domain_name ."$/", $record["record_content"]))
+				if (preg_match("/\./", $record["record_content"]))
 				{
 					$record["record_content"]	= $record["record_content"] .".";
 				}
