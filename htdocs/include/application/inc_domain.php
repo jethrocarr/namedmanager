@@ -259,9 +259,37 @@ class domain
 				$this->data["records"][] = $data_records;
 			}
 
+
+			if (!function_exists("sort_domain_records"))
+			{
+				function sort_domain_records($a, $b)
+				{
+					if ($a["prio"])
+					{
+						return strnatcmp($a["prio"], $b["prio"]);
+					}
+
+					if ($a["name"] == $b["name"])
+					{
+						// sort by content
+						return strnatcmp($a["content"], $b["content"]);
+					}
+					else
+					{
+						// sort by name field
+						return strnatcmp($a["name"], $b["name"]);
+					}
+				}
+			}
+
+			// re-sort with PHP to fix ip address ordering
+			usort( $this->data["records"], 'sort_domain_records');
+
+
 			return 1;
 		}
 
+		
 		// failure
 		return 0;
 
