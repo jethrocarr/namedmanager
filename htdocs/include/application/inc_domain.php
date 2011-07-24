@@ -942,7 +942,7 @@ class domain_records extends domain
 		/*
 			Seed key values when unspecified
 		*/
-		if (!$this->data_record["name"])
+		if (!isset($this->data_record["name"]))
 		{
 			$this->data_record["name"]	= $this->data["name"];
 		}

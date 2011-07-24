@@ -174,7 +174,7 @@ if (user_permissions_get("namedadmins"))
 
 
 		// validate content and name formatting per domain type
-		if (!empty($data_tmp["name"]))
+		if ($data_tmp["name"] != '')
 		{
 			switch ($data_tmp["type"])
 			{
