@@ -576,14 +576,17 @@ class domain
 		*/
 
 		$obj_ns_sql		= New sql_query;
-		$obj_ns_sql->string	= "SELECT server_name FROM `name_servers`";
+		$obj_ns_sql->string	= "SELECT server_name FROM `name_servers` WHERE server_record='1'";
 		$obj_ns_sql->execute();
 		$obj_ns_sql->fetch_array();
 
-		foreach ($obj_ns_sql->data as $data_ns)
+		if ($obj_ns_sql->num_rows())
 		{
-			$this->sql_obj->string		= "INSERT INTO `dns_records` (id_domain, name, type, content, ttl) VALUES ('". $this->id ."', '". $this->data["domain_name"] ."', 'NS', '". $data_ns["server_name"] ."', '". $GLOBALS["config"]["DEFAULT_TTL_NS"] ."')";
-			$this->sql_obj->execute();
+			foreach ($obj_ns_sql->data as $data_ns)
+			{
+				$this->sql_obj->string		= "INSERT INTO `dns_records` (id_domain, name, type, content, ttl) VALUES ('". $this->id ."', '". $this->data["domain_name"] ."', 'NS', '". $data_ns["server_name"] ."', '". $GLOBALS["config"]["DEFAULT_TTL_NS"] ."')";
+				$this->sql_obj->execute();
+			}
 		}
 
 	

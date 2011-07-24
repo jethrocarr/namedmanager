@@ -218,6 +218,7 @@ class name_server
 		*/
 
 		$sql_obj->string	= "UPDATE `name_servers` SET "
+						."server_record='". $this->data["server_record"] ."', "
 						."server_name='". $this->data["server_name"] ."', "
 						."server_description='". $this->data["server_description"] ."', "
 						."server_type='". $this->data["server_type"] ."', "
