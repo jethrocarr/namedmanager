@@ -848,7 +848,7 @@ class domain_records extends domain
 			{
 				$this->sql_obj->fetch_array();
 
-				$this->id_record	= $this->sql_obj->data[0]["id"];
+				$this->id_record		= $this->sql_obj->data[0]["id"];
 
 				log_write("debug", "domain_records", "Found matching record with ID of ". $this->id_record ."");
 			}

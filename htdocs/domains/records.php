@@ -427,6 +427,11 @@ class page_output
 				$structure["type"]			= "checkbox"; 
 				$structure["options"]["label"]		= "";
 				$this->obj_form->add_input($structure);
+
+				$structure = NULL;
+				$structure["fieldname"]			= "record_custom_". $i ."_reverse_ptr_orig";
+				$structure["type"]			= "hidden"; 
+				$this->obj_form->add_input($structure);
 			}
 		}
 
@@ -452,6 +457,7 @@ class page_output
 					// disable inappropate values for CNAME fields
 					$this->obj_form->structure["record_custom_". $i ."_ttl"]["options"]["disabled"]	= "yes";
 					$this->obj_form->structure["record_custom_". $i ."_reverse_ptr"]["options"]["disabled"] = "yes";
+					$this->obj_form->structure["record_custom_". $i ."_reverse_ptr_orig"]["options"]["disabled"] = "yes";
 				}
 				elseif ($record["type"] != "PTR")
 				{
@@ -472,6 +478,7 @@ class page_output
 						if ($obj_ptr->data_record["content"] == $record["name"] || $obj_ptr->data_record["content"] == ($record["name"] .".". $this->obj_domain->data["domain_name"]))
 						{
 							$this->obj_form->structure["record_custom_". $i ."_reverse_ptr"]["defaultvalue"] = "on";
+							$this->obj_form->structure["record_custom_". $i ."_reverse_ptr_orig"]["defaultvalue"] = "on";
 						}
 					}
 

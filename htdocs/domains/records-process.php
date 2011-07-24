@@ -139,6 +139,7 @@ if (user_permissions_get("namedadmins"))
 		$data_tmp["name"]		= @security_form_input_predefined("any", "record_custom_". $i ."_name", 0, "");
 		$data_tmp["content"]		= @security_form_input_predefined("any", "record_custom_". $i ."_content", 0, "");
 		$data_tmp["reverse_ptr"]	= @security_form_input_predefined("checkbox", "record_custom_". $i ."_reverse_ptr", 0, "");
+		$data_tmp["reverse_ptr_orig"]	= @security_form_input_predefined("checkbox", "record_custom_". $i ."_reverse_ptr_orig", 0, "");
 		$data_tmp["delete_undo"]	= @security_form_input_predefined("any", "record_custom_". $i ."_delete_undo", 0, "");
 		
 
@@ -370,6 +371,7 @@ if (user_permissions_get("namedadmins"))
 					|| $obj_record->data_record["content"]	!= $record["content"]
 					|| $obj_record->data_record["ttl"]	!= (int)$record["ttl"]
 					|| $obj_record->data_record["prio"]	!= (int)$record["prio"]
+					|| $record["reverse_ptr"]		!= $record["reverse_ptr_orig"]
 					)
 				{
 					/*
