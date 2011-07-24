@@ -129,7 +129,7 @@ class page_output
 	{
 		// title + summary
 		print "<h3>DELETE DOMAIN</h3><br>";
-		print "<p>This page allows you to delete an unwanted domain - take care to make sure you are deleting the domain that you intend to, this action is not reversable.</p>";
+		print "<p style=\"color: #ff0000;\"><b>This page allows you to delete an unwanted domain - take care to make sure you are deleting the domain that you intend to, this action is not reversable.</b></p>";
 
 	
 		// display the form
