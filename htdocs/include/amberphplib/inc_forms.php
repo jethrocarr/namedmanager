@@ -1439,7 +1439,7 @@ class form_input
 
 
 		// start form
-		print "<form enctype=\"multipart/form-data\" method=\"". $this->method ."\" action=\"". $this->action ."\" class=\"form_standard\">";
+		print "<form enctype=\"multipart/form-data\" method=\"". $this->method ."\" action=\"". $this->action ."\" class=\"form_standard\" name=\"" . $this->formname ."\">";
 
 		// draw session form box
 		if ($this->sessionform)
