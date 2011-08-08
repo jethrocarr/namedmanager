@@ -296,7 +296,52 @@ class domain
 	} // end of load_data_record_all
 
 
+	/*
+		load_data_record_custom
 
+		Load all the records for the selected domain into the $this->data["records"] array. If you wish to modifiy or query specific
+		records, please refer to the domain_records class.
+
+		Returns
+		0	failure
+		1	success
+	*/
+	function load_data_record_custom($offset = 0, $limit = false)
+	{
+
+		$extra_sql = '';
+		if($limit >= 1) {
+			$extra_sql = ' LIMIT ' . ($offset >= 0 ? $offset : '0') . ', ' . $limit;
+		}
+
+		log_debug("domain", "Executing load_data_record_custom($offset, " . ($limit ? $limit : 'ALL') . ")");
+
+		$this->sql_obj->string	= "SELECT id AS id_record, name, type, content, ttl, prio FROM `dns_records` WHERE type IN (SELECT type from dns_record_types where user_selectable = 1) and id_domain='". $this->id ."' ORDER BY type, name" . $extra_sql;
+		$this->sql_obj->execute();
+
+		if ($this->sql_obj->num_rows())
+		{
+			$this->sql_obj->fetch_array();
+
+			foreach ($this->sql_obj->data as $data_records)
+			{
+				$this->data["records"][] = $data_records;
+			}
+
+			return 1;
+		}
+
+		// failure
+		return 0;
+
+	} // end of load_data_record_all
+
+	function data_record_custom_count() 
+	{
+		log_debug("domain", "Executing load_data_record_custom_count()");
+
+		return sql_get_singlevalue("SELECT COUNT(*) AS value FROM `dns_records` WHERE type IN (SELECT type from dns_record_types where user_selectable = 1) and id_domain='" . $this->id . "'");
+	}
 
 	/*
 		action_create
@@ -1100,8 +1145,205 @@ class domain_records extends domain
 		}
 	}
 
+	function validate_custom_records(&$data) {
+
+		// validate the record_custom_page for returnign the user to their page, default to page 1 if any errors in validating...
+		$data['record_custom_page'] = @security_form_input_predefined("int", "record_custom_page", 1, "");
+
+
+	for ($i = 0; $i < $data["custom"]["num_records"]; $i++)
+	{
+		/*
+			Fetch Data
+		*/
+		$data_tmp			= array();
+		$data_tmp["id"]			= @security_form_input_predefined("int", "record_custom_". $i ."_id", 0, "");
+		$data_tmp["type"]		= @security_form_input_predefined("any", "record_custom_". $i ."_type", 0, "");
+		$data_tmp["ttl"]		= @security_form_input_predefined("int", "record_custom_". $i ."_ttl", 0, "");
+		$data_tmp["name"]		= @security_form_input_predefined("any", "record_custom_". $i ."_name", 0, "");
+		$data_tmp["content"]		= @security_form_input_predefined("any", "record_custom_". $i ."_content", 0, "");
+		$data_tmp["reverse_ptr"]	= @security_form_input_predefined("checkbox", "record_custom_". $i ."_reverse_ptr", 0, "");
+		$data_tmp["delete_undo"]	= @security_form_input_predefined("any", "record_custom_". $i ."_delete_undo", 0, "");
+		
+		/*
+			Process Raw Data
+		*/
+		if ($data_tmp["id"] && $data_tmp["delete_undo"] == "true")
+		{
+			$data_tmp["mode"] = "delete";
+		}
+		else
+		{
+			if (!empty($data_tmp["content"]) && $data_tmp["delete_undo"] == "false")
+			{
+				$data_tmp["mode"] = "update";
+			}
+		}
+
+
+		/*
+			Error Handling
+		*/
+
+
+		// verify name syntax
+		if ($data_tmp["name"] != "@" && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp["name"]))
+		{
+			log_write("error", "process", "Sorry, the value you have entered for record ". $data_tmp["name"] ." contains invalid charactors");
+
+			error_flag_field("record_custom_". $i ."");
+		}
+
+
+		// validate content and name formatting per domain type
+		if (!empty($data_tmp["name"]))
+		{
+			switch ($data_tmp["type"])
+			{
+				case "A":
+					// validate IPv4
+					if (!preg_match("/^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:[.](?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$/", $data_tmp["content"]))
+					{
+						// invalid IP address
+						log_write("error", "process", "A record for ". $data_tmp["name"] ." did not validate as an IPv4 address");
+						error_flag_field("record_custom_". $i ."");
+					}
+				break;
+
+				case "AAAA":
+					// validate IPv6
+					if (filter_var($data_tmp["content"], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) == FALSE)
+					{
+						// invalid IP address
+						log_write("error", "process", "AAAA record for ". $data_tmp["name"] ." did not validate as an IPv6 address");
+						error_flag_field("record_custom_". $i ."");
+					}
+				break;
+
+				case "CNAME":
+					// validate CNAME
+					if ($data_tmp["content"] != "@" && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp["content"]))
+					{
+						// invalid CNAME
+						log_write("error", "process", "CNAME record for ". $data_tmp["name"] ." contains invalid characters.");
+						error_flag_field("record_custom_". $i ."");
+					}
+
+					// make sure it's not an IP
+					if (filter_var($data_tmp["content"], FILTER_VALIDATE_IP) == $data_tmp["content"])
+					{
+						// CNAME is pointing at an IP
+						log_write("error", "process", "CNAME record for ". $data_tmp["name"] ." is incorrectly referencing an IP address.");
+						error_flag_field("record_custom_". $i ."");
+					}
+				break;
+
+				case "SRV":
+					// validate SRV name (_service._proto.name)
+					if (!preg_match("/^_[A-Za-z0-9.-]*\._[A-Za-z]*\.[A-Za-z0-9.-]*$/", $data_tmp["name"]))
+					{
+						log_write("error", "process", "SRV record for ". $data_tmp["name"] ." is not correctly formatted - name must be: _service._proto.name");
+						error_flag_field("record_custom_". $i ."");
+					}
+
+					// validate SRV content (priority, weight, port, target/host)
+					if (!preg_match("/^[0-9]*\s[0-9]*\s[0-9]*\s[A-Za-z0-9.-]*$/", $data_tmp["content"]))
+					{
+						log_write("error", "process", "SRV record for ". $data_tmp["name"] ." is not correctly formatted - content must be: priority weight port target/hostname");
+						error_flag_field("record_custom_". $i ."");
+					}
+				break;
+
+				case "SPF":
+				case "TXT":
+					// TXT string could be almost anything, just make sure it's quoted.
+					$data_tmp["content"] = str_replace("'", "", $data_tmp["content"]);
+					$data_tmp["content"] = str_replace('"', "", $data_tmp["content"]);
+
+					$data_tmp["content"] = '"'. $data_tmp["content"] .'"';
+				break;
+
+				case "PTR":
+					// validate PTR
+					if (!preg_match("/^[0-9]*$/", $data_tmp["name"]))
+					{
+						log_write("error", "process", "PTR reverse record for ". $data_tmp["content"] ." should be a single octet.");
+						error_flag_field("record_custom_". $i ."");
+					}
+
+					if (!preg_match("/^[A-Za-z0-9.-]*$/", $data_tmp["content"]))
+					{
+						log_write("error", "process", "PTR reverse record for ". $data_tmp["name"] ." is not correctly formatted.");
+						error_flag_field("record_custom_". $i ."");
+					}
+				break;
+
+
+				default:
+					log_write("error", "process", "Unknown record type ". $data_tmp["type"] ."");
+
+				break;
+			}
+
+
+			// remove excess "." which might have been added
+			$data_tmp["name"]	= rtrim($data_tmp["name"], ".");
+			$data_tmp["content"]	= rtrim($data_tmp["content"], ".");
+
+
+			// verify reverse PTR options
+			if ($data_tmp["reverse_ptr"])
+			{
+				// check if the appropiate reverse DNS domain exists
+				$obj_record = New domain_records;
+
+				if (!$obj_record->find_reverse_domain($data_tmp["content"]))
+				{
+					// no match
+					log_write("error", "process", "Sorry, we can't set a reverse PTR for ". $data_tmp["content"] ." --&gt; ". $data_tmp["name"] .", since there is no reverse domain record for that IP address");
+
+					error_flag_field("record_custom_". $i ."");
+
+				}
+				else
+				{
+					// match, record the domain ID and record ID to save a lookup
+					$data_tmp["reverse_ptr_id_domain"]	= $obj_record->id;
+					$data_tmp["reverse_ptr_id_record"]	= $obj_record->id_record;
+				}
+
+
+				// add to the reverse domain list - we use this list to avoid reloading for every record
+				if (!in_array($obj_record->id, $data["reverse"]))
+				{
+					$data["reverse"][] = $obj_record->id;
+				}
+
+				unset($obj_record);
+			}
+
+
+
+			// add to processing array
+			$data["records"][] = $data_tmp;
+		} else { // empty name
+
+			if(!empty($data_tmp['content'])) {
+				log_write("error", "process", "Name cannot be empty for IP address: " . $data_tmp['content']);
+
+				error_flag_field("record_custom_". $i ."");
+			}
+
+		}
+
+	} // end of named record 
+
+	}
+
 } // end of class domain_records
 
 
 
 ?>
+
+

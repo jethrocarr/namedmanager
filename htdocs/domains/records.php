@@ -313,182 +313,22 @@ class page_output
 		}
 
 
+		// hidden
+		$structure = NULL;
+		$structure["fieldname"] 	= "form_session";
+		$structure["type"]		= "hidden";
 
+		// clear the custom records from the session on initial page load for this edit session
+		// if there is no record from the SESSION then we can assume that this is a new edit session as apposed to one that has been redirected from the process page
 
-		/*
-			Define stucture for all other record types
-
-			This includes A, AAAA, PTR and other record types.
-		*/
-
-
-		// fetch all the known record types from the database
-		$dns_record_types = sql_get_singlecol("SELECT type as value FROM `dns_record_types` WHERE user_selectable='1'");
-			
-
-		// unless there has been error data returned, fetch all the records
-		// and work out the number of rows
-		if (!isset($_SESSION["error"]["form"][$this->obj_form->formname]))
-		{
-			$this->num_records_custom = 1;
-
-			foreach ($this->obj_domain->data["records"] as $record)
-			{
-				if (in_array($record["type"], $dns_record_types))
-				{
-					$this->num_records_custom++;
-				}
-			}
+		if(isset($_SESSION["form"]["domain_records"]["form_session"]) && $_SESSION["form"]["domain_records"]["form_session"]) {
+			$structure["defaultvalue"]	= $_SESSION["form"]["domain_records"]["form_session"];
+		} else {
+			$structure["defaultvalue"]	= time();
+			$_SESSION['form']['domain_records'] = array();
 		}
-		else
-		{
-			$this->num_records_custom = @security_script_input('/^[0-9]*$/', $_SESSION["error"]["num_records_custom"]);
-		}
+		$this->obj_form->add_input($structure);
 
-		
-
-		// ensure there are at least two rows, if more are needed when entering information,
-		// then the javascript functions will provide.
-
-		if ($this->num_records_custom < 2)
-		{
-			$this->num_records_custom = 2;
-		}
-
-
-		// custom domain records
-		for ($i = 0; $i < $this->num_records_custom; $i++)
-		{					
-			// values
-			$structure = NULL;
-			$structure["fieldname"] 		= "record_custom_". $i ."_id";
-			$structure["type"]			= "hidden";
-			$this->obj_form->add_input($structure);
-
-
-			if (strpos($this->obj_domain->data["domain_name"], "arpa"))
-			{
-				$structure = NULL;
-				$structure["fieldname"] 		= "record_custom_". $i ."_type";
-				$structure["type"]			= "text";
-				$structure["defaultvalue"]		= "PTR";
-				$this->obj_form->add_input($structure);
-			}
-			else
-			{
-				$structure = form_helper_prepare_dropdownfromdb("record_custom_". $i ."_type", "SELECT type as label, type as id FROM `dns_record_types` WHERE user_selectable='1' AND is_standard='1'");
-				$structure["defaultvalue"]		= "A";
-				$structure["options"]["width"]		= "100";
-				$this->obj_form->add_input($structure);
-			}
-
-			$structure = NULL;
-			$structure["fieldname"]		 	= "record_custom_". $i ."_name";
-			$structure["type"]			= "input";
-			
-			if (strpos($this->obj_domain->data["domain_name"], "arpa"))
-			{
-				$structure["options"]["width"]		= "50";
-				$structure["options"]["max_length"]	= "3";
-				$structure["options"]["prelabel"]	= $this->obj_domain->data["domain_ip_prefix"] .". ";
-			}
-			else
-			{
-				$structure["options"]["width"]		= "300";
-				$structure["options"]["help"]		= "Record name, eg www";
-			}
-
-			$this->obj_form->add_input($structure);
-
-			$structure = NULL;
-			$structure["fieldname"] 		= "record_custom_". $i ."_content";
-			$structure["type"]			= "input";
-			$structure["options"]["width"]		= "300";
-			$structure["options"]["help"]		= "Target IP, eg 192.168.0.1";
-			$this->obj_form->add_input($structure);
-
-			$structure = NULL;
-			$structure["fieldname"] 		= "record_custom_". $i ."_ttl";
-			$structure["type"]			= "input";
-			$structure["options"]["width"]		= "80";
-			$structure["defaultvalue"]		= $GLOBALS["config"]["DEFAULT_TTL_OTHER"];
-			$this->obj_form->add_input($structure);
-			
-			$structure = NULL;
-			$structure["fieldname"]			= "record_custom_". $i ."_delete_undo";
-			$structure["type"]			= "hidden";
-			$structure["defaultvalue"]		= "false";
-			$this->obj_form->add_input($structure);
-			
-			if (!strpos($this->obj_domain->data["domain_name"], "arpa"))
-			{
-				$structure = NULL;
-				$structure["fieldname"]			= "record_custom_". $i ."_reverse_ptr";
-				$structure["type"]			= "checkbox"; 
-				$structure["options"]["label"]		= "";
-				$this->obj_form->add_input($structure);
-
-				$structure = NULL;
-				$structure["fieldname"]			= "record_custom_". $i ."_reverse_ptr_orig";
-				$structure["type"]			= "hidden"; 
-				$this->obj_form->add_input($structure);
-			}
-		}
-
-
-		// load in what data we have
-		//disable invalid fields
-		$i = 0;
-
-		foreach ($this->obj_domain->data["records"] as $record)
-		{
-			if (in_array($record["type"], $dns_record_types))
-			{
-				// fetch data
-				$this->obj_form->structure["record_custom_". $i ."_id"]["defaultvalue"]			= $record["id_record"];
-				$this->obj_form->structure["record_custom_". $i ."_type"]["defaultvalue"]		= $record["type"];
-				$this->obj_form->structure["record_custom_". $i ."_prio"]["defaultvalue"]		= $record["prio"];
-				$this->obj_form->structure["record_custom_". $i ."_name"]["defaultvalue"]		= $record["name"];
-				$this->obj_form->structure["record_custom_". $i ."_content"]["defaultvalue"]		= $record["content"];
-				$this->obj_form->structure["record_custom_". $i ."_ttl"]["defaultvalue"]		= $record["ttl"];
-				
-				if ($record["type"] == "CNAME")
-				{
-					// disable inappropate values for CNAME fields
-					$this->obj_form->structure["record_custom_". $i ."_ttl"]["options"]["disabled"]	= "yes";
-					$this->obj_form->structure["record_custom_". $i ."_reverse_ptr"]["options"]["disabled"] = "yes";
-					$this->obj_form->structure["record_custom_". $i ."_reverse_ptr_orig"]["options"]["disabled"] = "yes";
-				}
-				elseif ($record["type"] != "PTR")
-				{
-					// check if this record has a reverse PTR value
-					$obj_ptr = New domain_records;
-
-					$obj_ptr->find_reverse_domain($record["content"]);
-
-					if ($obj_ptr->id_record)
-					{
-						$obj_ptr->load_data_record();
-
-						if ($record["name"] == "@")
-						{
-							$record["name"] = $this->obj_domain->data["domain_name"];
-						}
-
-						if ($obj_ptr->data_record["content"] == $record["name"] || $obj_ptr->data_record["content"] == ($record["name"] .".". $this->obj_domain->data["domain_name"]))
-						{
-							$this->obj_form->structure["record_custom_". $i ."_reverse_ptr"]["defaultvalue"] = "on";
-							$this->obj_form->structure["record_custom_". $i ."_reverse_ptr_orig"]["defaultvalue"] = "on";
-						}
-					}
-
-					unset($obj_ptr);
-				}
-
-				$i++;
-			}
-		}
-		
 
 
 		// hidden
@@ -509,13 +349,13 @@ class page_output
 		$structure["type"]		= "hidden";
 		$structure["defaultvalue"]	= "$this->num_records_mx";
 		$this->obj_form->add_input($structure);
-
+/*
 		$structure = NULL;
 		$structure["fieldname"] 	= "num_records_custom";
 		$structure["type"]		= "hidden";
 		$structure["defaultvalue"]	= "$this->num_records_custom";
 		$this->obj_form->add_input($structure);
-
+*/
 	
 		// submit section
 		$structure = NULL;
@@ -549,7 +389,7 @@ class page_output
 		*/
 
 		// start form/table structure
-		print "<form method=\"". $this->obj_form->method ."\" action=\"". $this->obj_form->action ."\" class=\"form_standard\">";
+		print "<form method=\"". $this->obj_form->method ."\" action=\"". $this->obj_form->action ."\" class=\"form_standard\" name=\"domain_records\">";
 		print "<table class=\"form_table\" width=\"100%\">";
 
 
@@ -716,88 +556,24 @@ class page_output
 		/*
 			All other records
 		*/
-		print "<tr class=\"header\">";
-		print "<td colspan=\"2\"><b>". lang_trans("domain_records_custom") ."</b></td>";
-		print "</tr>";
 
-		print "<tr>";
-		print "<td colspan=\"2\" width=\"100%\">";
-		print "<table width=\"100%\">";
+		if(1 == 1) {
 
-		print "<p>". lang_trans("domain_records_custom_help") ."</p>";
-
-		print "<tr class=\"table_highlight_info\">";
-			print "<td width=\"10%\"><b>". lang_trans("record_type") ."</b></td>";
-			if (strpos($this->obj_domain->data["domain_name"], "arpa"))
-			{
-				print "<td width=\"15%\"><b>". lang_trans("record_ttl") ."</b></td>";
-			}
-			else
-			{
-				print "<td width=\"10%\"><b>". lang_trans("record_ttl") ."</b></td>";
-			}
-			print "<td width=\"35%\"><b>". lang_trans("record_name") ."</b></td>";
-			print "<td width=\"35%\"><b>". lang_trans("record_content") ."</b></td>";
-			if (!strpos($this->obj_domain->data["domain_name"], "arpa"))
-			{
-				print "<td width=\"5%\"><b>". lang_trans("reverse_ptr") ."</b></td>";
-			}
-			print "<td width=\"5%\">&nbsp;</td>";
-		print "</tr>";
-		
-		// display all the rows
-		for ($i = 0; $i < $this->num_records_custom; $i++)
-		{
-			if (isset($_SESSION["error"]["record_custom_". $i ."-error"]))
-			{
-				print "<tr class=\"form_error\">";
-			}
-			else
-			{
-				print "<tr class=\"table_highlight\">";
-			}
-
-			print "<td width=\"10%\" valign=\"top\">";
-			$this->obj_form->render_field("record_custom_". $i ."_type");
-			$this->obj_form->render_field("record_custom_". $i ."_id");
-			print "</td>";
-
-			if (strpos($this->obj_domain->data["domain_name"], "arpa"))
-			{
-				print "<td width=\"15%\" valign=\"top\">";
-			}
-			else
-			{
-				print "<td width=\"15%\" valign=\"top\">";
-			}
-			$this->obj_form->render_field("record_custom_". $i ."_ttl");
-			print "</td>";
-
-			print "<td width=\"35%\" valign=\"top\">";
-			$this->obj_form->render_field("record_custom_". $i ."_name");
-			print "</td>";
-
-			print "<td width=\"35%\" valign=\"top\">";
-			$this->obj_form->render_field("record_custom_". $i ."_content");
-			print "</td>";
-			
-			if (!strpos($this->obj_domain->data["domain_name"], "arpa"))
-			{
-				print "<td width=\"5%\" valign=\"top\" align=\"center\">";
-				$this->obj_form->render_field("record_custom_". $i ."_reverse_ptr");
-				print "</td>";
-			}
-			
-			print "<td width=\"5%\" valign=\"top\" align=\"center\">";
-			$this->obj_form->render_field("record_custom_". $i ."_delete_undo");
-			print "<strong class=\"delete_undo\"><a href=\"\">delete</a></strong>";
-			print "</td>";
-				
+			print "<tr class=\"header\">";
+			print "<td colspan=\"2\"><b>". lang_trans("domain_records_custom") ."</b></td>";
 			print "</tr>";
+
+			print "<tr>";
+			print "<td colspan=\"2\" width=\"100%\">";
+			print "<table width=\"100%\" id=\"domain_records_custom\">";
+
+			print "</table>";
+			print "</td></tr>";
+
+		} else {
+
 		}
 
-		print "</table>";
-		print "</td></tr>";
 
 		// spacer
 		print "<tr><td colspan=\"2\"><br></td></tr>";
@@ -807,7 +583,8 @@ class page_output
 		$this->obj_form->render_field("id_domain");
 		$this->obj_form->render_field("num_records_ns");
 		$this->obj_form->render_field("num_records_mx");
-		$this->obj_form->render_field("num_records_custom");
+		$this->obj_form->render_field("form_session");
+		// $this->obj_form->render_field("num_records_custom");
 
 
 		// form submit

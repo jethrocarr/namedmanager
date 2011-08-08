@@ -8,16 +8,204 @@ var num_records_mx;
 var num_records_ns;
 var num_records_custom;
 
+function load_domain_records_custom(id_domain, page, data) 
+{
+	
+	/*
+		Load in the records via ajax at page load
+	*/
+
+	if($("#domain_records_custom").html() == "") {
+		$("#domain_records_custom").html('<tr><td><img src="images/wait20.gif" /></td></tr>');
+	} else {
+		$("#domain_records_custom_loading").show();
+	}
+
+	if(!data) {
+		var data = new Array();
+	}
+
+	$.post("domains/records-ajax.php?id=" + id_domain + "&pagination=" + page, data, function(res) {
+			$('#domain_records_custom').html(res);
+			after_load_domain_records_custom();
+	});
+
+}
+
+/*
+function submit_callback() {
+
+	if($(":input[name='record_custom_status']").val() == 1) {
+		alert('forms are good, off we go');
+		// $("form[name='domain_records']").submit();
+		return true;
+	} else {
+		alert('forms are bad');
+		return false;
+	}
+
+}
+*/
+
+function after_load_domain_records_custom(submit) {
+
+	$("#domain_records_custom_loading").hide();
+
+	num_records_custom = $("input[name='num_records_custom']").val();
+	record_custom_page = $("input:[name='record_custom_page']").val();
+	$("select[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
+	$("input[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
+	$("textarea[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
+
+}
+
+/*
+ * get the custom form data and serialize it for ajax POSTING
+ */
+function get_custom_form_data() {
+	return $(":input[name^='record_custom_'],:input[name='num_records_custom']").serialize();
+}
 
 $(document).ready(function()
 {
+
+	/*
+		Load in the records via ajax at page load
+		Loads record for the current domain, and starts at page 1
+	*/
+
+	id_domain = $("input:[name='id_domain']").val();
+
+	load_domain_records_custom(id_domain, 1);
+
+	/* 
+	 * When a pagination item is clicked, load the records page in via ajax
+	 */
+
+	$("a[id^=pagination]").live("click", function() { 
+		load_domain_records_custom(id_domain, $(this).attr('id').replace('pagination_',''), get_custom_form_data()); 
+	});
+
+	/*
+	 * As soon as a form element is changed, declare the form status as 0 (requiring validation
+	 */
+
+	$(":input[name^='record_custom_']").live("change", function() {
+
+			// $("form[name='domain_records']").attr('validated', false);
+
+			$(":input[name='record_custom_status']").val("0");
+			});
+
+	/* 
+	 * Intercept the form submit button... submit the records custom first before the real form
+	 */
+
+	
+/*
+$("form[name='domain_records']").submit(function(e) {
+
+alert('e: ' + e.val());
+
+if($(":input[name='record_custom_status']").val() == "1") {
+$("form[name='domain_records']").unbind('submit');
+alert('returning true');
+	return true;
+}
+
+});
+*/
+
+	$("form[name='domain_records']").submit(function(e) {
+
+//		alert('submit function called, status: ' + $(":input[name='record_custom_status']").val());
+
+			if($(":input[name='record_custom_status']").val() != "1") {
+
+// alert('not yet validated');
+
+			$("#domain_records_custom_loading").show();
+
+			// prevent form submission
+			// e.preventDefault();
+
+			$.ajax({ 
+				data: get_custom_form_data(),
+				type: 'POST', 
+				dataType: 'html',
+				url: "domains/records-ajax.php?id=" + id_domain + "&pagination=" + record_custom_page,
+				success: function(res){
+
+// alert('ajax response has returned');
+
+				$('#domain_records_custom').html(res);
+				after_load_domain_records_custom();
+
+
+				if($(":input[name='record_custom_status']").val() == 1) {
+
+					// alert('the form record custom status is 1, ');
+					//return true;
+
+					$("form[name='domain_records']").submit();
+				}
+
+				}
+
+			});
+// e.preventDefault();
+
+//alert('form is either not validated, or is awaiting validation');
+
+//e.preventDefault();
+// return false;
+
+			} else {
+
+// alert('form is or was validated. Now unbind the form events and submit the form');
+
+//			alert('cleared for validation?');
+//			alert('validated: ' + $(":input[name='record_custom_status']").val());
+
+$("form[name='domain_records']").unbind('submit');
+$("form[name='domain_records']").submit();
+return true;
+
+			}
+
+
+
+/*
+$.post("domains/records-ajax.php?id=" + id_domain + "&pagination=" + record_custom_page, 
+		get_custom_form_data(), function(res) {
+		$('#domain_records_custom').html(res);
+		after_load_domain_records_custom();
+
+		alert('status is now: ' + $(":input[name='record_custom_status']").val());
+
+		if($(":input[name='record_custom_status']").val() == 1) {
+		$(":input[name='record_custom_status']").val("1");
+		$("form[name='domain_records']").attr('validated', true);
+		$("form[name='domain_records']").submit();
+		} else {
+		$("form[name='domain_records']").attr('validated', false);
+		}
+		});
+
+		*/
+
+	//alert('returning true');
+	//return true;
+
+});
+
+
 	/*
 		When any element in the last row is changed (therefore, having data put into it), call a function to create a new row
 	*/
 	num_records_ns = $("input[name='num_records_ns']").val();
 	num_records_mx = $("input[name='num_records_mx']").val();
-	num_records_custom = $("input[name='num_records_custom']").val();
-	
+
 	$("select[name^='record_ns_" + (num_records_ns-1) + "']").change(add_recordrow_ns);
 	$("input[name^='record_ns_" + (num_records_ns-1) + "']").change(add_recordrow_ns);
 	$("textarea[name^='record_ns_" + (num_records_ns-1) + "']").change(add_recordrow_ns);
@@ -26,9 +214,6 @@ $(document).ready(function()
 	$("input[name^='record_mx_" + (num_records_mx-1) + "']").change(add_recordrow_mx);
 	$("textarea[name^='record_mx_" + (num_records_mx-1) + "']").change(add_recordrow_mx);
 
-	$("select[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
-	$("input[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
-	$("textarea[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
 	
 	/*
 	 * 	Attach delete function to mouse click on delete link
@@ -48,7 +233,7 @@ $(document).ready(function()
 	/*
 	 * 	Change columns for custom records on change
 	 */
-	$("select[name^='record_custom_']").change(function()
+	$("select[name^='record_custom_']").live("change", function()
 	{
 		if ($(this).val() == "CNAME")
 		{
@@ -167,6 +352,7 @@ function add_recordrow_ns()
 */
 function add_recordrow_custom()
 {
+
 	previous_row	= $("input[name='record_custom_" + (num_records_custom-1) + "_name']").parent().parent();
 	new_row		= $(previous_row).clone().insertAfter(previous_row);
 
@@ -246,6 +432,9 @@ function delete_undo_row(cell)
 		$(cell).children(".delete_undo").children().html("delete");
 		$(cell).children("input").val("false");
 	}
+	
+	$(":input[name='record_custom_status']").val("0");
+
 }
 
 function dynamic_help_message(previous_string, new_string, is_ttl)
