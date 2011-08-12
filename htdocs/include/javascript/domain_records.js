@@ -8,63 +8,10 @@ var num_records_mx;
 var num_records_ns;
 var num_records_custom;
 
-function load_domain_records_custom(id_domain, page, data) 
-{
-	
-	/*
-		Load in the records via ajax at page load
-	*/
-
-	if($("#domain_records_custom").html() == "") {
-		$("#domain_records_custom").html('<tr><td><img src="images/wait20.gif" /></td></tr>');
-	} else {
-		$("#domain_records_custom_loading").show();
-	}
-
-	if(!data) {
-		var data = new Array();
-	}
-
-	$.post("domains/records-ajax.php?id=" + id_domain + "&pagination=" + page, data, function(res) {
-			$('#domain_records_custom').html(res);
-			after_load_domain_records_custom();
-	});
-
-}
 
 /*
-function submit_callback() {
-
-	if($(":input[name='record_custom_status']").val() == 1) {
-		alert('forms are good, off we go');
-		// $("form[name='domain_records']").submit();
-		return true;
-	} else {
-		alert('forms are bad');
-		return false;
-	}
-
-}
+	Page Load
 */
-
-function after_load_domain_records_custom(submit) {
-
-	$("#domain_records_custom_loading").hide();
-
-	num_records_custom = $("input[name='num_records_custom']").val();
-	record_custom_page = $("input:[name='record_custom_page']").val();
-	$("select[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
-	$("input[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
-	$("textarea[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
-
-}
-
-/*
- * get the custom form data and serialize it for ajax POSTING
- */
-function get_custom_form_data() {
-	return $(":input[name^='record_custom_'],:input[name='num_records_custom']").serialize();
-}
 
 $(document).ready(function()
 {
@@ -78,126 +25,94 @@ $(document).ready(function()
 
 	load_domain_records_custom(id_domain, 1);
 
-	/* 
-	 * When a pagination item is clicked, load the records page in via ajax
-	 */
 
-	$("a[id^=pagination]").live("click", function() { 
+	/* 
+		When a pagination item is clicked, load the records page in via ajax
+	*/
+
+	$("a[id^=pagination]").live("click", function()
+	{ 
 		load_domain_records_custom(id_domain, $(this).attr('id').replace('pagination_',''), get_custom_form_data()); 
 	});
 
+
 	/*
-	 * As soon as a form element is changed, declare the form status as 0 (requiring validation
-	 */
+		As soon as a form element is changed, declare the form status as 0 (requiring validation)
+	*/
 
-	$(":input[name^='record_custom_']").live("change", function() {
+	$(":input[name^='record_custom_']").live("change", function()
+	{
+		// $("form[name='domain_records']").attr('validated', false);
+		$(":input[name='record_custom_status']").val("0");
+	});
 
-			// $("form[name='domain_records']").attr('validated', false);
 
-			$(":input[name='record_custom_status']").val("0");
-			});
+	/*
+		Intercept the form submit button. 
 
-	/* 
-	 * Intercept the form submit button... submit the records custom first before the real form
-	 */
+		* Intercept submit action
+		* Validate current custom records - we do this to enforce UI consistency, so any issues with custom
+		  records get adddressed in the same place.
+		* Submit (POST) form to the processing page for *secure* validation and processing.
+	*/
 
-	
-/*
-$("form[name='domain_records']").submit(function(e) {
+	$("form[name='domain_records']").submit(function(e)
+	{
+		console.log('Processing form upon submit click');
 
-alert('e: ' + e.val());
 
-if($(":input[name='record_custom_status']").val() == "1") {
-$("form[name='domain_records']").unbind('submit');
-alert('returning true');
-	return true;
-}
+		// we need to validate the form - this is not a secure check, since a user could have
+		// changed this value - but that's OK, since we validate properly on the paste.
+		//
+		// this step is also important, since it loads the currently displayed records into $_SESSION
+		// so we can process it and any other records at submit time.
+		// 
 
-});
-*/
+		$("#domain_records_custom_loading").show();
 
-	$("form[name='domain_records']").submit(function(e) {
+		$.ajax({ 
+			data: get_custom_form_data(),
+			type: 'POST', 
+			async: false,
+			dataType: 'html',
+			url: "domains/records-ajax.php?id=" + id_domain + "&pagination=" + record_custom_page,
+			success: function(res){
 
-//		alert('submit function called, status: ' + $(":input[name='record_custom_status']").val());
-
-			if($(":input[name='record_custom_status']").val() != "1") {
-
-// alert('not yet validated');
-
-			$("#domain_records_custom_loading").show();
-
-			// prevent form submission
-			// e.preventDefault();
-
-			$.ajax({ 
-				data: get_custom_form_data(),
-				type: 'POST', 
-				dataType: 'html',
-				url: "domains/records-ajax.php?id=" + id_domain + "&pagination=" + record_custom_page,
-				success: function(res){
-
-// alert('ajax response has returned');
+				console.log('ajax response has returned');
 
 				$('#domain_records_custom').html(res);
 				after_load_domain_records_custom();
 
 
-				if($(":input[name='record_custom_status']").val() == 1) {
-
-					// alert('the form record custom status is 1, ');
-					//return true;
-
-					$("form[name='domain_records']").submit();
+				if($(":input[name='record_custom_status']").val() == 1)
+				{
+					// validation successful
+					console.log('Validation successful: the form record custom status is 1');
 				}
+				else
+				{
+					// validation failed
+					console.log('Validation failed: the form record custom status is 0');
 
+					// prevent the form from submitting
+					e.preventDefault();
+					return false;
 				}
-
-			});
-// e.preventDefault();
-
-//alert('form is either not validated, or is awaiting validation');
-
-//e.preventDefault();
-// return false;
-
-			} else {
-
-// alert('form is or was validated. Now unbind the form events and submit the form');
-
-//			alert('cleared for validation?');
-//			alert('validated: ' + $(":input[name='record_custom_status']").val());
-
-$("form[name='domain_records']").unbind('submit');
-$("form[name='domain_records']").submit();
-return true;
-
 			}
 
-
-
-/*
-$.post("domains/records-ajax.php?id=" + id_domain + "&pagination=" + record_custom_page, 
-		get_custom_form_data(), function(res) {
-		$('#domain_records_custom').html(res);
-		after_load_domain_records_custom();
-
-		alert('status is now: ' + $(":input[name='record_custom_status']").val());
-
-		if($(":input[name='record_custom_status']").val() == 1) {
-		$(":input[name='record_custom_status']").val("1");
-		$("form[name='domain_records']").attr('validated', true);
-		$("form[name='domain_records']").submit();
-		} else {
-		$("form[name='domain_records']").attr('validated', false);
-		}
 		});
 
-		*/
 
-	//alert('returning true');
-	//return true;
+		// unbind the submit hooks - if we don't, we'll keep looping through this same
+		// function forever
+		$("form[name='domain_records']").unbind('submit');
 
-});
+
+		// UI validation passed, take to submit stage
+		return true;
+
+	}); // end if submit
+
 
 
 	/*
@@ -252,6 +167,84 @@ $.post("domains/records-ajax.php?id=" + id_domain + "&pagination=" + record_cust
 	});
 
 });
+
+
+/*
+	load_domain_records_custom
+*/
+function load_domain_records_custom(id_domain, page, data) 
+{
+	
+	/*
+		Load in the records via ajax at page load
+	*/
+
+	if($("#domain_records_custom").html() == "") {
+		$("#domain_records_custom").html('<tr><td><img src="images/wait20.gif" /></td></tr>');
+	} else {
+		$("#domain_records_custom_loading").show();
+	}
+
+	if(!data) {
+		var data = new Array();
+	}
+
+	$.post("domains/records-ajax.php?id=" + id_domain + "&pagination=" + page, data, function(res) {
+			$('#domain_records_custom').html(res);
+			after_load_domain_records_custom();
+	});
+
+}
+
+/*
+function submit_callback() {
+
+	if($(":input[name='record_custom_status']").val() == 1) {
+		alert('forms are good, off we go');
+		// $("form[name='domain_records']").submit();
+		return true;
+	} else {
+		alert('forms are bad');
+		return false;
+	}
+
+}
+*/
+
+
+
+/*
+	after_load_domain_records_custom
+
+	Execute function after loading custom domain records to cleanly add a new row
+	for adding additional custom domain records.
+*/
+function after_load_domain_records_custom(submit)
+{
+	$("#domain_records_custom_loading").hide();
+
+	num_records_custom = $("input[name='num_records_custom']").val();
+	record_custom_page = $("input:[name='record_custom_page']").val();
+	$("select[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
+	$("input[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
+	$("textarea[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
+
+}
+
+
+/*
+	get_custom_form_data
+
+ 	Get the custom form data and serialize it for AJAX POSTing - we use this approach to enable
+	UI-side validation of form logic, by reading all the values of a form and then posting
+	to the AJAX page.
+*/
+function get_custom_form_data()
+{
+	return $(":input[name^='record_custom_'],:input[name='num_records_custom']").serialize();
+}
+
+
 
 
 /*

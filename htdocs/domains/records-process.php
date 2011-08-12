@@ -56,6 +56,11 @@ if (user_permissions_get("namedadmins"))
 		/*
 			Process Raw Data
 		*/
+		if (empty($data_tmp["name"]))
+		{
+			$data_tmp["name"] = "@";
+		}
+
 		if ($data_tmp["id"] && $data_tmp["delete_undo"] == "true")
 		{
 			$data_tmp["mode"] = "delete";
@@ -121,41 +126,62 @@ if (user_permissions_get("namedadmins"))
 	}
 
 
-
-	
 	/*
-		Fetch and verify custom records
+		Fetch and verify custom records - note that the brower must be running javascript
+		in order for this function to execute correctly.
 	*/
 
-	if(is_array($_SESSION['form']['domain_records'])) {
-		foreach($_SESSION['form']['domain_records'] as $page => $records) {
-			foreach($records as $record) {
+	if (is_array($_SESSION['form']['domain_records']))
+	{
+		foreach($_SESSION['form']['domain_records'] as $page => $records)
+		{
+			foreach($records as $record)
+			{
 				$data['records'][] = $record;
 			}
 		}
 	}
 
+
+	//print "<pre>";
+	//print_r($_SESSION["form"]);
+	//print "</pre>";
+	//die("foo");
+
+
+	/*
+		Validate Records
+	*/
+
+
 	// initate object
-	//$obj_domain_records               = New domain_records;
+	$obj_domain_records               = New domain_records;
+	$obj_domain_records->id           = $obj_domain->id;
 
-	// fetch variables
-	//$obj_domain_records->id           = @security_form_input_predefined("int", "records_custom_id_domain", 1, "");
+	// validate records
+	$data_validated = $obj_domain_records->validate_custom_records($data['records']);
 
-	//$obj_domain_records->validate_custom_records($data);
+	$data['records']	= $data_validated['records'];
+	$data['reverse']	= $data_validated['reverse'];
 
+/*
+	print "<pre>";
+	print_r($data);
+	print "</pre>";
+	die("debug halt");
+*/
 
 	/*
 		Error Handling
 	*/
 
-
-
 	// return to input page in event of an error
-	if ($_SESSION["error"]["message"])
+	if (error_check())
 	{
-		// if there is an error check for hte existance of a form_session, this will retain the session data for custom records if the form fails
+		// if there is an error check for the existance of a form_session, this will retain the session data for custom records if the form fails
 		// otherwise on the next load of the domain records page the custom section will be reset
-		if($form_session = @security_form_input_predefined("int", "form_session", 0, "") !== 0) {
+		if ($form_session = @security_form_input_predefined("int", "form_session", 0, "") !== 0)
+		{
 			$_SESSION['form']['domain_records']['form_session'] = $form_session;
 		}
 
@@ -361,7 +387,7 @@ if (user_permissions_get("namedadmins"))
 	}
 
 	// display updated details
-	header("Location: ../index.php?page=domains/records.php&id=". $obj_record->id);
+	header("Location: ../index.php?page=domains/records.php&id=". $obj_domain->id);
 	exit(0);
 	
 }

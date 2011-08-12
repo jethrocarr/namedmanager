@@ -313,6 +313,14 @@ class page_output
 		}
 
 
+
+		/*
+			Define Custom Records
+
+			The custom records form is more complex than MX/NS and is defined in the domains/records-ajax.php, being called via an AJAX
+			call when required to display records.
+		*/
+
 		// hidden
 		$structure = NULL;
 		$structure["fieldname"] 	= "form_session";
@@ -321,12 +329,16 @@ class page_output
 		// clear the custom records from the session on initial page load for this edit session
 		// if there is no record from the SESSION then we can assume that this is a new edit session as apposed to one that has been redirected from the process page
 
-		if(isset($_SESSION["form"]["domain_records"]["form_session"]) && $_SESSION["form"]["domain_records"]["form_session"]) {
-			$structure["defaultvalue"]	= $_SESSION["form"]["domain_records"]["form_session"];
-		} else {
-			$structure["defaultvalue"]	= time();
-			$_SESSION['form']['domain_records'] = array();
+		if (!empty($_SESSION["form"]["domain_records"]["form_session"]))
+		{
+			$structure["defaultvalue"]		= $_SESSION["form"]["domain_records"]["form_session"];
 		}
+		else
+		{
+			$structure["defaultvalue"]		= time();
+			$_SESSION['form']['domain_records']	= array();
+		}
+
 		$this->obj_form->add_input($structure);
 
 
@@ -553,26 +565,23 @@ class page_output
 		print "<tr><td colspan=\"2\"><br></td></tr>";
 
 
-		/*
-			All other records
+		/*	
+			Custom Records
+
+			The definition and display of custom records is controlled in domain/records-ajax.php.
 		*/
 
-		if(1 == 1) {
+		print "<tr class=\"header\">";
+		print "<td colspan=\"2\"><b>". lang_trans("domain_records_custom") ."</b></td>";
+		print "</tr>";
 
-			print "<tr class=\"header\">";
-			print "<td colspan=\"2\"><b>". lang_trans("domain_records_custom") ."</b></td>";
-			print "</tr>";
+		print "<tr>";
+		print "<td colspan=\"2\" width=\"100%\">";
+		print "<table width=\"100%\" id=\"domain_records_custom\">";
 
-			print "<tr>";
-			print "<td colspan=\"2\" width=\"100%\">";
-			print "<table width=\"100%\" id=\"domain_records_custom\">";
+		print "</table>";
+		print "</td></tr>";
 
-			print "</table>";
-			print "</td></tr>";
-
-		} else {
-
-		}
 
 
 		// spacer

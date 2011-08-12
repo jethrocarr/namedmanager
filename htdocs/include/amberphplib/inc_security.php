@@ -414,16 +414,22 @@ function security_form_input_predefined ($type, $valuename, $numchar, $errormsg)
 
 
 /*
-	security_script_input ($expression, $value)
+	security_script_input
 
 	Checks data that gets provided to a script (eg: returned error messages,
-	get commands, etc). If data passes, it gets returned. If it doesn't NULL
-	is returned, and the value is set to "error".
-	
-	Success: Returns the value.
-	Failure: Returns "error".
+	get commands, etc) - simular to security_form_input.
+
+	Values
+	expression		Regex to use for the validation
+	value			Value to check
+	mode			0 -  standard check, return error in string if wrong - USE FOR SQL COMMANDS
+				1 -  error handling, return value but raise error - USE FOR SMOOTH ERROR HANDLING
+
+	Returns
+	value			Validated value
+	"error"			An error occured in mode 1
 */
-function security_script_input ($expression, $value)
+function security_script_input ($expression, $value, $mode = 0)
 {
 	// if the input matches the regex, all is good, otherwise set to "error".
 	if (preg_match($expression, $value))
@@ -434,18 +440,38 @@ function security_script_input ($expression, $value)
 	}
 	else
 	{
-		return "error";
+		// failure to validate
+
+
+		if ($mode)
+		{
+			$valuename = vname($valuename);
+
+			$_SESSION["error"]["message"][]		= "Invalid ". lang_trans($valuename) ." supplied, please correct.";
+			$_SESSION["error"][$valuename]		= 0;
+
+			return $value;
+		}
+		else
+		{
+			return "error";
+		}
 	}		
 }
 
 
 
 /*
-	security_script_predefined ($value)
+	security_script_predefined
 	
 	Wrapper function for the security_script_input function with various
-	pre-defined checks. This function is simular in to security_form_predefined but
-	is simpler since it doesn't have all the complex error handling code
+	pre-defined checks. This function is simular in to security_form_predefined but somewhat
+	simplier due to less pre-processing being required.
+
+	Values
+	type		Predefined regex type.
+	value		Value to check.
+	mode		See security_script_input.
 
 	"type" options:
 	* any		Allow any input (note: HTML tags will still be stripped)
@@ -456,10 +482,11 @@ function security_script_input ($expression, $value)
 	* money		0.2f floating point money value - the security function will perform padding
 	* float		Floating point integer
 	* ipv4		XXX.XXX.XXX.XXX IPv4 syntax
+	* checkbox	Returns bool 0/1 depends on value contents
 
 	For further details, refer to the commentsfor the security_form_input function.
 */
-function security_script_input_predefined ($type, $value)
+function security_script_input_predefined ($type, $value, $mode = 0)
 {
 	$expression = NULL;
 
@@ -474,6 +501,18 @@ function security_script_input_predefined ($type, $value)
 	{
 		case "any":
 			$expression = "/^[\S\s]*$/";
+		break;
+
+		case "checkbox":
+			// simple bool state, never an error return
+			if ($value)
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
 		break;
 
 		case "date":
@@ -534,7 +573,7 @@ function security_script_input_predefined ($type, $value)
 
 	}
 
-	return @security_script_input($expression, $value);
+	return @security_script_input($expression, $value, $mode);
 }
 
 

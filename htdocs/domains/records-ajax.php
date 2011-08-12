@@ -1,11 +1,12 @@
 <?php
 /*
-	domains/records.php
+	domains/records-ajax.php
 
 	access:
 		namedadmins
 
-	Allows the updating of records for the selected domain.
+	Performs a number of functions to support the domains/records.php page - in particular,
+	the display of the custom records fields.
 */
 
 class page_output
@@ -37,14 +38,20 @@ class page_output
 
 		// fetch variables
 		$this->obj_domain->id		= security_script_input('/^[0-9]*$/', $_GET["id"]);
-		$this->page		= 1;
+		$this->page			= 1;
 		$this->offset			= 0;
-		if(isset($_GET['pagination'])) {
+
+		if (isset($_GET['pagination']))
+		{
 			$this->page = security_script_input('/^[0-9]*$/', $_GET["pagination"]);
-			if($this->page == 1) {
+
+			if ($this->page == 1)
+			{
 				$this->offset = 0;
-			} else {
-				$this->offset = $GLOBALS["config"]['PAGINATION_DOMAIN_RECORDS'] * $this->page;
+			}
+			else
+			{
+				$this->offset = $GLOBALS["config"]['PAGINATION_DOMAIN_RECORDS'] * ($this->page - 1);
 			}
 		}
 
@@ -69,89 +76,121 @@ class page_output
 		return 1;
 	}
 
-	function get_pagination_row() {
+	function get_pagination_row()
+	{
+		if ($this->num_records_custom_total > $GLOBALS["config"]["PAGINATION_DOMAIN_RECORDS"])
+		{
+			$str = "";
 
-		// determine start and end records and total number of pages
-		$start_record = ($this->offset + 1);
-		$end_record = ($GLOBALS["config"]['PAGINATION_DOMAIN_RECORDS'] + ($GLOBALS["config"]['PAGINATION_DOMAIN_RECORDS'] * $this->page));
-		if($end_record > $this->num_records_custom_total) {
-			$end_record = $this->num_records_custom_total;
-		}
-		$this->page_total = round($this->num_records_custom_total / $GLOBALS["config"]['PAGINATION_DOMAIN_RECORDS'], false, PHP_ROUND_HALF_DOWN);
+			// determine start and end records and total number of pages
+			$start_record 	= ($this->offset + 1);
+			$end_record	= $GLOBALS["config"]['PAGINATION_DOMAIN_RECORDS'] * $this->page;
 
-		if($this->page > $this->page_total) {
-			$this->page = $this->page_total;
-		}
+			if ($end_record > $this->num_records_custom_total)
+			{
+				$end_record = $this->num_records_custom_total;
+			}
 
-		// output the information
-		$str  = $this->num_records_custom_total . ' record' . ($this->num_records_custom_total <> 1 ? 's' : '') . '. Showing Records ';
-	        $str .= $start_record . ' to ' . $end_record . ' on page ' . $this->page . ' of ' . $this->page_total . '<br />';
+			$this->page_total = ceil($this->num_records_custom_total / $GLOBALS["config"]['PAGINATION_DOMAIN_RECORDS']);
 
-		if($this->page != 1) {
-			$str .= '<a id="pagination_0" href="#1"><<</a> ';
-		} else {
-			$str .= '<<';
-		}
+			if ($this->page > $this->page_total)
+			{
+				$this->page = $this->page_total;
+			}
 
-		$pagination_nav_limit = 5;
 
-		// determine starting point
-		if($this->page - $pagination_nav_limit <= 1) {
-			$pagination_start = 1;
-		} else {
-			$pagination_start = $this->page - $pagination_nav_limit;
-		}
+			// output the information
+			$str .= $this->num_records_custom_total . ' record' . ($this->num_records_custom_total <> 1 ? 's' : '') . '. Showing Records ';
+			$str .= $start_record . ' to ' . $end_record . ' on page ' . $this->page . ' of ' . $this->page_total . '<br />';
 
-		if($this->page >= $this->page_total - $pagination_nav_limit) {
-			$i = $this->page;
+			if ($this->page != 1)
+			{
+				$str .= '<a id="pagination_1" href="#1"><<</a> ';
+			}
+			else
+			{
+				$str .= '<<';
+			}
 
-			while($i > $this->page_total - ($pagination_nav_limit * 2) ) {
-				$i--;
-				if($i <= 1) {
-					$i = 1;
+			$pagination_nav_limit = 10;
+
+			// determine starting point
+			if (($this->page - $pagination_nav_limit) <= 1)
+			{
+				$pagination_start = 1;
+			}
+			else
+			{
+				$pagination_start = $this->page - $pagination_nav_limit;
+			}
+
+			if ($this->page >= ($this->page_total - $pagination_nav_limit))
+			{
+				$i = $this->page;
+
+				while ($i > $this->page_total - ($pagination_nav_limit * 2) )
+				{
+					$i--;
+
+					if ($i <= 1)
+					{
+						$i = 1;
+						break;
+					}
+				}
+
+				$pagination_start = $i;
+			}
+
+			if ($this->page + $pagination_nav_limit < $this->page_total)
+			{
+				$pagination_start = $this->page - $pagination_nav_limit;
+
+				if ($pagination_start <= 1)
+				{
+					$pagination_start = 1;
+				}
+			}
+			
+			for ($i = $pagination_start; $i <= $this->page_total; $i++)
+			{
+				if ($pagination_start > 1 && $pagination_start == $i)
+				{
+					$str .= '...';
+				}
+
+				if ($i == $this->page)
+				{
+					$str .= $i . ' ';
+				}
+				else
+				{
+					$str .= '<a id="pagination_' . $i . '" href="#' . $i . '">' . $i . '</a> ';
+				}
+
+				if ($i == $this->page_total)
+				{
+					break;
+				}
+
+				if ($i > $pagination_nav_limit + $this->page)
+				{
+					$str .= '...';
 					break;
 				}
 			}
-			$pagination_start = $i;
-		}
 
-		if($this->page + $pagination_nav_limit < $this->page_total) {
-			$pagination_start = ($this->page_total - ($pagination_nav_limit * 2) - 1);
-			if($pagination_start <= 1) {
-				$pagination_start = 1;
+			if ($this->page != $this->page_total)
+			{
+				$str .= ' <a id="pagination_' . $this->page_total . '" href="#' . $this->page_total . '">>></a>';
 			}
-		}
-		
-		for ($i = $pagination_start; $i <= $this->page_total; $i++) {
-			
-			if($this->page > $pagination_nav_limit && $i < $pagination_nav_limit - $this->page && $pagination_nav_limit <= $this->page_total) {
-				$str .= '...';
+			else
+			{
+				$str .= ' >>';
 			}
 
-			if($i == $this->page) {
-				$str .= $i . ' ';
-			} else {
-				$str .= '<a id="pagination_' . $i . '" href="#' . $i . '">' . $i . '</a> ';
-			}
-
-			if($i == $this->page_total) {
-				break;
-			}
-
-			if($i > $pagination_nav_limit + $this->page) {
-				$str .= '...';
-				break;
-			}
-		}
-
-		if($this->page != $this->page_total) {
-			$str .= ' <a id="pagination_' . $this->page_total . '" href="#' . $this->page_total . '">>></a>';
-		} else {
-			$str .= ' >>';
-		}
-
-		return $str;
-
+			return $str;
+		} 
 		
 	}
 
@@ -162,47 +201,34 @@ class page_output
 		 * Validate a POST (page navigation move will prompt this)
 		 */
 		
-		if(isset($_POST['record_custom_page'] )) {
-			//echo 'got a post submit for custom page';
-			//print_R($_POST);
+		if (isset($_POST['record_custom_page'] ))
+		{
+			// fetch data from POST and validate - we then return values
+			$data = $this->obj_domain->validate_custom_records();
 
-			$data["custom"]["num_records"]          = @security_form_input_predefined("int", "num_records_custom", 0, "");
+			// validate the record_custom_page for returning the user to their page, default to page 1 if any errors in validating...
+			$data['record_custom_page']		= @security_form_input_predefined("int", "record_custom_page", 1, "");
 
-			$data["records"]                        = array();
-			$data["reverse"]                        = array();
-
-
-			$this->obj_domain->validate_custom_records($data);
 /*
-			echo '<tr><td colspan="100%">from db<pre>'; 
+			echo '<tr><td colspan="100%">post-validation POST data<pre>'; 
 			echo '<pre>';
 			print_R($data);
 			echo '</pre>';
 			echo '</td></tr>';
 */
 
-			if ($_SESSION["error"]["message"])
+			if (error_check())
 			{
 				$_SESSION["error"]["form"]["domain_records"] = "failed";
 				$this->page = $data['record_custom_page'];
-			} else {
+			}
+			else
+			{
 				// no errors... set the records to the session
 				$_SESSION['form']['domain_records'][$data['record_custom_page']] = $data['records'];
 			}
-
-			//echo 'session error:<br>';
-			//echo '<pre>';
-			//print_R($_SESSION['error']);
-
-			//echo 'data:<br>';
-			//print_R($data);
-
-			//echo '</pre>';
-			
 		}
 
-
-		// $this->obj_domain->
 
 
 		/*
@@ -378,6 +404,11 @@ class page_output
 				$structure["type"]			= "checkbox"; 
 				$structure["options"]["label"]		= "";
 				$this->obj_form->add_input($structure);
+
+				$structure = NULL;
+				$structure["fieldname"]         	= "record_custom_". $i ."_reverse_ptr_orig";
+				$structure["type"] 		        = "hidden"; 
+				$this->obj_form->add_input($structure);
 			}
 		}
 
@@ -390,8 +421,17 @@ class page_output
 		{
 			if (in_array($record["type"], $dns_record_types))
 			{
+				// special ID rules
+				if ($record["id"])
+				{
+					$this->obj_form->structure["record_custom_". $i ."_id"]["defaultvalue"]		= $record["id"];
+				}
+				else
+				{
+					$this->obj_form->structure["record_custom_". $i ."_id"]["defaultvalue"]		= $record["id_record"];
+				}
+
 				// fetch data
-				$this->obj_form->structure["record_custom_". $i ."_id"]["defaultvalue"]			= $record["id_record"];
 				$this->obj_form->structure["record_custom_". $i ."_type"]["defaultvalue"]		= $record["type"];
 				$this->obj_form->structure["record_custom_". $i ."_prio"]["defaultvalue"]		= $record["prio"];
 				$this->obj_form->structure["record_custom_". $i ."_name"]["defaultvalue"]		= $record["name"];
@@ -403,6 +443,7 @@ class page_output
 					// disable inappropate values for CNAME fields
 					$this->obj_form->structure["record_custom_". $i ."_ttl"]["options"]["disabled"]	= "yes";
 					$this->obj_form->structure["record_custom_". $i ."_reverse_ptr"]["options"]["disabled"] = "yes";
+					$this->obj_form->structure["record_custom_". $i ."_reverse_ptr_orig"]["options"]["disabled"] = "yes";
 				}
 				elseif ($record["type"] != "PTR")
 				{
@@ -423,6 +464,7 @@ class page_output
 						if ($obj_ptr->data_record["content"] == $record["name"] || $obj_ptr->data_record["content"] == ($record["name"] .".". $this->obj_domain->data["domain_name"]))
 						{
 							$this->obj_form->structure["record_custom_". $i ."_reverse_ptr"]["defaultvalue"] = "on";
+							$this->obj_form->structure["record_custom_". $i ."_reverse_ptr_orig"]["defaultvalue"] = "on";
 						}
 					}
 
@@ -469,7 +511,6 @@ class page_output
 		}
 
 		$this->obj_form->add_input($structure);
-
 	}
 
 
@@ -539,6 +580,7 @@ class page_output
 			{
 				print "<td width=\"5%\" valign=\"top\" align=\"center\">";
 				$this->obj_form->render_field("record_custom_". $i ."_reverse_ptr");
+				$this->obj_form->render_field("record_custom_". $i ."_reverse_ptr_orig");
 				print "</td>";
 			}
 			
