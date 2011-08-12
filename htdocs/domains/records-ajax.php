@@ -99,17 +99,13 @@ class page_output
 			}
 
 
-			// output the information
-			$str .= $this->num_records_custom_total . ' record' . ($this->num_records_custom_total <> 1 ? 's' : '') . '. Showing Records ';
-			$str .= $start_record . ' to ' . $end_record . ' on page ' . $this->page . ' of ' . $this->page_total . '<br />';
-
 			if ($this->page != 1)
 			{
-				$str .= '<a id="pagination_1" href="#1"><<</a> ';
+				$str .= '<a class="button_small" id="pagination_1" href="#1">&lt;&lt;</a> ';
 			}
 			else
 			{
-				$str .= '<<';
+				$str .= '<a class="button_small_disabled">&lt;&lt;</a>';
 			}
 
 			$pagination_nav_limit = 10;
@@ -161,11 +157,11 @@ class page_output
 
 				if ($i == $this->page)
 				{
-					$str .= $i . ' ';
+					$str .= '<a class="button_small_disabled">'. $i .'</a> ';
 				}
 				else
 				{
-					$str .= '<a id="pagination_' . $i . '" href="#' . $i . '">' . $i . '</a> ';
+					$str .= '<a class="button_small" id="pagination_' . $i . '" href="#' . $i . '">' . $i . '</a> ';
 				}
 
 				if ($i == $this->page_total)
@@ -182,12 +178,19 @@ class page_output
 
 			if ($this->page != $this->page_total)
 			{
-				$str .= ' <a id="pagination_' . $this->page_total . '" href="#' . $this->page_total . '">>></a>';
+				$str .= ' <a class="button_small" id="pagination_' . $this->page_total . '" href="#' . $this->page_total . '">&gt;&gt;</a>';
 			}
 			else
 			{
-				$str .= ' >>';
+				$str .= ' <a class="button_small_disabled"> &gt;&gt; </a>';
 			}
+
+
+			// output the information
+			$str .= "<br><br>";
+			$str .= $this->num_records_custom_total . ' record' . ($this->num_records_custom_total <> 1 ? 's' : '') . '. Showing Records ';
+			$str .= $start_record . ' to ' . $end_record . ' on page ' . $this->page . ' of ' . $this->page_total . '<br />';
+
 
 			return $str;
 		} 
@@ -225,7 +228,7 @@ class page_output
 			else
 			{
 				// no errors... set the records to the session
-				$_SESSION['form']['domain_records'][$data['record_custom_page']] = $data['records'];
+				$_SESSION['form']['domain_records'][$this->obj_domain->id][$data['record_custom_page']] = $data['records'];
 			}
 		}
 
@@ -244,9 +247,9 @@ class page_output
 		// if the data is present in the session then it has either changed and is awaiting submission
 		// or the user has visited that page before during this edit session
 		
-		if(isset($_SESSION['form']['domain_records'][$this->page]) && count($_SESSION['form']['domain_records'][$this->page])) {
+		if(isset($_SESSION['form']['domain_records'][$this->obj_domain->id][$this->page]) && count($_SESSION['form']['domain_records'][$this->obj_domain->id][$this->page])) {
 			log_debug("execute", 'Loading records from session as previous load or edit detected');
-			$this->obj_domain->data['records'] = $_SESSION['form']['domain_records'][$this->page];
+			$this->obj_domain->data['records'] = $_SESSION['form']['domain_records'][$this->obj_domain->id][$this->page];
 			/*
 			echo '<tr><td colspan="100%">from sesssion<pre>';
 			print_R($this->obj_domain->data['records']);
@@ -687,24 +690,10 @@ else
 	Draw page data
 */
 
-// sleep(1);
 
 if ($page_valid)
 {
-	// HTML-formatted output
-/*
-	print "<tr><td bgcolor=\"#ffffff\" style=\"border: 1px #000000 dashed; padding: 5px;\">";
-	print "<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr>";
-
-	print "<td valign=\"top\" style=\"padding: 5px;\">";
-*/
 	$page_obj->render_html();
-/*
-	print "<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td>";
-
-	print "</tr></table>";
-	print "</td></tr>";
-*/
 }
 
 ?>

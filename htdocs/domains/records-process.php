@@ -131,9 +131,9 @@ if (user_permissions_get("namedadmins"))
 		in order for this function to execute correctly.
 	*/
 
-	if (is_array($_SESSION['form']['domain_records']))
+	if (is_array($_SESSION['form']['domain_records'][$obj_domain->id]))
 	{
-		foreach($_SESSION['form']['domain_records'] as $page => $records)
+		foreach($_SESSION['form']['domain_records'][$obj_domain->id] as $page => $records)
 		{
 			foreach($records as $record)
 			{
@@ -144,7 +144,7 @@ if (user_permissions_get("namedadmins"))
 
 
 	//print "<pre>";
-	//print_r($_SESSION["form"]);
+	//print_r($_SESSION["form"][$obj_domain->id]);
 	//print "</pre>";
 	//die("foo");
 
@@ -182,7 +182,7 @@ if (user_permissions_get("namedadmins"))
 		// otherwise on the next load of the domain records page the custom section will be reset
 		if ($form_session = @security_form_input_predefined("int", "form_session", 0, "") !== 0)
 		{
-			$_SESSION['form']['domain_records']['form_session'] = $form_session;
+			$_SESSION['form']['domain_records'][$obj_domain->id]['form_session'] = $form_session;
 		}
 
 		$_SESSION["error"]["form"]["domain_records"] = "failed";
