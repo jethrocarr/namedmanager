@@ -302,46 +302,84 @@ class domain
 		Load all the records for the selected domain into the $this->data["records"] array. If you wish to modifiy or query specific
 		records, please refer to the domain_records class.
 
+		Values
+		offset
+		limit
+
 		Returns
 		0	failure
 		1	success
 	*/
-	function load_data_record_custom($offset = 0, $limit = false)
+	function load_data_record_custom($offset = 0, $limit = 0)
 	{
+		log_debug("domain", "Executing load_data_record_custom($offset, $limit)");
 
-		$extra_sql = '';
-		if($limit >= 1) {
-			$extra_sql = ' LIMIT ' . ($offset >= 0 ? $offset : '0') . ', ' . $limit;
-		}
+		// need actual range
+		$limit = $offset + $limit;
 
-		log_debug("domain", "Executing load_data_record_custom($offset, " . ($limit ? $limit : 'ALL') . ")");
+		// load array of custom types
+		$custom_types = sql_get_singlecol("SELECT type as value FROM dns_record_types WHERE user_selectable = 1");
 
-		$this->sql_obj->string	= "SELECT id AS id_record, name, type, content, ttl, prio FROM `dns_records` WHERE type IN (SELECT type from dns_record_types where user_selectable = 1) and id_domain='". $this->id ."' ORDER BY type, name" . $extra_sql;
-		$this->sql_obj->execute();
 
-		if ($this->sql_obj->num_rows())
+		// load all records - we can't do a partial limit select, since the sorting in SQL
+		// is not suitable for correct domain ordering
+
+		if ($this->load_data_record_all())
 		{
-			$this->sql_obj->fetch_array();
+			log_write("debug", "Loaded all records, selecting limited set of custom records.");
 
-			foreach ($this->sql_obj->data as $data_records)
+
+			$data_new = array();
+
+			$j=0;
+
+			for ($i=0; $i < count(array_keys($this->data["records"])); $i++)
 			{
-				$this->data["records"][] = $data_records;
+				if (in_array($this->data["records"][$i]["type"], $custom_types))
+				{
+					// custom record selected
+					if ($j >= $offset && $j <= $limit)
+					{
+						$data_new[] = $this->data["records"][$i];
+					}
+
+					$j++;
+				}
 			}
 
+
+			$this->data["records"] = $data_new;
+			unset($data_new);
+
 			return 1;
-		}
+
+		} // end of record load
 
 		// failure
 		return 0;
 
 	} // end of load_data_record_all
 
+
+
+	/*
+		data_record_custom_count
+
+		Returns count of the number of custom records in a domain, used for various UI
+		functions that require the knowledge of record count.
+
+		Returns
+		#	Integer Count
+	*/
+	
 	function data_record_custom_count() 
 	{
 		log_debug("domain", "Executing load_data_record_custom_count()");
 
 		return sql_get_singlevalue("SELECT COUNT(*) AS value FROM `dns_records` WHERE type IN (SELECT type from dns_record_types where user_selectable = 1) and id_domain='" . $this->id . "'");
 	}
+
+
 
 	/*
 		action_create
