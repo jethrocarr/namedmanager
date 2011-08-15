@@ -57,7 +57,8 @@ if (user_permissions_get('namedadmins'))
 //			$obj_domain->data["ipv4_help"]			= security_form_input_predefined("any", "ipv4_help", 1, "");
 			$obj_domain->data["ipv4_network"]		= security_form_input_predefined("ipv4", "ipv4_network", 1, "Must supply full IPv4 network address");
 //			$obj_domain->data["ipv4_subnet"]		= security_form_input_predefined("int", "ipv4_subnet", 1, "");
-			$obj_domain->data["ipv4_autofill"]		= security_form_input_predefined("any", "ipv4_autofill", 0, "");
+			$obj_domain->data["ipv4_autofill"]		= security_form_input_predefined("checkbox", "ipv4_autofill", 0, "");
+			$obj_domain->data["ipv4_autofill_forward"]	= security_form_input_predefined("checkbox", "ipv4_autofill_forward", 0, "");
 			$obj_domain->data["ipv4_autofill_domain"]	= security_form_input_predefined("any", "ipv4_autofill_domain", 0, "");
 			$obj_domain->data["domain_description"]		= security_form_input_predefined("any", "domain_description", 0, "");
 
@@ -68,6 +69,53 @@ if (user_permissions_get('namedadmins'))
 				$tmp_network = explode(".", $obj_domain->data["ipv4_network"]);
 					
 				$obj_domain->data["domain_name"]	= $tmp_network[2] .".". $tmp_network[1] .".". $tmp_network[0] .".in-addr.arpa";
+
+
+				// make sure autofill combinations are correct
+				if ($obj_domain->data["ipv4_autofill"])
+				{
+					if (empty($obj_domain->data["ipv4_autofill_domain"]))
+					{
+						error_flag_field("ipv4_autofill_domain");
+						log_write("error", "process", "A domain must be provided in order to use autofill");
+					}
+				}
+
+				if ($obj_domain->data["ipv4_autofill_forward"])
+				{
+					// autofill must be enabled -just a safety check if the UI glitches
+					if (!$obj_domain->data["ipv4_autofill"])
+					{
+						error_flag_field("ipv4_autofill");
+						log_write("error", "process", "Select autofill if autofill forwards is desired.");
+					}
+
+
+					// a domain must be provided
+					if (empty($obj_domain->data["ipv4_autofill_domain"]))
+					{
+						error_flag_field("ipv4_autofill_domain");
+						log_write("error", "process", "A domain must be provided in order to use autofill forwards");
+					}
+
+
+					// check that the selected domain exists in this system as a forward domain
+					$obj_domain_check 			= New domain;
+					$obj_domain_check->data["domain_name"]	= $obj_domain->data["ipv4_autofill_domain"];
+
+					if (!$obj_domain_check->verify_domain_name())
+					{
+						$obj_domain->data["ipv4_autofill_domain_id"] = $obj_domain_check->id;
+					}
+					else
+					{
+						log_write("error", "process", "The domain provided does not exist and can't be used for forwards autofill.");
+						error_flag_field("ipv4_autofill_domain");
+					}
+
+
+					unset($obj_domain_check);
+				}
 
 
 /*
@@ -195,9 +243,41 @@ if (user_permissions_get('namedadmins'))
 			
 				$obj_record->action_update_record();
 			}
+
+			unset($obj_record);
 		}
 
 
+		// handle IPv4 forward domains
+		if ($obj_domain->data["ipv4_autofill_forward"])
+		{
+			// create
+			$obj_record		= New domain_records;
+			$obj_record->id		= $obj_domain->data["ipv4_autofill_domain_id"];
+			$obj_record->load_data();
+
+			$tmp_network = explode(".", $obj_domain->data["ipv4_network"]);
+
+
+			// assuming /24 only
+			for ($i=1; $i < 255; $i++)
+			{
+				// check if there is an existing record.
+				$obj_record->id_record			= $obj_record->find_forward_record($tmp_network[0] ."-". $tmp_network[1] ."-". $tmp_network[2] ."-$i");
+
+				$obj_record->data_record["type"]	= "A";
+				$obj_record->data_record["name"]	= $tmp_network[0] ."-". $tmp_network[1] ."-". $tmp_network[2] ."-$i";	// name
+				$obj_record->data_record["content"]	= $tmp_network[0] .".". $tmp_network[1] .".". $tmp_network[2] .".$i";	// ipv4
+				$obj_record->data_record["ttl"]		= $obj_domain->data["soa_default_ttl"];
+			
+				$obj_record->action_update_record();
+			}
+			
+			// update serial to regenerate domain files
+			$obj_record->action_update_serial();
+
+			unset($obj_record);
+		}
 
 		// update serial & NS records
 		$obj_domain->action_update_serial();

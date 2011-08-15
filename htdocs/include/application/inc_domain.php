@@ -123,6 +123,14 @@ class domain
 
 		if ($this->sql_obj->num_rows())
 		{
+			if (!$this->id)
+			{
+				$this->sql_obj->fetch_array();
+
+				$this->id = $this->sql_obj->data[0]["id"];
+			}
+
+
 			return 0;
 		}
 		
@@ -879,6 +887,43 @@ class domain_records extends domain
 
 	} // end of verify_id_record
 
+
+	/*
+		find_forward_record
+
+		Takes the provided name field and returns the matching ID
+		from the domain.
+
+		This function is primarily intended for use for functions wanting
+		to check the existance of a record
+
+		Fields
+		name/origin
+
+		Returns
+		0		No Match
+		#		ID of record
+	*/
+
+	function find_forward_record($name)
+	{
+		log_debug("domain_records", "Executing find_forward_record($name)");
+
+		$this->sql_obj->string = "SELECT id FROM `dns_records` WHERE id_domain='". $this->id ."' AND name='". $name ."' LIMIT 1";
+		$this->sql_obj->execute();
+
+		if ($this->sql_obj->num_rows())
+		{
+			$this->sql_obj->fetch_array();
+
+			$this->id_record = $this->sql_obj->data[0]["id"];
+
+			return $this->id_record;
+		}
+
+		return 0;
+
+	} // end of find_forward_record
 
 
 
