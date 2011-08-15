@@ -88,6 +88,10 @@ $(document).ready(function()
 				{
 					// validation successful
 					console.log('Validation successful: the form record custom status is 1');
+
+					// unbind the submit hooks - if we don't, we'll keep looping through this same
+					// function forever
+					$("form[name='domain_records']").unbind('submit');
 				}
 				else
 				{
@@ -96,19 +100,13 @@ $(document).ready(function()
 
 					// prevent the form from submitting
 					e.preventDefault();
-					return false;
 				}
 			}
 
 		});
 
 
-		// unbind the submit hooks - if we don't, we'll keep looping through this same
-		// function forever
-		$("form[name='domain_records']").unbind('submit');
-
-
-		// UI validation passed, take to submit stage
+		// return true, regardless of validation state
 		return true;
 
 	}); // end if submit

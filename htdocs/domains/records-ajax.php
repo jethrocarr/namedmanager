@@ -222,6 +222,8 @@ class page_output
 
 			if (error_check())
 			{
+				log_write("debug", "records-ajax", "POST records provided but error encountered, failing");
+
 				$_SESSION["error"]["form"]["domain_records"] = "failed";
 				$this->page = $data['record_custom_page'];
 			}
