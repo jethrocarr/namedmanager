@@ -41,8 +41,6 @@ class page_output
 
 		// defaults
 		$this->obj_table->columns		= array("domain_name", "domain_serial", "domain_description");
-		$this->obj_table->columns_order		= array("domain_name");
-		$this->obj_table->columns_order_options	= array("domain_name");
 
 		// TODO: we should stop querying directly and use the domains class logic, this would also provide support for multiple backends.
 		// use seporate zone database
@@ -51,6 +49,8 @@ class page_output
 		// fetch all the domains
 		$this->obj_table->sql_obj->prepare_sql_settable("dns_domains");
 		$this->obj_table->sql_obj->prepare_sql_addfield("id", "");
+		$this->obj_table->sql_obj->prepare_sql_addorderby("domain_name LIKE '%arpa%'");
+		$this->obj_table->sql_obj->prepare_sql_addorderby("domain_name");
 
 		// load data
 		$this->obj_table->generate_sql();
