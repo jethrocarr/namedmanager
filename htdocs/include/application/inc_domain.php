@@ -320,7 +320,7 @@ class domain
 	*/
 	function load_data_record_custom($offset = 0, $limit = 0)
 	{
-		log_debug("domain", "Executing load_data_record_custom($offset, $limit)");
+		log_debug("domains", "Executing load_data_record_custom($offset, $limit)");
 
 		// need actual range
 		$limit = $offset + $limit;
@@ -334,7 +334,7 @@ class domain
 
 		if ($this->load_data_record_all())
 		{
-			log_write("debug", "Loaded all records, selecting limited set of custom records.");
+			log_write("debug", "domains", "Loaded all records, selecting limited set of custom records.");
 
 
 			$data_new = array();
