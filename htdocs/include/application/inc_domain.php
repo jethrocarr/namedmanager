@@ -819,6 +819,116 @@ class domain
 	}
 
 
+
+
+
+	/*
+		action_autofill_reverse
+
+		Automatically fills a reverse IPv4 domain with records. Typically called as an option when creating
+		a new reverse IPv4 domain.
+
+		Requires
+		this->data["ipv4_network"]
+		this->data["ipv4_autofill_domain"]
+		this->data["soa_default_ttl"]
+
+		Returns
+		0	Unexpected Failure
+		1	Success
+	*/
+	
+	function action_autofill_reverse()
+	{
+		log_write("debug", "domains", "Executing action_autofill_reverse()");
+
+
+		// this is a new domain, we need to seed the domain, by calculating all the addresses
+		// in the domain and then creating a record for each one.
+
+		$obj_record		= New domain_records;
+		$obj_record->id		= $this->id;
+		$obj_record->data	= $this->data;	// shortcut load
+
+		$tmp_network = explode(".", $this->data["ipv4_network"]);
+
+
+		// assuming /24 only
+		for ($i=1; $i < 255; $i++)
+		{
+			// overwrite any existing records
+			$obj_record->id_record			= $obj_record->find_forward_record($i);
+
+			$obj_record->data_record["type"]	= "PTR";
+			$obj_record->data_record["name"]	= $i;
+			$obj_record->data_record["content"]	= $tmp_network[0] ."-". $tmp_network[1] ."-". $tmp_network[2] ."-$i.". $this->data["ipv4_autofill_domain"];
+			$obj_record->data_record["ttl"]		= $this->data["soa_default_ttl"];
+		
+			$obj_record->action_update_record();
+		}
+
+		unset($obj_record);
+
+
+		return 1;
+
+	} // end of action_autofill_reverse
+
+
+
+	/*
+		action_autofill_forward
+
+		Automatically fills the matching forwards domain for a reverse IPv4 domain with records. Typically called as an option
+		when creating a new reverse IPv4 domain, along with action_autofill_reverse.
+
+		Requires
+		this->data["ipv4_network"]			IPv4 /24 range
+		this->data["ipv4_autofill_domain_id"]		ID of the forward domain to fill
+		this->data["soa_default_ttl"]			Default Record TTL
+
+		Returns
+		0	Unexpected Failure
+		1	Success
+	*/
+
+	function action_autofill_forward()
+	{
+		log_write("debug", "domains", "Executing action_autofill_forward()");
+
+		// create
+		$obj_record		= New domain_records;
+		$obj_record->id		= $this->data["ipv4_autofill_domain_id"];
+		$obj_record->load_data();
+
+		$tmp_network = explode(".", $this->data["ipv4_network"]);
+
+
+		// assuming /24 only
+		for ($i=1; $i < 255; $i++)
+		{
+			// check if there is an existing record.
+			$obj_record->id_record			= $obj_record->find_forward_record($tmp_network[0] ."-". $tmp_network[1] ."-". $tmp_network[2] ."-$i");
+
+			$obj_record->data_record["type"]	= "A";
+			$obj_record->data_record["name"]	= $tmp_network[0] ."-". $tmp_network[1] ."-". $tmp_network[2] ."-$i";	// name
+			$obj_record->data_record["content"]	= $tmp_network[0] .".". $tmp_network[1] .".". $tmp_network[2] .".$i";	// ipv4
+			$obj_record->data_record["ttl"]		= $this->data["soa_default_ttl"];
+		
+			$obj_record->action_update_record();
+		}
+		
+		// update serial to regenerate domain files
+		$obj_record->action_update_serial();
+
+
+		unset($obj_record);
+
+		return 1;
+
+	} // end of action_autofill_forward
+
+
 } // end of class:domain
 
 

@@ -38,7 +38,8 @@ if (user_permissions_get('namedadmins'))
 			$obj_domain->load_data();
 
 			// fetch domain data
-			$obj_domain->data["domain_name"]	= security_form_input_predefined("any", "domain_name", 1, "");
+			$obj_domain->data["domain_name"]		= security_form_input_predefined("any", "domain_name", 1, "");
+			$obj_domain->data["domain_description"]		= security_form_input_predefined("any", "domain_description", 0, "");
 		}
 	}
 	else
@@ -55,12 +56,35 @@ if (user_permissions_get('namedadmins'))
 		{
 			// fetch domain data
 //			$obj_domain->data["ipv4_help"]			= security_form_input_predefined("any", "ipv4_help", 1, "");
-			$obj_domain->data["ipv4_network"]		= security_form_input_predefined("ipv4", "ipv4_network", 1, "Must supply full IPv4 network address");
+			$obj_domain->data["ipv4_network"]		= security_form_input_predefined("ipv4_cidr", "ipv4_network", 1, "Must supply full IPv4 network address");
 //			$obj_domain->data["ipv4_subnet"]		= security_form_input_predefined("int", "ipv4_subnet", 1, "");
 			$obj_domain->data["ipv4_autofill"]		= security_form_input_predefined("checkbox", "ipv4_autofill", 0, "");
 			$obj_domain->data["ipv4_autofill_forward"]	= security_form_input_predefined("checkbox", "ipv4_autofill_forward", 0, "");
 			$obj_domain->data["ipv4_autofill_domain"]	= security_form_input_predefined("any", "ipv4_autofill_domain", 0, "");
 			$obj_domain->data["domain_description"]		= security_form_input_predefined("any", "domain_description", 0, "");
+
+
+			// check CIDR
+			$matches = explode("/", $obj_domain->data["ipv4_network"]);
+			if (!empty($matches[0]) && !empty($matches[1]))
+			{
+				// set network
+				$obj_domain->data["ipv4_network"]	= $matches[0];
+				$obj_domain->data["ipv4_cidr"]		= $matches[1];
+
+
+				// check CIDR
+				if ($obj_domain->data["ipv4_cidr"] > 24)
+				{
+					log_write("error", "process", "CIDRs greater than /24 can not be used for reverse domains.");
+					error_flag_field("ipv4_network");
+				}
+			}
+			else
+			{
+				// no CIDR
+				$obj_domain->data["ipv4_cidr"]		= "24";
+			}
 
 
 			// calculate domain name
@@ -146,7 +170,7 @@ if (user_permissions_get('namedadmins'))
 			// if no description, set to original IP
 			if (!$obj_domain->data["domain_description"])
 			{
-				$obj_domain->data["domain_description"] = "Reverse domain for range ". $obj_domain->data["ipv4_network"] ."";
+				$obj_domain->data["domain_description"] = "Reverse domain for range ". $obj_domain->data["ipv4_network"] ."/". $obj_domain->data["ipv4_cidr"];
 			}
 		}
 
@@ -160,8 +184,6 @@ if (user_permissions_get('namedadmins'))
 	$obj_domain->data["soa_retry"]				= security_form_input_predefined("int", "soa_retry", 1, "");
 	$obj_domain->data["soa_expire"]				= security_form_input_predefined("int", "soa_expire", 1, "");
 	$obj_domain->data["soa_default_ttl"]			= security_form_input_predefined("int", "soa_default_ttl", 1, "");
-
-
 
 
 	/*
@@ -211,87 +233,161 @@ if (user_permissions_get('namedadmins'))
 
 
 		/*
-			Update domain
+			Start DB Transaction
 		*/
 
-		// update domain details
-		$obj_domain->action_update();
-
-
-		// handle IPv4 reverse domains
-		if ($obj_domain->data["ipv4_autofill_domain"])
-		{
-			// this is a new domain, we need to seed the domain, by calculating all the addresses
-			// in the domain and then creating a record for each one.
-
-			$obj_record		= New domain_records;
-			$obj_record->id		= $obj_domain->id;
-			$obj_record->data	= $obj_domain->data;	// shortcut load
-
-			$tmp_network = explode(".", $obj_domain->data["ipv4_network"]);
-
-
-			// assuming /24 only
-			for ($i=1; $i < 255; $i++)
-			{
-				$obj_record->id_record			= NULL;		// we are reusing objects, better blank the ID just-in-case.
-
-				$obj_record->data_record["type"]	= "PTR";
-				$obj_record->data_record["name"]	= $i;
-				$obj_record->data_record["content"]	= $tmp_network[0] ."-". $tmp_network[1] ."-". $tmp_network[2] ."-$i.". $obj_domain->data["ipv4_autofill_domain"];
-				$obj_record->data_record["ttl"]		= $obj_domain->data["soa_default_ttl"];
-			
-				$obj_record->action_update_record();
-			}
-
-			unset($obj_record);
-		}
-
-
-		// handle IPv4 forward domains
-		if ($obj_domain->data["ipv4_autofill_forward"])
-		{
-			// create
-			$obj_record		= New domain_records;
-			$obj_record->id		= $obj_domain->data["ipv4_autofill_domain_id"];
-			$obj_record->load_data();
-
-			$tmp_network = explode(".", $obj_domain->data["ipv4_network"]);
-
-
-			// assuming /24 only
-			for ($i=1; $i < 255; $i++)
-			{
-				// check if there is an existing record.
-				$obj_record->id_record			= $obj_record->find_forward_record($tmp_network[0] ."-". $tmp_network[1] ."-". $tmp_network[2] ."-$i");
-
-				$obj_record->data_record["type"]	= "A";
-				$obj_record->data_record["name"]	= $tmp_network[0] ."-". $tmp_network[1] ."-". $tmp_network[2] ."-$i";	// name
-				$obj_record->data_record["content"]	= $tmp_network[0] .".". $tmp_network[1] .".". $tmp_network[2] .".$i";	// ipv4
-				$obj_record->data_record["ttl"]		= $obj_domain->data["soa_default_ttl"];
-			
-				$obj_record->action_update_record();
-			}
-			
-			// update serial to regenerate domain files
-			$obj_record->action_update_serial();
-
-			unset($obj_record);
-		}
-
-		// update serial & NS records
-		$obj_domain->action_update_serial();
-		$obj_domain->action_update_ns();
+		$sql_obj = New sql_query;
+		$sql_obj->trans_begin();
 
 
 		/*
-			Return
+			Handle CIDR lower than /24
+
+			For standard domains or /24 reverse domains, we simply go and create the appropiate domain. For domains with
+			lower CIDRs, we need to generate multiple /24 domains.
 		*/
 
-		$_SESSION["notification"]["message"] = array("Domain updated successfully - name servers scheduled to reload with new domain configuration");
+		if ($obj_domain->data["ipv4_cidr"] > 1 && $obj_domain->data["ipv4_cidr"] < 24)
+		{
+			/*
+				Large reverse IPv4 domain, requires splitting into multiple domains.
+			*/
 
-		header("Location: ../index.php?page=domains/view.php&id=". $obj_domain->id ."");
-		exit(0);
+			$networks = ipv4_split_to_class_c($obj_domain->data["ipv4_network"] ."/". $obj_domain->data["ipv4_cidr"]);
+
+
+			foreach ($networks as $classc)
+			{
+				// copy main domain
+				$obj_domain_net		= clone $obj_domain;
+				$obj_domain_net->id	= 0;
+
+				// set network range to name
+				$obj_domain_net->data["ipv4_network"]	= $classc;
+
+				$tmp_network					= explode(".", $obj_domain_net->data["ipv4_network"]);
+				$obj_domain_net->data["domain_name"]		= $tmp_network[2] .".". $tmp_network[1] .".". $tmp_network[0] .".in-addr.arpa";
+
+				$obj_domain_net->data["domain_description"]	.= " ($classc/24)";
+
+
+				// check if the domain already exists
+				if (!$obj_domain_net->verify_domain_name())
+				{
+					// domain is in use - we skip and move on, this is designed to better support
+					// users who are expanding their use base
+
+					log_write("notification", "process", "No changes made to domain ". $obj_domain_net->data["domain_name"] ." due to existing entry");
+				}
+				else
+				{
+					// update/create domain
+					$obj_domain_net->action_update();
+
+					// handle IPv4 reverse domains
+					if ($obj_domain_net->data["ipv4_autofill_domain"])
+					{
+						// this is a new domain, we need to seed the domain, by calculating all the addresses
+						// in the domain and then creating a record for each one.
+
+						$obj_domain_net->action_autofill_reverse();
+					}
+
+					// handle IPv4 forward domains
+					if ($obj_domain_net->data["ipv4_autofill_forward"])
+					{
+						$obj_domain_net->action_autofill_forward();
+					}
+
+					// update serial & NS records
+					$obj_domain_net->action_update_serial();
+					$obj_domain_net->action_update_ns();
+				}
+
+
+				unset($obj_domain_net);
+
+			} // end of loop through networks
+
+			unset($obj_domain);
+
+		}
+		else
+		{
+			/*
+				Standard domain or single reverse domain
+			*/
+
+			// update domain details
+			$obj_domain->action_update();
+
+			// handle IPv4 reverse domains
+			if ($obj_domain->data["ipv4_autofill_domain"])
+			{
+				// this is a new domain, we need to seed the domain, by calculating all the addresses
+				// in the domain and then creating a record for each one.
+
+				$obj_domain->action_autofill_reverse();
+			}
+
+			// handle IPv4 forward domains
+			if ($obj_domain->data["ipv4_autofill_forward"])
+			{
+				$obj_domain->action_autofill_forward();
+			}
+
+			// update serial & NS records
+			$obj_domain->action_update_serial();
+			$obj_domain->action_update_ns();
+
+
+		}
+
+
+		/*
+			Final
+		*/
+		
+		if (error_check())
+		{
+			$sql_obj->trans_rollback();
+
+			log_write("error", "domain", "An error occured whilst trying to adjust the domain.");
+
+			if ($obj_domain->id)
+			{
+				$_SESSION["error"]["form"]["domain_edit"]	= "failed";
+				header("Location: ../index.php?page=domains/view.php&id=". $obj_domain->id ."");
+			}
+			else
+			{
+				$_SESSION["error"]["form"]["domain_add"]	= "failed";
+				header("Location: ../index.php?page=domains/add.php");
+			}
+
+			exit(0);
+
+		}
+		else
+		{
+			$sql_obj->trans_commit();
+
+			$_SESSION["notification"]["message"] = array("Domain updated successfully - name servers scheduled to reload with new domain configuration");
+
+
+			if (empty($networks))
+			{
+				// multiple domains
+				header("Location: ../index.php?page=domains/view.php&id=". $obj_domain->id ."");
+				exit(0);
+			}
+			else
+			{
+				// single domain
+				header("Location: ../index.php?page=domains/domains.php");
+				exit(0);
+			}
+		}
 
 
 	} // if valid data input

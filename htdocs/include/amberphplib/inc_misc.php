@@ -1347,6 +1347,74 @@ function ipv4_subnet_members($address_with_cidr, $include_network = FALSE)
 } // end of ipv4_subnet_members
 
 
+/*
+	ipv4_split_to_class_c
+
+	Takes the provided network & CIDR notation (less than /24) and divides it
+	into multiple /24s, returning those in CIDR notation in an array.
+
+	Fields
+	address_with_cidr
+
+	Returns
+	0	Failure
+	array	Array of /24 CIDR notation networks without notation
+*/
+
+function ipv4_split_to_class_c($address_with_cidr)
+{
+	log_write("debug", "inc_misc", "Executing ipv4_split_to_class_c($address_with_cidr)");
+
+	// source range
+	$matches	= split("/", $address_with_cidr);
+
+	$src_addr	= $matches[0];
+	$src_cidr	= $matches[1];
+
+
+	// calculate subnet mask
+	$bin = NULL;
+
+	for ($i = 1; $i <= 32; $i++)
+	{
+		$bin .= $src_cidr >= $i ? '1' : '0';
+	}
+
+	// calculate key values
+	$long_netmask	= bindec($bin);					// eg: 255.255.255.0
+	$long_network	= ip2long($src_addr);				// eg: 192.168.0.0
+	$long_broadcast	= ($long_network | ~($long_netmask));		// eg: 192.168.0.255
+	$long_classc	= ip2long("0.0.1.0");				// used for addition calculations
+
+	$long_broadcast	= ip2long(long2ip($long_broadcast));		// fixes ugly PHP math issues -without this
+									// the broadcast long is totally incorrect.
+
+
+	/*
+		Debugging
+
+	print "addr: $address_with_cidr <br>";
+	print "netmask: $long_netmask ". long2ip($long_netmask) ."<br>";
+	print "network: $long_network ". long2ip($long_network) ."<br>";
+	print "broadcast: $long_broadcast ". long2ip($long_broadcast) ."<br>";
+	print "classc: $long_classc ". long2ip($long_classc) ."<br>";
+
+	*/
+
+
+	// get network addresses for /24s
+	$curr	= $long_network;
+	$return	= array();
+
+	while ($curr < $long_broadcast)
+	{
+		$return[]	= long2ip($curr);
+		$curr		= $curr + $long_classc;
+	}
+
+	return $return;
+
+} // end of ipv4_split_to_class_c
 
 
 /*

@@ -64,18 +64,11 @@ class page_output
 		$structure = NULL;
 		$structure["fieldname"] 	= "ipv4_network";
 		$structure["type"]		= "input";
-		$structure["options"]["help"]	= "eg: 192.168.0.0";
-		$structure["options"]["label"]	= " /24";
+		$structure["options"]["help"]	= "eg: 192.168.0.0/24";
+		$structure["options"]["label"]	= " include /cidr for ranges greater than /24";
 		$structure["options"]["req"]	= "yes";
 		$this->obj_form->add_input($structure);
-/*
-		$structure = NULL;
-		$structure["fieldname"] 	= "ipv4_subnet";
-		$structure["type"]		= "radio";
-		$structure["values"]		= array("24", "16", "8");
-		$structure["options"]["req"]	= "yes";
-		$this->obj_form->add_input($structure);
-*/
+
 		$structure = NULL;
 		$structure["fieldname"] 	= "ipv4_autofill";
 		$structure["type"]		= "checkbox";

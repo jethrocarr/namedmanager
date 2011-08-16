@@ -49,7 +49,8 @@ class page_output
 		// fetch all the domains
 		$this->obj_table->sql_obj->prepare_sql_settable("dns_domains");
 		$this->obj_table->sql_obj->prepare_sql_addfield("id", "");
-		$this->obj_table->sql_obj->prepare_sql_addorderby("domain_name LIKE '%arpa%'");
+		$this->obj_table->sql_obj->prepare_sql_addorderby("REVERSE(domain_name) LIKE 'apra%'");
+		$this->obj_table->sql_obj->prepare_sql_addorderby("domain_description");
 		$this->obj_table->sql_obj->prepare_sql_addorderby("domain_name");
 
 		// load data
