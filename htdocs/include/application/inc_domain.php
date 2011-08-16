@@ -1478,7 +1478,7 @@ class domain_records extends domain
 
 
 				// validate content and name formatting per domain type
-				if (!empty($data_tmp[$i]["name"]))
+				if ($data_tmp[$i]["name"] != "")
 				{
 					switch ($data_tmp[$i]["type"])
 					{
