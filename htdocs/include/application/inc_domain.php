@@ -854,7 +854,7 @@ class domain
 
 
 		// assuming /24 only
-		for ($i=1; $i < 255; $i++)
+		for ($i=0; $i < 255; $i++)
 		{
 			// overwrite any existing records
 			$obj_record->id_record			= $obj_record->find_forward_record($i);
@@ -905,7 +905,7 @@ class domain
 
 
 		// assuming /24 only
-		for ($i=1; $i < 255; $i++)
+		for ($i=0; $i < 255; $i++)
 		{
 			// check if there is an existing record.
 			$obj_record->id_record			= $obj_record->find_forward_record($tmp_network[0] ."-". $tmp_network[1] ."-". $tmp_network[2] ."-$i");
