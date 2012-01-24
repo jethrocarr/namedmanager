@@ -33,9 +33,13 @@ $GLOBALS["config"]["schema_version"]		= "20110816";
 
 /*
 	Apply required PHP settings
+
+	These can be overridden in config-settings.php if desired
 */
 ini_set('memory_limit', '256M');		// NamedManager can be a bit RAM hungry, especially if debugging is enabled 
 						// (debugging == about 2-4x normal memory usage)
+
+ini_set('max_input_vars', '2000');		// for large domains, the volume of POST vars can be too many for defaults
 
 
 
