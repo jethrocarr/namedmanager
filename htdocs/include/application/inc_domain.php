@@ -1613,7 +1613,7 @@ class domain_records extends domain
 
 
 						// add to the reverse domain list - we use this list to avoid reloading for every record
-						if (!in_array($obj_record->id, $data["reverse"]))
+						if (@!in_array($obj_record->id, $data["reverse"]))
 						{
 							$data["reverse"][] = $obj_record->id;
 						}
