@@ -246,16 +246,27 @@ class domain
 		Load all the records for the selected domain into the $this->data["records"] array. If you wish to modifiy or query specific
 		records, please refer to the domain_records class.
 
+		Options
+		exclude_forwardrev	Set to 1 to exclude forwards reverse records
+
 		Returns
 		0	failure
 		1	success
 	*/
-	function load_data_record_all()
+	function load_data_record_all($exclude_forwardrev = NULL)
 	{
-		log_debug("domain", "Executing load_data_record_all()");
+		log_debug("domain", "Executing load_data_record_all($exclude_forwardrev)");
 
 
-		$this->sql_obj->string	= "SELECT id as id_record, name, type, content, ttl, prio FROM `dns_records` WHERE id_domain='". $this->id ."' ORDER BY type, name";
+		if ($exclude_forwardrev)
+		{
+			$this->sql_obj->string	= "SELECT id as id_record, name, type, content, ttl, prio FROM `dns_records` WHERE id_domain='". $this->id ."' AND name NOT REGEXP '^[0-9]*-[0-9]*-[0-9]*-[0-9]*$' ORDER BY type, name";
+		}
+		else
+		{
+			$this->sql_obj->string	= "SELECT id as id_record, name, type, content, ttl, prio FROM `dns_records` WHERE id_domain='". $this->id ."' ORDER BY type, name";
+		}
+
 		$this->sql_obj->execute();
 
 		if ($this->sql_obj->num_rows())
@@ -332,7 +343,7 @@ class domain
 		// load all records - we can't do a partial limit select, since the sorting in SQL
 		// is not suitable for correct domain ordering
 
-		if ($this->load_data_record_all())
+		if ($this->load_data_record_all(1))
 		{
 			log_write("debug", "domains", "Loaded all records, selecting limited set of custom records.");
 
@@ -384,7 +395,7 @@ class domain
 	{
 		log_debug("domain", "Executing load_data_record_custom_count()");
 
-		return sql_get_singlevalue("SELECT COUNT(*) AS value FROM `dns_records` WHERE type IN (SELECT type from dns_record_types where user_selectable = 1) and id_domain='" . $this->id . "'");
+		return sql_get_singlevalue("SELECT COUNT(*) AS value FROM `dns_records` WHERE type IN (SELECT type from dns_record_types where user_selectable = 1) and id_domain='" . $this->id . "' AND name NOT REGEXP '^[0-9]*-[0-9]*-[0-9]*-[0-9]*$'");
 	}
 
 
