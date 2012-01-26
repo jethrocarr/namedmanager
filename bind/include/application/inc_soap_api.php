@@ -82,6 +82,27 @@ class soap_api
 	{
 		log_write("debug", "script", "Executing log_push(timestamp, log_contents)");
 
+		// safety check - make sure the log message isn't for a DNS lookup for the API server, otherwise
+		// this will form a painful loop that DOSes the server.
+
+		if (!isset($GLOBALS["config"]["api_host"]))
+		{
+			// need to set what the API hostname is for DNS lookups
+			preg_match("/^http[s]:\/\/(\S*?)[:0-9]*\//", $GLOBALS["config"]["api_url"], $matches);
+			$GLOBALS["config"]["api_host"] = $matches[1];
+		}
+
+		if (strpos($log_contents, $GLOBALS["config"]["api_host"]))
+		{
+			// skip this log message as it's about the host we're querying
+			log_write("debug", "script", "Skipping log message as it self-references the API host, anti-loop prevention.");
+			return 1;
+		}
+
+
+		// post log message - we then check the exceptions returned and if there is an error, attempt to re-establish a connection
+		// as sometimes a network or server disruption can cause issues.
+
 		try
 		{
 			$this->client->log_write($timestamp, "server", $log_contents);
