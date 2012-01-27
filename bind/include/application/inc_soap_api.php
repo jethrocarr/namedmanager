@@ -118,22 +118,36 @@ class soap_api
                                 }
                                 else
                                 {
+					// this situation would only occur if the session was logged out and authentication then refused, a network
+					// disruption will not lead to this occuring, since an ACCESS_DENIED response is required.
+
                                         log_write("error", "script", "Unable to re-establish connection with NamedManager");
                                         die("Fatal Error");
                                 }
                         }
                         elseif ($exception->getMessage() == "Could not connect to host")
                         {
-                                // this can happen when restarted named.... sleep for 10 seconds and retry.
-                                log_write("error", "script", "Unable to connect to the host, most likely due to named not running.");
+                                // this can happen when restarting the server or apache.... sleep for 10 seconds and retry.
+                                log_write("error", "script", "Unable to connect to the host, probably apache/NamedManager outage or server unreachable");
 
-                                sleep(5);
+                                sleep(10);
 
                         }
+			elseif ($exception->getMessage() == "Error Fetching http headers")
+			{
+				// unexpected HTTP header issue
+				log_write("error", "script", "An unexpected issue occured when fetching HTTP headers. Possible network or service disruption.");
+
+				sleep (10);
+			}
                         else
                         {
+				// for any other errors, report fault and retry later - better to keep retrying and only quit if there's an actual
+				// known un-fixable problem.
+
                                 log_write("error", "script", "Unknown failure whilst attempting to push log messages - ". $exception->getMessage() ."");
-                                die("Fatal Error");
+
+				sleep(10);
                         }
 
 		}
