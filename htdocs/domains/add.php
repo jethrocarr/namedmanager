@@ -158,7 +158,7 @@ class page_output
 		$structure["fieldname"] 	= "soa_default_ttl";
 		$structure["type"]		= "input";
 		$structure["options"]["req"]	= "yes";
-		$structure["defaultvalue"]	= $GLOBALS["config"]["DEFAULT_TTL_SOA"];
+		$structure["defaultvalue"]	= $GLOBALS["config"]["DEFAULT_TTL_OTHER"];
 		$this->obj_form->add_input($structure);
 
 

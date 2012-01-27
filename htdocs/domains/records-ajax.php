@@ -393,7 +393,7 @@ class page_output
 			$structure["fieldname"] 		= "record_custom_". $i ."_ttl";
 			$structure["type"]			= "input";
 			$structure["options"]["width"]		= "80";
-			$structure["defaultvalue"]		= $GLOBALS["config"]["DEFAULT_TTL_OTHER"];
+			$structure["defaultvalue"]		= $this->obj_domain->data["soa_default_ttl"];
 			$this->obj_form->add_input($structure);
 			
 			$structure = NULL;
