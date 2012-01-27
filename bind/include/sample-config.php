@@ -27,6 +27,17 @@ $config["log_file"]		= "/var/log/messages";
 
 
 
+/*
+	Lock File
+
+	Used to prevent clashes when multiple instances are accidently run.
+*/
+
+$config["lock_file"]		= "/var/lock/namedmanager_lock";
+
+
+
+
 
 /*
 	Bind Configuration Files
