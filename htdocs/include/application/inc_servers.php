@@ -457,6 +457,29 @@ class name_server
 		$sql_obj->execute();
 
 
+
+		/*
+			Update NS records
+
+			We need to run through all the domains and update the records - if the nameserver was an automated entry for all the domains,
+			after deleting the name server we should remove it from all the domains.
+		*/
+
+		$obj_domain			= New domain;
+		$obj_domain->load_data_all();
+
+		foreach ($obj_domain->data as $data_domain)
+		{
+			$obj_domain_sub		= New domain;
+			$obj_domain_sub->id	= $data_domain["id"];
+
+			$obj_domain_sub->load_data();
+			$obj_domain_sub->action_update_ns();
+			$obj_domain_sub->action_update_serial();
+		}
+
+
+
 		/*
 			Commit
 		*/
