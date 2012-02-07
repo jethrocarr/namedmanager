@@ -144,13 +144,24 @@ class page_output
 		$structure["options"]["label"]				= " seconds";
 		$this->obj_form->add_input($structure);
 
+
+		$max_input_vars = @ini_get('max_input_vars');
+
+		if (empty($max_input_vars))
+		{
+			// PHP defaults if we can't query
+			$max_input_vars = 1000;
+		}
+
+		$max_input_vars = sprintf("%d", $max_input_vars / 15);
+
+
 		$structure = NULL;
 		$structure["fieldname"]					= "PAGINATION_DOMAIN_RECORDS";
 		$structure["type"]					= "input";
 		$structure["options"]["no_translate_fieldname"]		= "yes";
-		$structure["options"]["label"]				= " records per page";
+		$structure["options"]["label"]				= " records per page (recommend maximum of $max_input_vars, adjust PHP max_input_vars to support more if required. Some browsers may perform badly with high values here)";
 		$this->obj_form->add_input($structure);
-
 
 
 		$this->obj_form->add_action("ZONE_DB_TYPE", "default", "ZONE_DB_HOST", "hide");

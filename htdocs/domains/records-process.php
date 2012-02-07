@@ -21,6 +21,32 @@ if (user_permissions_get("namedadmins"))
 
 
 	/*
+		Check for max_input_vars error
+
+		The default limit for PHP is to allow a maxium of 1000 POST values to be passed through. This can sometimes be
+		reached quite easily with domain records where the administrator of NamedManager has configured high limits
+		for PAGINATION_DOMAIN_RECORDS.
+
+		Whilst the admin page will warn and advise the recommended maximum, we should also handle gracefully here
+		to reduce support headaches.
+	*/
+
+	$max_input_vars = @ini_get('max_input_vars');
+
+	if (empty($max_input_vars))
+	{
+		// PHP defaults if we can't query
+		$max_input_vars = 1000;
+	}
+
+	if (count($_POST) >= $max_input_vars)
+	{
+		log_write("error", "process", "A fatal error occurred with form submission due to too many records being posted for the configured server environment. To resolve, please lower PAGINATION_DOMAIN_RECORDS in NamedManager, or increase max_input_vars in the php.ini configuration to allow more records to be submitted concurrently");
+	}
+
+
+
+	/*
 		Import form data
 	*/
 
