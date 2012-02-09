@@ -66,8 +66,20 @@ if (flock($fh_lock, LOCK_EX | LOCK_NB))
 }
 else
 {
+	// One problem with the locking, is that when another script has been terminated, the lock stays active until the 
+	// tail process terminates - this is due to the way PHP and fgets blocks. To nicely handle this, where there is a lock
+	// issue, we log a warning about it and then wait for the lock to become available.
+	//
+	// If this script is terminated whilst waiting, then it will cleanly exit. If the other script is terminated or ends naturally
+	// will take over and continue with logging.
+	//
+	// See https://projects.amberdms.com/p/oss-namedmanager/issues/341/ for more reading.
+	//
 	log_write("warning", "script", "Unable to execute script due to active lock file ". $GLOBALS["config"]["lock_file"] .", is another instance running?");
-	die("Lock Conflict ". $GLOBALS["config"]["lock_file"] ."\n");
+	log_write("warning", "script", "Waiting pending availability of log file.....");
+	
+	// we now wait until the lock is available
+	flock($fh_lock, LOCK_EX);
 }
 
 
