@@ -84,6 +84,14 @@ class page_output
 		$this->obj_form->add_input($structure);
 
 		$structure = NULL;
+		$structure["fieldname"] 	= "ipv4_autofill_reverse_from_forward";
+		$structure["type"]		= "checkbox";
+		$structure["options"]["label"]	= lang_trans("help_ipv4_autofill_reverse_from_forward");
+		$structure["options"]["req"]	= "yes";
+		$this->obj_form->add_input($structure);
+
+
+		$structure = NULL;
 		$structure["fieldname"] 	= "ipv4_autofill_domain";
 		$structure["type"]		= "input";
 		$structure["options"]["help"]	= "eg: static.example.com";
@@ -108,8 +116,10 @@ class page_output
 
 		$this->obj_form->add_action("ipv4_autofill", "default", "ipv4_autofill_domain", "hide");
 		$this->obj_form->add_action("ipv4_autofill", "default", "ipv4_autofill_forward", "hide");
+		$this->obj_form->add_action("ipv4_autofill", "default", "ipv4_autofill_reverse_from_forward", "hide");
 		$this->obj_form->add_action("ipv4_autofill", "1", "ipv4_autofill_domain", "show");
 		$this->obj_form->add_action("ipv4_autofill", "1", "ipv4_autofill_forward", "show");
+		$this->obj_form->add_action("ipv4_autofill", "1", "ipv4_autofill_reverse_from_forward", "show");
 
 
 
@@ -171,7 +181,7 @@ class page_output
 		
 		
 		// define subforms
-		$this->obj_form->subforms["domain_details"]	= array("domain_type", "domain_name", "ipv4_help", "ipv4_network", "ipv4_autofill", "ipv4_autofill_forward", "ipv4_autofill_domain", "domain_description");
+		$this->obj_form->subforms["domain_details"]	= array("domain_type", "domain_name", "ipv4_help", "ipv4_network", "ipv4_autofill", "ipv4_autofill_forward", "ipv4_autofill_reverse_from_forward", "ipv4_autofill_domain", "domain_description");
 		$this->obj_form->subforms["domain_soa"]		= array("soa_hostmaster", "soa_serial", "soa_refresh", "soa_retry", "soa_expire", "soa_default_ttl");
 		$this->obj_form->subforms["submit"]		= array("submit");
 

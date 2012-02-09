@@ -55,13 +55,14 @@ if (user_permissions_get('namedadmins'))
 		else
 		{
 			// fetch domain data
-//			$obj_domain->data["ipv4_help"]			= security_form_input_predefined("any", "ipv4_help", 1, "");
-			$obj_domain->data["ipv4_network"]		= security_form_input_predefined("ipv4_cidr", "ipv4_network", 1, "Must supply full IPv4 network address");
-//			$obj_domain->data["ipv4_subnet"]		= security_form_input_predefined("int", "ipv4_subnet", 1, "");
-			$obj_domain->data["ipv4_autofill"]		= security_form_input_predefined("checkbox", "ipv4_autofill", 0, "");
-			$obj_domain->data["ipv4_autofill_forward"]	= security_form_input_predefined("checkbox", "ipv4_autofill_forward", 0, "");
-			$obj_domain->data["ipv4_autofill_domain"]	= security_form_input_predefined("any", "ipv4_autofill_domain", 0, "");
-			$obj_domain->data["domain_description"]		= security_form_input_predefined("any", "domain_description", 0, "");
+//			$obj_domain->data["ipv4_help"]				= security_form_input_predefined("any", "ipv4_help", 1, "");
+			$obj_domain->data["ipv4_network"]			= security_form_input_predefined("ipv4_cidr", "ipv4_network", 1, "Must supply full IPv4 network address");
+//			$obj_domain->data["ipv4_subnet"]			= security_form_input_predefined("int", "ipv4_subnet", 1, "");
+			$obj_domain->data["ipv4_autofill"]			= security_form_input_predefined("checkbox", "ipv4_autofill", 0, "");
+			$obj_domain->data["ipv4_autofill_forward"]		= security_form_input_predefined("checkbox", "ipv4_autofill_forward", 0, "");
+			$obj_domain->data["ipv4_autofill_reverse_from_forward"]	= security_form_input_predefined("checkbox", "ipv4_autofill_reverse_from_forward", 0, "");
+			$obj_domain->data["ipv4_autofill_domain"]		= security_form_input_predefined("any", "ipv4_autofill_domain", 0, "");
+			$obj_domain->data["domain_description"]			= security_form_input_predefined("any", "domain_description", 0, "");
 
 
 			// check CIDR

@@ -844,6 +844,9 @@ class domain
 		this->data["ipv4_autofill_domain"]
 		this->data["soa_default_ttl"]
 
+		Options
+		$this->data["ipv4_autofill_reverse_from_forward"]		0 == disabled, 1 == create matching reverse records for existing forward records for this IP
+
 		Returns
 		0	Unexpected Failure
 		1	Success
@@ -864,17 +867,61 @@ class domain
 		$tmp_network = explode(".", $this->data["ipv4_network"]);
 
 
+		// if enabled, we should fetch all forward A records that match any of the specified
+		$forward_matches = array();
+
+		if ($this->data["ipv4_autofill_reverse_from_forward"])
+		{
+			log_write("debug", "domains", "ipv4_autofill_reverse_from_forward enabled, pulling data from forward records (if any)");
+
+			$this->sql_obj->string = "SELECT dns_domains.domain_name as domain_name, dns_records.name as record_name, dns_records.content as record_ipv4 FROM dns_records LEFT JOIN dns_domains ON dns_domains.id = dns_records.id_domain WHERE dns_records.content LIKE '". $tmp_network[0] .".". $tmp_network[1] .".". $tmp_network[2] .".%' ORDER BY dns_records.name";
+			$this->sql_obj->execute();
+			
+			if ($this->sql_obj->num_rows())
+			{
+				// Matching records found - the selection log here isn't too smart, the reverse of the IP will be set to
+				// whatever record happens to come last in the query. It's not going to be perfect, but it's impossible
+				// to get a perfect solution here, this feature is best-efforts only really.
+
+				$this->sql_obj->fetch_array();
+
+				foreach ($this->sql_obj->data as $data_forwards)
+				{
+					if ($data_forwards["record_name"] == "@")
+					{
+						$forward_matches[ $data_forwards["record_ipv4"] ] = $data_forwards["domain_name"];
+					}
+					else
+					{
+						$forward_matches[ $data_forwards["record_ipv4"] ] = $data_forwards["record_name"] .".". $data_forwards["domain_name"];
+					}
+				}
+			}
+		}
+
 		// assuming /24 only
 		for ($i=0; $i < 255; $i++)
 		{
 			// overwrite any existing records
 			$obj_record->id_record			= $obj_record->find_forward_record($i);
 
+			// default PTR style entry
 			$obj_record->data_record["type"]	= "PTR";
 			$obj_record->data_record["name"]	= $i;
 			$obj_record->data_record["content"]	= $tmp_network[0] ."-". $tmp_network[1] ."-". $tmp_network[2] ."-$i.". $this->data["ipv4_autofill_domain"];
 			$obj_record->data_record["ttl"]		= $this->data["soa_default_ttl"];
-		
+
+			// if enabled, check for the existance of forward domain records we can use in reverse
+			if (!empty($forward_matches))
+			{
+				if ($forward_matches[ $tmp_network[0] .".". $tmp_network[1] .".". $tmp_network[2] .".$i" ])
+				{
+					$obj_record->data_record["content"] = $forward_matches[ $tmp_network[0] .".". $tmp_network[1] .".". $tmp_network[2] .".$i" ];
+				}
+			}
+
+
+			// create/update record
 			$obj_record->action_update_record();
 		}
 
