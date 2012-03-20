@@ -323,6 +323,26 @@ class sql_query
 
 
 	/*
+		fetch_affected_rows()
+
+		Returns the number of rows affected by the previous query.
+
+		Return codes:
+		-1	No previous queryable statement
+		#	Number of rows affected
+	*/
+	function fetch_affected_rows()
+	{
+		log_debug("sql_query", "Executing fetch_affected_rows()");
+
+		$num = mysql_affected_rows($this->db_link);
+
+		return $num;
+	}
+
+
+
+	/*
 		num_rows()
 
 		Returns the number of rows in the results and also saves into $this->data_num_rows.
