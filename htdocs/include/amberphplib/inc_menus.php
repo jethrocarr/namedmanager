@@ -137,7 +137,7 @@ class menu_main
 
 
 		$sql_menu_obj		= New sql_query;
-		$sql_menu_obj->string	= "SELECT link, topic, parent FROM menu WHERE permid IN (". format_arraytocommastring($user_permissions) .") ORDER BY priority DESC";
+		$sql_menu_obj->string	= "SELECT link, topic, parent, config FROM menu WHERE permid IN (". format_arraytocommastring($user_permissions) .") ORDER BY priority DESC";
 		$sql_menu_obj->execute();
 
 		if (!$sql_menu_obj->num_rows())
@@ -150,12 +150,39 @@ class menu_main
 		// fetch menu entires
 		$sql_menu_obj->fetch_array();
 
-
 		// array to store the order of the menu items
 		$this->menu_order = array();
 	
 		// keep track of the topic we are looking for
 		$target_topic = "";
+
+
+
+		/*
+			Apply config filtering
+
+			Some applications have the need to be able to enable/disable specific features
+			using boolean options in the config table - by setting the name of the value in
+			the config column on the menu entries, a check will be made, and if the menu entry
+			config option is unset, the menu options will not be displayed.
+
+			This is typically used for hiding disabled features where for whatever reason, the
+			feature can not be disabled using permissions groups.
+		*/
+
+		for ($i=0; $i < $sql_menu_obj->data_num_rows; $i++)
+		{
+			// check feature option (if set)
+			if (!empty($sql_menu_obj->data[$i]["config"]))
+			{
+				if (!$GLOBALS["config"][ $sql_menu_obj->data[$i]["config"] ])
+				{
+					// config is disabled for this feature
+					unset($sql_menu_obj->data[$i]);
+				}
+			}
+		}
+
 
 
 		/*
@@ -184,6 +211,7 @@ class menu_main
 		// loop though the menu items 
 		foreach ($sql_menu_obj->data as $data)
 		{
+			// add each item to menu array
 			if ($target_topic != "top")
 			{
 				if (!$target_topic)
