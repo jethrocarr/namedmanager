@@ -172,6 +172,13 @@ a:active {
 	background-color: #95c7d9;
 }
 
+.table_highlight_disabled {
+	padding: 4px;
+	background-color: #e7e7e7;
+	color: #5e5e5e;
+}
+
+
 
 /*
 	table_linkbox

@@ -77,13 +77,20 @@ class page_output
 				}
 
 
-				if ((time() - $this->obj_table->data[$i]["api_sync_log"]) > 86400)
+				if ($GLOBALS["config"]["FEATURE_LOGS_API"])
 				{
-					$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_important\">". lang_trans("status_unsynced") ."</span>";
+					if ((time() - $this->obj_table->data[$i]["api_sync_log"]) > 86400)
+					{
+						$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_important\">". lang_trans("status_unsynced") ."</span>";
+					}
+					else
+					{
+						$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_open\">". lang_trans("status_synced") ."</span>";
+					}
 				}
 				else
 				{
-					$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_open\">". lang_trans("status_synced") ."</span>";
+					$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_disabled\">". lang_trans("status_disabled") ."</span>";
 				}
 			}
 			else
@@ -115,9 +122,12 @@ class page_output
 			$this->obj_table->add_link("tbl_lnk_details", "servers/view.php", $structure);
 
 			// logging link
-			$structure = NULL;
-			$structure["id"]["column"]	= "id";
-			$this->obj_table->add_link("tbl_lnk_logs", "servers/logs.php", $structure);
+			if ($GLOBALS["config"]["FEATURE_LOGS_API"])
+			{
+				$structure = NULL;
+				$structure["id"]["column"]	= "id";
+				$this->obj_table->add_link("tbl_lnk_logs", "servers/logs.php", $structure);
+			}
 
 			// delete link
 			$structure = NULL;

@@ -27,7 +27,14 @@ class page_output
 
 	function check_requirements()
 	{
-		// nothing todo
+		// make sure logging is enabled
+		if (!$GLOBALS["config"]["FEATURE_LOGS_ENABLE"])
+		{
+			log_write("error", "page_output", "Application API logging is currently disabled. Adjust FEATURE_LOGS_ENABLE to enable.");
+			return 0;
+		}
+
+		// otherwise logging is OK :-)
 		return 1;
 	}
 

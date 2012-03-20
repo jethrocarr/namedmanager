@@ -38,7 +38,28 @@ if (user_permissions_get("namedadmins"))
 	$data["DATEFORMAT"]			= security_form_input_predefined("any", "DATEFORMAT", 1, "");
 	$data["TIMEZONE_DEFAULT"]		= security_form_input_predefined("any", "TIMEZONE_DEFAULT", 1, "");
 	
-	$data["LOG_UPDATE_INTERVAL"]		= security_form_input_predefined("int", "LOG_UPDATE_INTERVAL", 1, "");
+	$data["FEATURE_LOGS_ENABLE"]		= security_form_input_predefined("checkbox", "FEATURE_LOGS_ENABLE", 0, "");
+
+	if ($data["FEATURE_LOGS_ENABLE"])
+	{
+		$data["FEATURE_LOGS_API"]	= security_form_input_predefined("checkbox", "FEATURE_LOGS_API", 0, "");
+		$data["FEATURE_LOGS_AUDIT"]	= security_form_input_predefined("checkbox", "FEATURE_LOGS_AUDIT", 0, "");
+		$data["FEATURE_LOGS_PERIOD"]	= security_form_input_predefined("int", "FEATURE_LOGS_PERIOD", 0, "");
+		$data["LOG_RETENTION_PERIOD"]	= security_form_input_predefined("int", "LOG_RETENTION_PERIOD", 0, "");
+		$data["LOG_UPDATE_INTERVAL"]	= security_form_input_predefined("int", "LOG_UPDATE_INTERVAL", 1, "");
+
+		$data["LOG_RETENTION_CHECKTIME"]	= 0; // reset check time, so that the log retention processes run
+	}
+	else
+	{
+		$data["FEATURE_LOGS_CHECKTIME"]		= 0;
+		$data["FEATURE_LOGS_API"]		= 0;
+		$data["FEATURE_LOGS_AUDIT"]		= 0;
+		$data["FEATURE_LOGS_PERIOD"]		= 0;
+		$data["LOG_RETENTION_CHECKTIME"]	= 0;
+		$data["LOG_UPDATE_INTERVAL"]		= "5";
+	}
+
 	$data["PAGINATION_DOMAIN_RECORDS"]	= security_form_input_predefined("int", "PAGINATION_DOMAIN_RECORDS", 1, "");
 	
 

@@ -59,6 +59,12 @@ class changelog
 	{
 		log_debug("changelog", "Executing log_post($log_type, $log_contents, $timestamp)");
 
+		if (!$GLOBALS["config"]["FEATURE_LOGS_AUDIT"])
+		{
+			// audit logging is disabled
+			return 0;
+		}
+
 		if (empty($timestamp))
 		{
 			$timestamp = time();

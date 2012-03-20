@@ -140,6 +140,12 @@ class api_namedmanager
 
 		if ($this->auth_online)
 		{
+			// refuse authentication if logging disabled
+			if (!$GLOBALS["config"]["FEATURE_LOGS_API"])
+			{
+				throw new SoapFault("Sender", "FEATURE_DISABLED");
+			}
+
 			// sanitise input
 			$timestamp	= @security_script_input_predefined("int", $timestamp);
 			$log_type	= @security_script_input_predefined("any", $log_type);
