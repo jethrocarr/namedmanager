@@ -59,10 +59,21 @@ class changelog
 	{
 		log_debug("changelog", "Executing log_post($log_type, $log_contents, $timestamp)");
 
-		if (!$GLOBALS["config"]["FEATURE_LOGS_AUDIT"])
+		// check audit logging
+		if (!$GLOBALS["config"]["FEATURE_LOGS_AUDIT"] && $log_type == "audit")
 		{
 			// audit logging is disabled
 			return 0;
+		}
+
+		// do retention clean check
+		if ($GLOBALS["config"]["LOG_RETENTION_PERIOD"])
+		{
+			// check when we last ran a retention clean
+			if ($GLOBALS["config"]["LOG_RETENTION_CHECKTIME"] < (time() - 86400))
+			{
+				$this->log_retention_clean();
+			}
 		}
 
 		if (empty($timestamp))
@@ -87,6 +98,64 @@ class changelog
 		return 1;
 
 	} // end of log_post
+
+
+
+	/*
+		log_retention_clean
+
+		Cleans the log table of outdated records.
+
+		This process needs to take place at least every day to ensure speedy performance and is triggered from either
+		a log API call or an audit log entry (since there is no guarantee that either logging method is going to be enabled,
+		we have to trigger on any.)
+
+		Returns
+		0	No log clean requires
+		1	Performed log clean.
+	*/
+
+	function log_retention_clean()
+	{
+		log_write("debug", "changelog", "Executing log_retention_clean()");
+		log_write("debug", "changelog", "A retention clean is required - last one was more than 24 hours ago.");
+
+		// calc date to clean up to
+		$clean_time	= time() - ($GLOBALS["config"]["LOG_RETENTION_PERIOD"] * 86400);
+		$clean_date	= time_format_humandate($clean_time);
+
+
+		// clean
+		$obj_sql_clean		= New sql_query;
+		$obj_sql_clean->string	= "DELETE FROM logs WHERE timestamp <= '$clean_time'";
+		$obj_sql_clean->execute();
+
+		$clean_removed = $obj_sql_clean->fetch_affected_rows();
+
+		unset($obj_sql_clean);
+
+
+		// update rentention time check
+		$obj_sql_clean		= New sql_query;
+		$obj_sql_clean->string	= "UPDATE `config` SET value='". time() ."' WHERE name='LOG_RETENTION_CHECKTIME' LIMIT 1";
+		$obj_sql_clean->execute();
+
+		unset($obj_sql_clean);
+
+
+		// add audit entry - we have to set the LOG_RETENTION_CHECKTIME variable here to avoid
+		// looping the program, as the SQL change above won't be applied until the current transaction
+		// is commited.
+
+		$GLOBALS["config"]["LOG_RETENTION_CHECKTIME"] = time();
+		$this->log_post("audit", "Automated log retention clean completed, removed $clean_removed records order than $clean_date");
+
+
+		// complete
+		log_write("debug", "changelog", "Completed retention log clean, removed $clean_removed log records older than $clean_date");
+
+		return 1;
+	}
 
 
 
