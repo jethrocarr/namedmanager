@@ -25,7 +25,7 @@ INSERT INTO `menu` (`id`, `priority`, `parent`, `topic`, `link`, `permid`, `conf
 INSERT INTO `menu` (`id`, `priority`, `parent`, `topic`, `link`, `permid`, `config`) VALUES(NULL, 520, 'menu_servers_groups', 'menu_servers_groups_view', 'servers/groups.php', 2, '');
 INSERT INTO `menu` (`id`, `priority`, `parent`, `topic`, `link`, `permid`, `config`) VALUES(NULL, 521, 'menu_servers_groups', 'menu_servers_groups_add', 'servers/group-add.php', 2, '');
 INSERT INTO `menu` (`id`, `priority`, `parent`, `topic`, `link`, `permid`, `config`) VALUES(NULL, 521, 'menu_servers_groups_view', '', 'servers/group-view.php', 2, '');
-INSERT INTO `menu` (`id`, `priority`, `parent`, `topic`, `link`, `permid`, `config`) VALUES(NULLcp d, 521, 'menu_servers_groups_view', '', 'servers/group-delete.php', 2, '');
+INSERT INTO `menu` (`id`, `priority`, `parent`, `topic`, `link`, `permid`, `config`) VALUES(NULL, 521, 'menu_servers_groups_view', '', 'servers/group-delete.php', 2, '');
 
 INSERT INTO `language` (`id`, `language`, `label`, `translation`) VALUES (NULL, 'en_us', 'help_domain_group_selection', 'Select the group or groups that this domain belongs to - groups allow domains to be located on specific sets of name servers which is useful for segregation purposes (eg internal vs external name servers).');
 INSERT INTO `language` (`id`, `language`, `label`, `translation`) VALUES (NULL, 'en_us', 'config_logging', 'Logging Configuration');
