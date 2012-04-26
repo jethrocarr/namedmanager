@@ -40,18 +40,20 @@ class page_output
 		$this->obj_table->add_column("bool_tick", "server_primary", "");
 		$this->obj_table->add_column("bool_tick", "server_record", "");
 		$this->obj_table->add_column("standard", "server_name", "");
+		$this->obj_table->add_column("standard", "server_group", "name_servers_groups.group_name");
 		$this->obj_table->add_column("standard", "server_description", "");
 		$this->obj_table->add_column("standard", "server_type", "");
 		$this->obj_table->add_column("standard", "sync_status_zones", "NONE");
 		$this->obj_table->add_column("standard", "sync_status_log", "NONE");
 
 		// defaults
-		$this->obj_table->columns		= array("server_primary", "server_record", "server_name", "server_description", "server_type", "sync_status_zones", "sync_status_log");
+		$this->obj_table->columns		= array("server_primary", "server_record", "server_name", "server_description", "server_group", "server_type", "sync_status_zones", "sync_status_log");
 		$this->obj_table->columns_order		= array("server_name");
 		$this->obj_table->columns_order_options	= array("server_name");
 
 		$this->obj_table->sql_obj->prepare_sql_settable("name_servers");
-		$this->obj_table->sql_obj->prepare_sql_addfield("id", "");
+		$this->obj_table->sql_obj->prepare_sql_addjoin("LEFT JOIN name_servers_groups ON name_servers_groups.id = name_servers.id_group");
+		$this->obj_table->sql_obj->prepare_sql_addfield("id", "name_servers.id");
 		$this->obj_table->sql_obj->prepare_sql_addfield("api_sync_config", "");
 		$this->obj_table->sql_obj->prepare_sql_addfield("api_sync_log", "");
 

@@ -186,6 +186,39 @@ if (user_permissions_get('namedadmins'))
 	$obj_domain->data["soa_expire"]				= security_form_input_predefined("int", "soa_expire", 1, "");
 	$obj_domain->data["soa_default_ttl"]			= security_form_input_predefined("int", "soa_default_ttl", 1, "");
 
+	// domain-group selection data
+	$sql_group_obj		= New sql_query;
+	$sql_group_obj->string	= "SELECT id FROM name_servers_groups";
+	$sql_group_obj->execute();
+
+	if ($sql_group_obj->num_rows())
+	{
+		// fetch all the name server groups and see which are selected for this domain
+		$sql_group_obj->fetch_array();
+
+		$count = 0;
+
+		foreach ($sql_group_obj->data as $data_group)
+		{
+			// set the selection
+			$obj_domain->data["name_server_group_". $data_group["id"] ] = @security_form_input_predefined("checkbox", "name_server_group_". $data_group["id"], 0, "");
+
+			// count selected groups
+			if (!empty($obj_domain->data["name_server_group_". $data_group["id"] ]))
+			{
+				$count++;
+			}
+		}
+
+		if (!$count)
+		{
+			error_flag_field("domain_message");
+			log_write("error", "process", "You must select at least one name server group for the domain to belong to.");
+		}
+	}
+
+
+
 
 	/*
 		Verify Data

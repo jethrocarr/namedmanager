@@ -24,6 +24,7 @@ class api_namedmanager
 	var $auth_server;		// ID of the DNS server that has authenticated.
 	var $auth_online;		// set to 1 if authenticated
 	var $auth_admin;		// set to 1 if authenticated as admin
+	var $auth_group;		// ID of the group the DNS server belongs to
 
 
 	/*
@@ -34,6 +35,7 @@ class api_namedmanager
 		$this->auth_server	= $_SESSION["auth_server"];
 		$this->auth_online	= $_SESSION["auth_online"];
 		$this->auth_admin	= $_SESSION["auth_admin"];
+		$this->auth_group	= $_SESSION["auth_group"];
 	}
 
 
@@ -74,9 +76,11 @@ class api_namedmanager
 
 					$this->auth_online	= 1;
 					$this->auth_admin	= 1;
+					$this->auth_group	= NULL;
 
 					$_SESSION["auth_online"]	= $this->auth_online;
 					$_SESSION["auth_admin"]		= $this->auth_admin;
+					$_SESSION["auth_group"]		= $this->auth_group;
 
 					return 1;
 				}
@@ -97,7 +101,7 @@ class api_namedmanager
 
 			// verify input
 			$sql_obj		= New sql_query;
-			$sql_obj->string	= "SELECT id FROM name_servers WHERE server_name='$server_name' AND api_auth_key='$api_auth_key' LIMIT 1";
+			$sql_obj->string	= "SELECT id, id_group FROM name_servers WHERE server_name='$server_name' AND api_auth_key='$api_auth_key' LIMIT 1";
 			$sql_obj->execute();
 
 			if ($sql_obj->num_rows())
@@ -106,9 +110,11 @@ class api_namedmanager
 
 				$this->auth_online		= 1;
 				$this->auth_server		= $sql_obj->data[0]["id"];
+				$this->auth_group		= $sql_obj->data[0]["id_group"];
 
 				$_SESSION["auth_online"]	= $this->auth_online;
 				$_SESSION["auth_server"]	= $this->auth_server;
+				$_SESSION["auth_group"]		= $this->auth_group;
 
 				return $this->auth_server;
 			}
@@ -479,6 +485,16 @@ class api_namedmanager
 			{
 				foreach ($obj_domain->data as $data)
 				{
+					// If the domain does not belong to the same group as the name server, skip it.
+					if ($this->auth_group)
+					{
+						if (!in_array($this->auth_group, $data["groups"]))
+						{
+							continue;
+						}
+					}
+
+					// add domain to values to be returned
 					$return_tmp				= array();
 
 					$return_tmp["id"]			= $data["id"];

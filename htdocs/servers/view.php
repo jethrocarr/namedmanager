@@ -83,6 +83,12 @@ class page_output
 		$structure["type"]		= "textarea";
 		$this->obj_form->add_input($structure);
 
+
+		// server attributes
+		$structure 			= form_helper_prepare_radiofromdb("id_group", "SELECT id, group_name as label, group_description as label1 FROM name_servers_groups");
+		$structure["options"]["req"]	= "yes";
+		$this->obj_form->add_input($structure);
+
 		$structure = NULL;
 		$structure["fieldname"] 	= "server_primary";
 		$structure["type"]		= "checkbox";
@@ -153,7 +159,8 @@ class page_output
 		
 		
 		// define subforms
-		$this->obj_form->subforms["server_details"]	= array("server_name", "server_description", "server_primary", "server_record");
+		$this->obj_form->subforms["server_details"]	= array("server_name", "server_description");
+		$this->obj_form->subforms["server_domains"]	= array("id_group", "server_primary", "server_record");
 		$this->obj_form->subforms["server_type"]	= array("server_type", "api_auth_key");
 		$this->obj_form->subforms["server_status"]	= array("sync_status_config", "sync_status_log");
 		$this->obj_form->subforms["hidden"]		= array("id_name_server");
@@ -171,6 +178,7 @@ class page_output
 			{
 				$this->obj_form->structure["server_name"]["defaultvalue"]		= $this->obj_name_server->data["server_name"];
 				$this->obj_form->structure["server_description"]["defaultvalue"]	= $this->obj_name_server->data["server_description"];
+				$this->obj_form->structure["id_group"]["defaultvalue"]			= $this->obj_name_server->data["id_group"];
 				$this->obj_form->structure["server_primary"]["defaultvalue"]		= $this->obj_name_server->data["server_primary"];
 				$this->obj_form->structure["server_record"]["defaultvalue"]		= $this->obj_name_server->data["server_record"];
 

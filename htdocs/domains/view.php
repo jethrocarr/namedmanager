@@ -85,6 +85,67 @@ class page_output
 		$this->obj_form->add_input($structure);
 
 
+		// domain groups
+		$sql_name_server_group_obj		= New sql_query;
+		$sql_name_server_group_obj->string	= "SELECT id, group_name, group_description FROM name_servers_groups ORDER BY group_name";
+		$sql_name_server_group_obj->execute();
+
+		if ($sql_name_server_group_obj->num_rows())
+		{
+			// user note
+			$structure = NULL;
+			$structure["fieldname"] 		= "domain_message";
+			$structure["type"]			= "message";
+			$structure["defaultvalue"]		= "<p>". lang_trans("help_domain_group_selection") ."</p>";
+			$this->obj_form->add_input($structure);
+			$this->domain_array[] = "domain_message";
+
+			// fetch customer's current domain status
+			if (!isset($_SESSION["error"]["message"]))
+			{
+				$sql_domain_groups_obj		= New sql_query;
+				$sql_domain_groups_obj->string	= "SELECT id_group FROM dns_domains_groups WHERE id_domain='". $this->obj_domain->id ."'";
+
+				$sql_domain_groups_obj->execute();
+
+				if ($sql_domain_groups_obj->num_rows())
+				{
+					$sql_domain_groups_obj->fetch_array();
+				}
+			}
+
+			// run through all the domains
+			$sql_name_server_group_obj->fetch_array();
+
+			foreach ($sql_name_server_group_obj->data as $data_group)
+			{
+				// define domain checkbox
+				$structure = NULL;
+				$structure["fieldname"] 		= "name_server_group_". $data_group["id"];
+				$structure["type"]			= "checkbox";
+				$structure["options"]["label"]		= $data_group["group_name"] ." -- ". $data_group["group_description"];
+				$structure["options"]["no_fieldname"]	= "enable";
+
+				// check if this domain is currently checked
+				
+				if ($sql_domain_groups_obj->data_num_rows)
+				{
+					foreach ($sql_domain_groups_obj->data as $data)
+					{
+						if ($data["id_group"] == $data_group["id"])
+						{
+							$structure["defaultvalue"] = "on";
+						}
+					}
+				}
+
+				// add to form
+				$this->obj_form->add_input($structure);
+				$this->domain_array[] = "name_server_group_". $data_group["id"];
+			}
+		}
+
+
 
 		// SOA configuration
 		$structure = NULL;
@@ -140,6 +201,7 @@ class page_output
 		
 		// define subforms
 		$this->obj_form->subforms["domain_details"]	= array("domain_name", "domain_description");
+		$this->obj_form->subforms["domain_groups"]	= $this->domain_array;
 		$this->obj_form->subforms["domain_soa"]		= array("soa_hostmaster", "soa_serial", "soa_refresh", "soa_retry", "soa_expire", "soa_default_ttl");
 		$this->obj_form->subforms["hidden"]		= array("id_domain");
 		$this->obj_form->subforms["submit"]		= array("submit");

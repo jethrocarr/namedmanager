@@ -165,6 +165,16 @@ class domain
 			// load base domain data
 			$this->data = $this->sql_obj->data[0];
 
+			// load domain group membership
+			$this->sql_obj->string	= "SELECT id_group FROM dns_domains_groups WHERE id_domain='". $this->id ."'";
+			$this->sql_obj->execute();
+			$this->sql_obj->fetch_array();
+
+			foreach ($this->sql_obj->data as $data_group)
+			{
+				$this->data["groups"][]	= $data_group["id_group"];
+			}
+
 /*
 	TODO: powerdns stuff to sort out
 
@@ -215,8 +225,23 @@ class domain
 	{
 		log_debug("domain", "Executing load_data_all()");
 
-		$this->data = array();
+		$this->data 		= array();
+		$this->data_groups	= array();
 
+
+		// Fetch all the domain groups
+		$this->sql_obj->string = "SELECT id_domain, id_group FROM `dns_domains_groups`";
+		$this->sql_obj->execute();
+		$this->sql_obj->fetch_array();
+
+		foreach ($this->sql_obj->data as $data_group)
+		{
+			$this->data_groups[ $data_group["id_domain"] ][] = $data_group["id_group"];
+		}
+
+
+
+		// Fetch all the domains
 		$this->sql_obj->string	= "SELECT * FROM `dns_domains`";
 		$this->sql_obj->execute();
 
@@ -226,7 +251,9 @@ class domain
 
 			foreach ($this->sql_obj->data as $data)
 			{
-				$this->data[] = $data;
+				$data["groups"]	= $this->data_groups[ $data["id"] ];
+
+				$this->data[]	= $data;
 			}
 
 			return 1;
@@ -490,6 +517,41 @@ class domain
 
 
 
+		/*
+			Update domain-group relationships
+
+			Domains can belong to one or more groups, we should update the group relationships based on the selected options.
+		*/
+
+		// delete any existing entires
+		$this->sql_obj->string	= "DELETE FROM dns_domains_groups WHERE id_domain='". $this->id ."'";
+		$this->sql_obj->execute();
+
+
+		// domain-group selection data
+		$sql_group_obj		= New sql_query;
+		$sql_group_obj->string	= "SELECT id FROM name_servers_groups";
+		$sql_group_obj->execute();
+
+		if ($sql_group_obj->num_rows())
+		{
+			// fetch all the name server groups and see which are selected for this domain
+			$sql_group_obj->fetch_array();
+
+			foreach ($sql_group_obj->data as $data_group)
+			{
+				if (!empty($this->data["name_server_group_". $data_group["id"] ]))
+				{
+					$this->sql_obj->string	= "INSERT INTO dns_domains_groups (id_group, id_domain) VALUES ('". $data_group["id"] ."', '". $this->id ."')";
+					$this->sql_obj->execute();
+				}
+			}
+		}
+
+		unset($sql_group_obj);
+
+
+
 
 		/*
 			Commit
@@ -670,8 +732,8 @@ class domain
 	/*
 		action_update_ns
 
-		Updates the nameserver configuration on the domain, setting the nameservers for the domain to be the ones
-		setup on NamedManager.
+		Updates the nameserver configuration on the domain, setting the nameservers for the domain to be the name servers
+		belonging to the configured domain groups.
 
 		Returns
 		0	failure
@@ -702,16 +764,19 @@ class domain
 
 
 		/*
-			Create new nameserver records
+			Fetch all name servers belonging to the groups selected for the domain.
 		*/
 
 		$obj_ns_sql		= New sql_query;
-		$obj_ns_sql->string	= "SELECT server_name FROM `name_servers` WHERE server_record='1'";
+		$obj_ns_sql->string	= "SELECT name_servers.server_name as server_name FROM name_servers LEFT JOIN dns_domains_groups ON dns_domains_groups.id_group = name_servers.id_group WHERE dns_domains_groups.id_domain='". $this->id ."' AND name_servers.server_record='1'";
 		$obj_ns_sql->execute();
 		$obj_ns_sql->fetch_array();
 
 		if ($obj_ns_sql->num_rows())
 		{
+			/*
+				Create new nameserver records
+			*/
 			foreach ($obj_ns_sql->data as $data_ns)
 			{
 				$this->sql_obj->string		= "INSERT INTO `dns_records` (id_domain, name, type, content, ttl) VALUES ('". $this->id ."', '". $this->data["domain_name"] ."', 'NS', '". $data_ns["server_name"] ."', '". $GLOBALS["config"]["DEFAULT_TTL_NS"] ."')";

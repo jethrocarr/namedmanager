@@ -130,6 +130,47 @@ class page_output
 
 
 
+		// domain groups
+		$sql_name_server_group_obj		= New sql_query;
+		$sql_name_server_group_obj->string	= "SELECT id, group_name, group_description FROM name_servers_groups ORDER BY group_name";
+		$sql_name_server_group_obj->execute();
+
+		if ($sql_name_server_group_obj->num_rows())
+		{
+			// user note
+			$structure = NULL;
+			$structure["fieldname"] 		= "domain_message";
+			$structure["type"]			= "message";
+			$structure["defaultvalue"]		= "<p>". lang_trans("help_domain_group_selection") ."</p>";
+			$this->obj_form->add_input($structure);
+			$this->domain_array[] = "domain_message";
+
+
+			// run through all the domains
+			$sql_name_server_group_obj->fetch_array();
+
+			foreach ($sql_name_server_group_obj->data as $data_group)
+			{
+				// define domain checkbox
+				$structure = NULL;
+				$structure["fieldname"] 		= "name_server_group_". $data_group["id"];
+				$structure["type"]			= "checkbox";
+				$structure["options"]["label"]		= $data_group["group_name"] ." -- ". $data_group["group_description"];
+				$structure["options"]["no_fieldname"]	= "enable";
+
+			
+				// by default, mark all groups selected - failure to select, will equal success
+				$structure["defaultvalue"] = "on";
+
+				// add to form
+				$this->obj_form->add_input($structure);
+				$this->domain_array[] = "name_server_group_". $data_group["id"];
+			}
+		}
+
+
+
+
 		// SOA configuration
 		$structure = NULL;
 		$structure["fieldname"] 	= "soa_hostmaster";
@@ -182,6 +223,7 @@ class page_output
 		
 		// define subforms
 		$this->obj_form->subforms["domain_details"]	= array("domain_type", "domain_name", "ipv4_help", "ipv4_network", "ipv4_autofill", "ipv4_autofill_forward", "ipv4_autofill_reverse_from_forward", "ipv4_autofill_domain", "domain_description");
+		$this->obj_form->subforms["domain_groups"]	= $this->domain_array;
 		$this->obj_form->subforms["domain_soa"]		= array("soa_hostmaster", "soa_serial", "soa_refresh", "soa_retry", "soa_expire", "soa_default_ttl");
 		$this->obj_form->subforms["submit"]		= array("submit");
 

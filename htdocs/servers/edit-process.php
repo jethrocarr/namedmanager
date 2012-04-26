@@ -42,6 +42,7 @@ if (user_permissions_get('namedadmins'))
 	// basic fields
 	$obj_name_server->data["server_name"]			= security_form_input_predefined("any", "server_name", 1, "");
 	$obj_name_server->data["server_description"]		= security_form_input_predefined("any", "server_description", 0, "");
+	$obj_name_server->data["id_group"]			= security_form_input_predefined("int", "id_group", 1, "");
 	$obj_name_server->data["server_primary"]		= security_form_input_predefined("checkbox", "server_primary", 0, "");
 	$obj_name_server->data["server_record"]			= security_form_input_predefined("checkbox", "server_record", 0, "");
 
@@ -66,6 +67,18 @@ if (user_permissions_get('namedadmins'))
 
 		error_flag_field("server_name");
 	}
+
+	// verify the ID of the server group
+	$obj_server_group		= New name_server_group;
+	$obj_server_group->id		= $obj_name_server->data["id_group"];
+
+	if (!$obj_server_group->verify_id())
+	{
+		log_write("error", "process", "The selected name server group does not exist! Perhaps it has just recently been removed?");
+
+		error_flag_field("id_group");
+	}
+
 
 
 	/*

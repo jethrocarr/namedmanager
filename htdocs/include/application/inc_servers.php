@@ -221,6 +221,7 @@ class name_server
 						."server_record='". $this->data["server_record"] ."', "
 						."server_name='". $this->data["server_name"] ."', "
 						."server_description='". $this->data["server_description"] ."', "
+						."id_group='". $this->data["id_group"] ."', "
 						."server_type='". $this->data["server_type"] ."', "
 						."api_auth_key='". $this->data["api_auth_key"] ."' "
 						."WHERE id='". $this->id ."' LIMIT 1";
