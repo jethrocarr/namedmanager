@@ -61,9 +61,38 @@ class bind_api extends soap_api
 
 	function check_domain_serial( $domain_name )
 	{
-		// TODO:	Implement this function in future
-		// 		Not an urgent requirement ATM, but will be needed for increased
-		//		application scalibility when handling large numbers of domains.
+		// set zonefile location
+		$zonefile = $GLOBALS["config"]["bind"]["zonefiledir"] ."/". $domain_name .".zone";
+
+		if (!file_exists($zonefile))
+		{
+			log_write("debug", "main", "Zonefile $zonefile does not exist yet, unable to check serial number for change detection. Assuming changed.");
+			return 0;
+		}
+
+		// open zonefile for reading
+		if (!$fh = fopen($zonefile, "r"))
+		{
+			log_write("debug", "main", "Unable to open file ". $zonefile ." for reading");
+			return 0;
+		}
+
+    		while (($buffer = fgets($fh, 4096)) !== false)
+		{
+			if (preg_match("/([0-9][0-9]*)\s;\sserial$/", $buffer, $matches))
+			{
+				$serial = $matches[1];
+
+				log_write("debug", "main", "Existing domain $domain_name serial is $serial");
+
+				// done, no more reading needed
+				fclose($fh);
+				return $serial;
+			}
+	        }
+
+		// close & done
+		fclose($fh);
 		
 		return 0;
 
