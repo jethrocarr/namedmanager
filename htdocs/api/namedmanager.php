@@ -563,6 +563,26 @@ class api_namedmanager
 			}
 
 
+			// if querying for a name server, we filter the NS records
+			// to only members of that name server group.
+			if ($this->auth_group)
+			{
+				$group_nameservers	= array();
+
+				$obj_ns_sql		= New sql_query;
+				$obj_ns_sql->string	= "SELECT server_name FROM name_servers WHERE id_group='". $this->auth_group ."' AND server_record='1'";
+				$obj_ns_sql->execute();
+				$obj_ns_sql->fetch_array();
+
+				foreach ($obj_ns_sql->data as $data_ns)
+				{
+					$group_nameservers[] = $data_ns["server_name"];
+				}
+
+				unset($obj_ns_sql);
+			}
+
+
 			// fetch domain records
 			$obj_domain->load_data_record_all();
 
@@ -570,7 +590,24 @@ class api_namedmanager
 			{
 				foreach ($obj_domain->data["records"] as $data_record)
 				{
-					$return_tmp			= array();
+					// filter to NS records that apply for the selected domain group only
+					if ($this->auth_group)
+					{
+						if ($return_tmp["record_type"] == "NS")
+						{
+							if (!in_array($data_record["content"], $group_nameservers))
+							{
+								// current NS record isn't in the domain group list,
+								// we should thus exclude it.
+								continue;
+							}
+
+						}
+					}
+
+
+					// add record to return array
+					$return_tmp	= array();
 
 					$return_tmp["id_record"]			= $data_record["id_record"];
 					$return_tmp["record_name"]			= $data_record["name"];
@@ -578,7 +615,7 @@ class api_namedmanager
 					$return_tmp["record_content"]			= $data_record["content"];
 					$return_tmp["record_ttl"]			= $data_record["ttl"];
 					$return_tmp["record_prio"]			= $data_record["prio"];
-
+							
 					$return[]	= $return_tmp;
 				}
 
