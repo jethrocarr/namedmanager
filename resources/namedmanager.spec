@@ -189,7 +189,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Sun May 06 2012 Jethro Carr <jethro.carr@amberdms.com> 1.4.1.
+* Fri May 18 2012 Jethro Carr <jethro.carr@amberdms.com> 1.4.2
+- Released version 1.4.2 [bugfix]
+* Sun May 06 2012 Jethro Carr <jethro.carr@amberdms.com> 1.4.1
 - Released version 1.4.1 [stable]
 * Thu Apr 26 2012 Jethro Carr <jethro.carr@amberdms.com> 1.4.0
 - Released version 1.4.0 [stable]
