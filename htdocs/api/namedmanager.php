@@ -593,7 +593,7 @@ class api_namedmanager
 					// filter to NS records that apply for the selected domain group only
 					if ($this->auth_group)
 					{
-						if ($return_tmp["record_type"] == "NS")
+						if ($data_record["type"] == "NS")
 						{
 							if (!in_array($data_record["content"], $group_nameservers))
 							{
