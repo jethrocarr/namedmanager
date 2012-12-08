@@ -21,14 +21,36 @@ $config["db_pass"] = "";				// MySQL password (if any)
 
 
 /*
-	LDAP Database Configuration
+	User Authentication Method
+
+	Two different authentication methods are supported:
+	- sql:		Local users inside the application users table are used.
+	- ldaponly:	LDAP is used for user AND group validation. 
 */
-$config["ldap_host"]		= "auth.example.com";			// hostname of the LDAP server
-$config["ldap_port"]		= "389";				// LDAP server port
-$config["ldap_dn"]		= "ou=auth,dc=example,dc=com";		// DN to run queries under
-$config["ldap_manager_user"]	= "cn=Manager,dc=example,dc=com";	// LDAP manager
-$config["ldap_manager_pwd"]	= "password";
-$config["ldap_ssl"]		= "enable";				// use TLS/SSL - enable/disable
+
+$config["AUTH_METHOD"] = "sql";
+
+
+
+/*
+	LDAP Database Configuration
+
+	When authenticating against an LDAP directory, we assume the following:
+	Users:	ou=User,ou=auth,dc=example,dc=com
+	Groups:	ou=Group,ou=auth,dc=example,dc=com
+
+	Note that users MUST belong to a POSIX group called "namedadmins" in order to
+	get access into Named.
+
+	A typical OpenLDAP setup will meet this, but environments such as RHDS, Novell or
+	Active Directory may require code adjustments.
+*/
+//$config["ldap_host"]		= "auth.example.com";			// hostname of the LDAP server
+//$config["ldap_port"]		= "389";				// LDAP server port
+//$config["ldap_dn"]		= "ou=auth,dc=example,dc=com";		// DN to run queries under
+//$config["ldap_manager_user"]	= "cn=Manager,dc=example,dc=com";	// LDAP manager
+//$config["ldap_manager_pwd"]	= "password";
+//$config["ldap_ssl"]		= "enable";				// use TLS/SSL - enable/disable
 
 
 
