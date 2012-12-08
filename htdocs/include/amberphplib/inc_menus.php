@@ -172,13 +172,31 @@ class menu_main
 
 		for ($i=0; $i < $sql_menu_obj->data_num_rows; $i++)
 		{
+			list($config_name, $config_value) = split('=', $sql_menu_obj->data[$i]["config"], 2);
+
 			// check feature option (if set)
 			if (!empty($sql_menu_obj->data[$i]["config"]))
 			{
-				if (!$GLOBALS["config"][ $sql_menu_obj->data[$i]["config"] ])
+				if (!$GLOBALS["config"][ $config_name ])
 				{
 					// config is disabled for this feature
 					unset($sql_menu_obj->data[$i]);
+				}
+				else
+				{
+					if ($config_value)
+					{
+						// do value matching
+						if ($GLOBALS["config"][ $config_name ] != $config_value)
+						{
+
+							// non match, failed
+							unset($sql_menu_obj->data[$i]);
+
+						}
+					}
+
+					// default is that menu item is enabled since config option exists
 				}
 			}
 		}

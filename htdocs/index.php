@@ -170,7 +170,16 @@ if (isset($page_obj->requires["javascript"]))
 
 			if (user_online())
 			{
-				print "<p style=\"font-size: 10px; color: #ffffff;\"><b>logged on as ". $_SESSION["user"]["name"] ." | <a style=\"color: #ffffff\" href=\"index.php?page=user/logout.php\">logout</a></b></p>";
+				print "<p style=\"font-size: 10px; color: #ffffff;\"><b>";
+				print "logged on as ". $_SESSION["user"]["name"] ." | ";
+
+				if ($GLOBALS["config"]["AUTH_METHOD"] == "sql")
+				{
+					print "<a style=\"color: #ffffff\" href=\"index.php?page=user/options.php\">options</a> | ";
+				}
+
+				print "<a style=\"color: #ffffff\" href=\"index.php?page=user/logout.php\">logout</a>";																				print "</b></p>";
+
 			}
 
 			?>
