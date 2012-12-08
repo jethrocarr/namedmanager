@@ -172,7 +172,7 @@ class menu_main
 
 		for ($i=0; $i < $sql_menu_obj->data_num_rows; $i++)
 		{
-			list($config_name, $config_value) = split('=', $sql_menu_obj->data[$i]["config"], 2);
+			list($config_name, $config_value) = explode('=', $sql_menu_obj->data[$i]["config"], 2);
 
 			// check feature option (if set)
 			if (!empty($sql_menu_obj->data[$i]["config"]))
