@@ -27,7 +27,7 @@ $GLOBALS["config"]["app_name"]			= "NamedManager";
 $GLOBALS["config"]["app_version"]		= "1.5.0";
 
 // define the schema version required
-$GLOBALS["config"]["schema_version"]		= "20120812";
+$GLOBALS["config"]["schema_version"]		= "20121208";
 
 
 
