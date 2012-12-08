@@ -186,6 +186,10 @@ system("rm -f $opt_cfgfile.new");
 $mysql_handle->disconnect;
 
 print "DB installation complete!\n";
+print "\n";
+print "You can now login with the default username/password of setup/setup123 at http://localhost/namedmanager\n";
+print "\n";
+
 
 
 # complete! :-)
