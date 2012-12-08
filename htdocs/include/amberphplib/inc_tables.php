@@ -1313,7 +1313,10 @@ class table
 
 
 		// calculate all the totals and prepare processed values
-		$this->render_table_prepare();
+		if (empty($this->data_render))
+		{
+			$this->render_table_prepare();
+		}
 		
 		// display header row
 		print "\n<table class=\"table_content\" cellspacing=\"0\" width=\"100%\">\n";
@@ -1480,6 +1483,25 @@ class table
 					}
 				}
 
+				// handle bytes
+				if ($this->structure[$columns]["type"] == "bytes")
+				{
+					if ($content)
+					{
+						$file_size_types = array(" Bytes", " KB", " MB", " GB", " TB");
+
+						if (!empty($GLOBALS["config"]["BYTECOUNT"]))
+						{
+							$content = round($content/pow($GLOBALS["config"]["BYTECOUNT"], ($z = floor(log($content, $GLOBALS["config"]["BYTECOUNT"])))), 2) . $file_size_types[$z];
+						}
+						else
+						{
+							// use 1024 bytes as a default
+							$content = round($content/pow(1024, ($z = floor(log($content, 1024)))), 2) . $file_size_types[$z];
+						}
+					}
+				}
+
 				// display content
 				if ($content)
 				{
@@ -1507,7 +1529,26 @@ class table
 			// optional: row totals column
 			if (isset($this->total_rows))
 			{
-				print "\t<td><b>". $this->data_render[$i]["total"] ."</b></td>\n";
+				$content = $this->data_render[$i]["total"];
+
+				// handle bytes
+				if ($this->structure[$column]["type"] == "bytes")
+				{
+					if ($content)
+					{
+						if (!empty($GLOBALS["config"]["BYTECOUNT"]))
+						{
+							$content = round($content/pow($GLOBALS["config"]["BYTECOUNT"], ($z = floor(log($content, $GLOBALS["config"]["BYTECOUNT"])))), 2) . $file_size_types[$z];
+						}
+						else
+						{
+							// use 1024 bytes as a default
+							$content = round($content/pow(1024, ($z = floor(log($content, 1024)))), 2) . $file_size_types[$z];
+						}
+					}
+				}
+
+				print "\t<td><b>". $content ."</b></td>\n";
 			}
 
 			
@@ -1661,7 +1702,20 @@ class table
 		
 				if (in_array($column, $this->total_columns))
 				{
-					print "<b>". $this->data_render["total"][$column] ."</b>";
+					$content = $this->data_render["total"][$column];
+
+					// handle bytes
+					if ($this->structure[$column]["type"] == "bytes")
+					{
+						if ($content)
+						{
+							$file_size_types = array(" Bytes", " KB", " MB", " GB", " TB");
+							$content = round($content/pow(1024, ($z = floor(log($content, 1024)))), 2) . $file_size_types[$z];
+						}
+					}
+
+					// render column total
+					print "<b>". $content ."</b>";
 				}
 				else
 				{
@@ -1674,7 +1728,19 @@ class table
 			// optional: totals for rows
 			if (isset($this->total_rows))
 			{
-				print "\t<td class=\"footer\"><b>". @$this->data_render["total"]["total"] ."</b></td>\n";
+				$content = @$this->data_render["total"]["total"];
+
+				// handle bytes
+				if ($this->structure[$column]["type"] == "bytes")
+				{
+					if ($content)
+					{
+						$file_size_types = array(" Bytes", " KB", " MB", " GB", " TB");
+						$content = round($content/pow(1024, ($z = floor(log($content, 1024)))), 2) . $file_size_types[$z];
+					}
+				}
+
+				print "\t<td class=\"footer\"><b>". $content ."</b></td>\n";
 			}
 
 

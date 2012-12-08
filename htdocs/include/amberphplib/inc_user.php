@@ -80,12 +80,62 @@ class user_auth
 		{
 			// get user session data
 			$sql_session_obj		= New sql_query;
-			$sql_session_obj->string 	= "SELECT id, time FROM `users_sessions` WHERE authkey='" . $_SESSION["user"]["authkey"] . "' AND ipaddress='" . $_SERVER["REMOTE_ADDR"] . "' LIMIT 1";
+			$sql_session_obj->string 	= "SELECT id, time, ipv4, ipv6 FROM `users_sessions` WHERE authkey='" . $_SESSION["user"]["authkey"] . "' LIMIT 1";
 			$sql_session_obj->execute();
 
 			if ($sql_session_obj->num_rows())
 			{
 				$sql_session_obj->fetch_array();
+
+				
+				// Verify the IP address
+				//
+				// This check is designed to reduce the risk of any theft of session information, by forcing the session
+				// to be linked to the user's IP  - stealing session data and connecting from another location will
+				// be denied.
+				//
+				// There is some trickiness to support IPv4/IPv6 mixed environments, as sometimes browers will swap between
+				// IPv4 and IPv6 addressing in a session, so we trust the first IPv4 and the first IPv6 addresses that the
+				// host identifies with, then deny all future ones.
+				//
+				if (ip_type_detect($_SERVER["REMOTE_ADDR"]) == 6)
+				{
+					if (!empty($sql_session_obj->data[0]["ipv6"]))
+					{
+						if ($_SERVER["REMOTE_ADDR"] != $sql_session_obj->data[0]["ipv6"])
+						{
+							// the current IPv6 address does not match the one for this session
+							// denied
+							return 0;
+						}
+					}
+					else
+					{
+						// this session hasn't connected via IPv6 before, add it to the session info.
+						$sql_obj		= New sql_query;
+						$sql_obj->string	= "UPDATE `users_sessions` SET ipv6='". $_SERVER["REMOTE_ADDR"] ."' WHERE authkey='". $_SESSION["user"]["authkey"] ."' LIMIT 1";
+						$sql_obj->execute();
+					}
+				}
+				else
+				{
+					if (!empty($sql_session_obj->data[0]["ipv4"]))
+					{
+						if ($_SERVER["REMOTE_ADDR"] != $sql_session_obj->data[0]["ipv4"])
+						{
+							// the current IPv4 address does not match the one for this session
+							// denied
+							return 0;
+						}
+					}
+					else
+					{
+						// this session hasn't connected via IPv4 before, add it to the session info.
+						$sql_obj		= New sql_query;
+						$sql_obj->string	= "UPDATE `users_sessions` SET ipv4='". $_SERVER["REMOTE_ADDR"] ."' WHERE authkey='". $_SESSION["user"]["authkey"] ."' LIMIT 1";
+						$sql_obj->execute();
+					}
+				}
 
 				$time = time();
 				if ($time < ($sql_session_obj->data[0]["time"] + 7200))
@@ -793,7 +843,16 @@ class user_auth
 
 		// create session entry for user login
 		$sql_obj		= New sql_query;
-		$sql_obj->string	= "INSERT INTO `users_sessions` (userid, authkey, ipaddress, time) VALUES ('$userid', '$authkey', '$ipaddress', '$time')";
+		
+		if (ip_type_detect($ipaddress) == 6)
+		{
+			$sql_obj->string	= "INSERT INTO `users_sessions` (userid, authkey, ipv6, time) VALUES ('$userid', '$authkey', '$ipaddress', '$time')";
+		}
+		else
+		{
+			$sql_obj->string	= "INSERT INTO `users_sessions` (userid, authkey, ipv4, time) VALUES ('$userid', '$authkey', '$ipaddress', '$time')";
+		}
+
 		$sql_obj->execute();
 
 
