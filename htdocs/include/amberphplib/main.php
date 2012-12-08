@@ -156,7 +156,10 @@ $sql_config_obj->fetch_array();
 
 foreach ($sql_config_obj->data as $data_config)
 {
-	$GLOBALS["config"][ $data_config["name"] ] = $data_config["value"];
+	if (!isset($GLOBALS["config"][ $data_config["name"] ]))
+	{
+		$GLOBALS["config"][ $data_config["name"] ] = $data_config["value"];
+	}
 }
 
 unset($sql_config_obj);

@@ -41,7 +41,7 @@ class user_auth
 		log_debug("user_auth", "Executing user_auth()");
 
 		// fetch authentication method from the database. If that fails, default to sql
-		$this->method = sql_get_singlevalue("SELECT value FROM `config` WHERE name='AUTH_METHOD' LIMIT 1");
+		$this->method = $GLOBALS["config"]["AUTH_METHOD"];
 
 		if (!$this->method)
 		{
