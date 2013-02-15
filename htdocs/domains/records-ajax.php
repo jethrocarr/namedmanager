@@ -207,7 +207,7 @@ class page_output
 		if (isset($_POST['record_custom_page'] ))
 		{
 			// fetch data from POST and validate - we then return values
-			$data = $this->obj_domain->validate_custom_records();
+			$data = stripslashes_deep($this->obj_domain->validate_custom_records());
 
 			// validate the record_custom_page for returning the user to their page, default to page 1 if any errors in validating...
 			$data['record_custom_page']		= @security_form_input_predefined("int", "record_custom_page", 1, "");
@@ -218,6 +218,7 @@ class page_output
 			print_R($data);
 			echo '</pre>';
 			echo '</td></tr>';
+			die("debug");
 */
 
 			if (error_check())
