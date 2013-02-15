@@ -55,6 +55,9 @@ $config["bind"]["reload"]		= "/usr/sbin/rndc reload";		// command to reload bind
 $config["bind"]["config"]		= "/etc/named.namedmanager.conf";	// configuration file to write bind config too
 $config["bind"]["zonefiledir"]		= "/var/named/";			// directory to write zonefiles too
 										// note: if using chroot bind, will often be /var/named/chroot/var/named/
+$config["bind"]["verify_zone"]		= "/usr/sbin/named-checkzone";		// Used to verify each generated zonefile as OK
+$config["bind"]["verify_config"]	= "/usr/sbin/named-checkconf";		// Used to verify generated NamedManager configuration
+
 
 
 // force debugging on for all users + scripts

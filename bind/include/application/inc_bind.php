@@ -114,12 +114,19 @@ class bind_api extends soap_api
 	{
 		log_write("debug", "script", "Reloading Bind with new configuration using ". $GLOBALS["config"]["bind"]["reload"] ."");
 
-		exec($GLOBALS["config"]["bind"]["reload"], $exec_output, $exec_return_value);
+		exec($GLOBALS["config"]["bind"]["reload"] ." 2>&1", $exec_output, $exec_return_value);
 
 		if ($exec_return_value)
 		{
 			// an error occured
-			log_write("error", "script", "Unable to confirm successful reload of Bind, potentially a configuration generation problem");
+			if (preg_match('/rndc:\sconnect\sfailed/', $exec_output[0]))
+			{
+				// typical sign that Bind hasn't been started
+				log_write("error", "script", "Rndc unable to connect to running Bind process - is there an active name server on this host?");
+			}
+
+			// generic failure
+			log_write("error", "script", "Unable to confirm successful reload of Bind!");
 
 			return 0;
 		}
@@ -168,7 +175,11 @@ class bind_api extends soap_api
 					log_write("debug", "script", "Domain ". $domain["domain_name"] ." is out of date - configuration needs to be regenerated");
 
 					// update the zone file
-					$this->action_generate_zonefile( $domain["domain_name"], $domain["id"] );
+					if (!$this->action_generate_zonefile( $domain["domain_name"], $domain["id"] ))
+					{
+						// unhandlable fault
+						return 0;
+					}
 				}
 			}
 		}
@@ -182,11 +193,21 @@ class bind_api extends soap_api
 		$this->action_remove_deleted();
 
 		// update application configuration
-		$this->action_generate_appconfig();
+		if (!$this->action_generate_appconfig())
+		{
+			// unhandlable fault	
+			return 0;
+		}
 
 
 		// reload Bind
-		$this->action_reload();
+		if (!$this->action_reload())
+		{
+			return 0;
+		}
+
+		// successful update
+		return 1;
 	}
 
 
@@ -229,6 +250,25 @@ class bind_api extends soap_api
 		}
 
 		fclose($fh);
+
+		// validate configuration
+		if ($GLOBALS["config"]["bind"]["verify_config"] && file_exists($GLOBALS["config"]["bind"]["verify_config"]))
+		{
+			exec($GLOBALS["config"]["bind"]["verify_config"] ." ". $GLOBALS["config"]["bind"]["config"], $exec_output, $exec_return_value);
+
+			if ($exec_return_value)
+			{
+				log_write("error", "script", "An unexpected problem occured when validating the generated configuration.");
+				log_write("error", "script", "It is possible this is an application bug, raising error to avoid reload");
+
+				return 0;
+			}
+		}
+		else
+		{
+			log_write("warning", "script", "No named configuration validater found, you should install named-checkconf to improve safety checks of your name server");
+		}
+		
 
 
 		log_write("debug", "script", "Finished writing application configuration");
@@ -328,9 +368,9 @@ class bind_api extends soap_api
 
 
 		// open zonefile for writing
-		if (!$fh = fopen($zonefile, "w"))
+		if (!$fh = fopen("$zonefile.tmp", "w"))
 		{
-			log_write("error", "main", "Unable to open file ". $zonefile ." for writing");
+			log_write("error", "main", "Unable to open file $zonefile.tmp for writing");
 			return 0;
 		}
 
@@ -545,6 +585,39 @@ class bind_api extends soap_api
 
 		// footer
 		fclose($fh);
+
+
+		// validate configuration
+		if ($GLOBALS["config"]["bind"]["verify_zone"] && file_exists($GLOBALS["config"]["bind"]["verify_zone"]))
+		{
+			exec($GLOBALS["config"]["bind"]["verify_zone"] ." $domain_name $zonefile.tmp", $exec_output, $exec_return_value);
+
+			if ($exec_return_value)
+			{
+				log_write("error", "script", "An unexpected problem occured when validating the generated zone file for $domain_name");
+
+				foreach ($exec_output as $line)
+				{
+					log_write("error", "script", "Validator: $line");
+				}
+
+				log_write("error", "script", "It is possible this is an application bug, raising error to avoid reload.");
+				log_write("error", "script", "Zonefile remains on previous version until validation error resolved.");
+
+				return 0;
+			}
+		}
+		else
+		{
+			log_write("warning", "script", "No named configuration validater found, you should install named-checkconf to improve safety checks of your name server");
+		}
+
+		// successful pass of the configuration, we can now rename the files
+		if (!rename("$zonefile.tmp", $zonefile))
+		{
+			log_write("error", "script", "Fatal error moving $zonefile.tmp to $zonefile");
+			return 0;
+		}
 
 		return 1;
 
