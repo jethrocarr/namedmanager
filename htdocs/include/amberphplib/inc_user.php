@@ -958,7 +958,7 @@ class user_auth
 		if ($GLOBALS["config"]["AUTH_PERMS_CACHE"] == "enabled")
 		{
 			// check for cache
-			if ($_SESSION["user"]["cache"]["perms"])
+			if (isset($_SESSION["user"]["cache"]["perms"]))
 			{
 				log_write("debug", "user_auth", "Loading user permissions from session cache");
 

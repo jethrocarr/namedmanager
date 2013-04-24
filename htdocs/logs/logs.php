@@ -92,7 +92,11 @@ class page_output
 
 
 		// load options
-		$this->obj_table->add_fixed_option("id", $this->obj_server_name->id);
+		if (isset($this->obj_server_name->id))
+		{
+			$this->obj_table->add_fixed_option("id", $this->obj_server_name->id);
+		}
+
 		$this->obj_table->load_options_form();
 
 

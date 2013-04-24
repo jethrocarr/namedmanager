@@ -172,11 +172,11 @@ class menu_main
 
 		for ($i=0; $i < $sql_menu_obj->data_num_rows; $i++)
 		{
-			list($config_name, $config_value) = explode('=', $sql_menu_obj->data[$i]["config"], 2);
-
 			// check feature option (if set)
 			if (!empty($sql_menu_obj->data[$i]["config"]))
 			{
+				@list($config_name, $config_value) = explode('=', $sql_menu_obj->data[$i]["config"], 2);
+
 				if (!$GLOBALS["config"][ $config_name ])
 				{
 					// config is disabled for this feature

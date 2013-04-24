@@ -627,7 +627,7 @@ function time_format_humandate($date = NULL, $time = FALSE)
 	}
 
 
-	if ($_SESSION["user"]["dateformat"])
+	if (isset($_SESSION["user"]["dateformat"]))
 	{
 		// fetch from user preferences
 		$format = $_SESSION["user"]["dateformat"];

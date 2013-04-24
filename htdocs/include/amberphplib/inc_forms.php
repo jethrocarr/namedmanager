@@ -965,7 +965,7 @@ class form_input
 
 						foreach (array_keys($this->actions[$fieldname]) as $target_field)
 						{
-							if ($this->actions[$fieldname][ $target_field ][ $value ])
+							if (isset($this->actions[$fieldname][ $target_field ][ $value ]))
 							{
 								$action = $this->actions[$fieldname][ $target_field ][ $value ];
 							}
@@ -998,8 +998,11 @@ class form_input
 					}			
 						
 					
-					if ($this->structure[$fieldname]["options"]["disabled"] == "yes")
-						print "disabled=\"disabled\" ";
+					if (isset($this->structure[$fieldname]["options"]["disabled"]))
+					{
+						if ($this->structure[$fieldname]["options"]["disabled"] == "yes")
+							print "disabled=\"disabled\" ";
+					}
 					
 					print "type=\"radio\" style=\"border: 0px\" name=\"$fieldname\" value=\"$value\" id=\"". $fieldname ."_". $value ."\">";
 					print "<label for=\"". $fieldname ."_". $value ."\">". $translations[$value] ."</label><br>";
@@ -1067,9 +1070,11 @@ class form_input
 					print "class=\"". $this->structure[$fieldname]["options"]["css_field_class"] ."\" ";
 				}			
 					
-
-				if ($this->structure[$fieldname]["options"]["disabled"] == "yes")
-					print "disabled=\"disabled\" ";
+				if (isset($this->structure[$fieldname]["options"]["disabled"]))
+				{
+					if ($this->structure[$fieldname]["options"]["disabled"] == "yes")
+						print "disabled=\"disabled\" ";
+				}
 					
 				print "type=\"checkbox\" style=\"border: 0px\" name=\"". $fieldname ."\" id=\"". $fieldname ."\">";
 
@@ -1260,8 +1265,11 @@ class form_input
 
 				print "<input name=\"$fieldname\" type=\"submit\" value=\"$translation\"";
 				
-				if ($this->structure[$fieldname]["options"]["disabled"] == "yes")
-					print "disabled=\"disabled\" ";
+				if (isset($this->structure[$fieldname]["options"]["disabled"]))
+				{
+					if ($this->structure[$fieldname]["options"]["disabled"] == "yes")
+						print "disabled=\"disabled\" ";
+				}
 					
 				print ">";
 			break;

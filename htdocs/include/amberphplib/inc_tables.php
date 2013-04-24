@@ -795,7 +795,7 @@ class table
 		// link bar instead of the main options table.
 		if (!isset($_SESSION["form"][$this->tablename]["custom_options_active"]))
 		{
-			if ($_SESSION["user"]["shrink_tableoptions"] == "on")
+			if (isset($_SESSION["user"]["shrink_tableoptions"]) && $_SESSION["user"]["shrink_tableoptions"] == "on")
 			{
 				print "<div id=\"". $this->tablename ."_link\">";
 
@@ -1108,7 +1108,7 @@ class table
 		// auto-hide options at startup
 		if (!isset($_SESSION["form"][$this->tablename]["custom_options_active"]))
 		{
-			if ($_SESSION["user"]["shrink_tableoptions"] == "on")
+			if (isset($_SESSION["user"]["shrink_tableoptions"]) && $_SESSION["user"]["shrink_tableoptions"] == "on")
 			{
 				print "<script type=\"text/javascript\">";
 				print "obj_hide('". $this->tablename ."_form');";

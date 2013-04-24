@@ -229,7 +229,7 @@ if ($page_valid == 1)
 			Draw navigiation menu
 		*/
 		
-		if ($page_obj->obj_menu_nav)
+		if (isset($page_obj->obj_menu_nav))
 		{
 			print "<tr><td>";
 			$page_obj->obj_menu_nav->render_html();
@@ -266,7 +266,7 @@ if ($page_valid == 1)
 	Draw messages
 */
 
-if ($_SESSION["error"]["message"])
+if (!empty($_SESSION["error"]["message"]))
 {
 	print "<tr><td>";
 	log_error_render();
@@ -274,7 +274,7 @@ if ($_SESSION["error"]["message"])
 }
 else
 {
-	if ($_SESSION["notification"]["message"])
+	if (!empty($_SESSION["notification"]["message"]))
 	{
 		print "<tr><td>";
 		log_notification_render();
