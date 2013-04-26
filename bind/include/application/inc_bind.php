@@ -26,6 +26,14 @@ class bind_api extends soap_api
 	{
 		log_write("debug", "bind_config", "Executing check_permissions()");
 
+		if (!file_exists($GLOBALS["config"]["bind"]["config"]))
+		{
+			if (!touch($GLOBALS["config"]["bind"]["config"]))
+			{
+				log_write("error", "script", "Unable to create Bind configuration file ". $GLOBALS["config"]["bind"]["config"]);
+			}
+		}
+
 		if (!is_writable($GLOBALS["config"]["bind"]["config"]))
 		{
 			log_write("error", "script", "Unable to write to Bind configuration file ". $GLOBALS["config"]["bind"]["config"]);
