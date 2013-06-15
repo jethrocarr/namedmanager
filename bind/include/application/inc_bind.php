@@ -544,6 +544,7 @@ class bind_api extends soap_api
 					case "A":
 					case "AAAA":
 					case "SPF":
+					case "TXT":
 
 						// Adjust to handle FQDN in name/origin
 						if (preg_match("/\./", $record["record_name"]) && preg_match("/". $domain_name ."$/", $record["record_name"]))
@@ -569,10 +570,6 @@ class bind_api extends soap_api
 						}
 					break;
 
-
-					case "TXT":
-						// nothing to do
-					break;
 
 					default:
 						// nothing to do
