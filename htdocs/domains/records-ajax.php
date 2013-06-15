@@ -243,7 +243,6 @@ class page_output
 		
 		$this->num_records_custom_total = $this->obj_domain->data_record_custom_count();
 
-		log_debug("execute", "Count of records is: " . $count);
 
 		$this->obj_domain->load_data();
 
@@ -270,12 +269,35 @@ class page_output
 
 
 
-		// work out the IP for reverse domains, assuming IPv4
-		if (strpos($this->obj_domain->data["domain_name"], "arpa"))
+		// work out the IP for reverse domains
+		if (strpos($this->obj_domain->data["domain_name"], "in-addr.arpa"))
 		{
+			// IPv4
 			$ip = explode(".", $this->obj_domain->data["domain_name"]);
 
 			$this->obj_domain->data["domain_ip_prefix"] = $ip[2] .".". $ip[1] .".". $ip[0];
+		}
+		elseif (strpos($this->obj_domain->data["domain_name"], "ip6.arpa"))
+		{
+			// IPv6
+			$ip_reverse	= substr($this->obj_domain->data["domain_name"], 0, strlen($this->obj_domain->data["domain_name"])-9);
+			$ip_array	= array();
+		
+			$i=0;
+			foreach (array_reverse(explode(".", $ip_reverse)) as $ip)
+			{
+				$i++;
+
+				$ip_array[] = $ip;
+
+				if ($i == 4)
+				{
+					$i =0 ;
+					$ip_array[] = ":";
+				}
+			}
+
+			$this->obj_domain->data["domain_ip_prefix"] = implode("", $ip_array);
 		}
 
 		/*
@@ -369,11 +391,20 @@ class page_output
 			$structure["fieldname"]		 	= "record_custom_". $i ."_name";
 			$structure["type"]			= "input";
 			
-			if (strpos($this->obj_domain->data["domain_name"], "arpa"))
+			if (strpos($this->obj_domain->data["domain_name"], "in-addr.arpa"))
 			{
 				$structure["options"]["width"]		= "50";
 				$structure["options"]["max_length"]	= "3";
 				$structure["options"]["prelabel"]	= $this->obj_domain->data["domain_ip_prefix"] .". ";
+				$structure["options"]["help"]		= "?";
+			}
+			elseif (strpos($this->obj_domain->data["domain_name"], "ip6.arpa"))
+			{
+				$structure["options"]["width"]		= "300";
+				$structure["options"]["prelabel"]	= " ";
+				$structure["options"]["help"]		= $this->obj_domain->data["domain_ip_prefix"] ."....";
+				$structure["options"]["autofill"]	= $this->obj_domain->data["domain_ip_prefix"];
+
 			}
 			else
 			{
@@ -387,7 +418,17 @@ class page_output
 			$structure["fieldname"] 		= "record_custom_". $i ."_content";
 			$structure["type"]			= "input";
 			$structure["options"]["width"]		= "300";
-			$structure["options"]["help"]		= "Target IP, eg 192.168.0.1";
+			
+			if (strpos($this->obj_domain->data["domain_name"], "arpa"))
+			{
+				// both IPv4 and IPv6
+				$structure["options"]["help"]	= "Reverse record name, eg www.example.com";
+			}
+			else
+			{
+				$structure["options"]["help"]	= "Target IP, eg 192.168.0.1";
+			}
+
 			$this->obj_form->add_input($structure);
 
 			$structure = NULL;
@@ -450,6 +491,15 @@ class page_output
 					$this->obj_form->structure["record_custom_". $i ."_ttl"]["options"]["disabled"]	= "yes";
 					$this->obj_form->structure["record_custom_". $i ."_reverse_ptr"]["options"]["disabled"] = "yes";
 					$this->obj_form->structure["record_custom_". $i ."_reverse_ptr_orig"]["options"]["disabled"] = "yes";
+				}
+				elseif ($record["type"] == "PTR")
+				{
+					if (strpos($this->obj_domain->data["domain_name"], "ip6.arpa"))
+					{
+						// IPv6 PTR records are in ARPA format, we should convert it to something human readable
+						$this->obj_form->structure["record_custom_". $i ."_name"]["defaultvalue"] = ipv6_convert_fromarpa($record["name"]);
+					}
+
 				}
 				elseif ($record["type"] != "PTR")
 				{

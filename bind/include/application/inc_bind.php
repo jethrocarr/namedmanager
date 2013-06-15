@@ -489,19 +489,13 @@ class bind_api extends soap_api
 		{
 			if ($record["record_type"] == "PTR")
 			{
-				fwrite($fh, $record["record_name"] . "\t". $record["record_ttl"] ." IN PTR ". $record["record_content"] );
-
-				if (preg_match("/\./", $record["record_content"]))
+				if (strpos($record["record_name"], "ip6.arpa"))
 				{
-					// FQDN
-					fwrite($fh, ".\n");
-				}
-				else
-				{
-					// non-FQND
-					fwrite($fh, "\n");
+					// IPv6 records are full domains, hence trailing .
+					$record["record_name"] = $record["record_name"] .".";
 				}
 
+				fwrite($fh, $record["record_name"] . "\t". $record["record_ttl"] ." IN PTR ". $record["record_content"] .".\n");
 			}
 		}
 

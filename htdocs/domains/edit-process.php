@@ -52,12 +52,10 @@ if (user_permissions_get('namedadmins'))
 			$obj_domain->data["domain_name"]		= security_form_input_predefined("any", "domain_name", 1, "");
 			$obj_domain->data["domain_description"]		= security_form_input_predefined("any", "domain_description", 0, "");
 		}
-		else
+		elseif ($obj_domain->data["domain_type"] == "domain_reverse_ipv4")
 		{
 			// fetch domain data
-//			$obj_domain->data["ipv4_help"]				= security_form_input_predefined("any", "ipv4_help", 1, "");
 			$obj_domain->data["ipv4_network"]			= security_form_input_predefined("ipv4_cidr", "ipv4_network", 1, "Must supply full IPv4 network address");
-//			$obj_domain->data["ipv4_subnet"]			= security_form_input_predefined("int", "ipv4_subnet", 1, "");
 			$obj_domain->data["ipv4_autofill"]			= security_form_input_predefined("checkbox", "ipv4_autofill", 0, "");
 			$obj_domain->data["ipv4_autofill_forward"]		= security_form_input_predefined("checkbox", "ipv4_autofill_forward", 0, "");
 			$obj_domain->data["ipv4_autofill_reverse_from_forward"]	= security_form_input_predefined("checkbox", "ipv4_autofill_reverse_from_forward", 0, "");
@@ -138,41 +136,57 @@ if (user_permissions_get('namedadmins'))
 						error_flag_field("ipv4_autofill_domain");
 					}
 
-
 					unset($obj_domain_check);
 				}
-
-
-/*
-				TODO: does the RFC standards and Bind allow for larger than /24?
-
-				switch ($obj_domain->data["ipv4_subnet"])
-				{
-					case "24":
-						$obj_domain->data["domain_name"]	= $tmp_network[2] .".". $tmp_network[1] .".". $tmp_network[0] .".in-addr.arpa";
-					break;
-
-					case "16":
-						$obj_domain->data["domain_name"]	= $tmp_network[1] .".". $tmp_network[0] .".in-addr.arpa";
-					break;
-
-					case "8":
-						$obj_domain->data["domain_name"]	= $tmp_network[0] .".in-addr.arpa";
-					break;
-
-					default:
-						log_write("error", "process", "Invalid subnet of ". $obj_domain->data["ipv4_subnet"] ." supplied!");
-					break;
-				}	
-*/
 			}
-
 
 			// if no description, set to original IP
 			if (!$obj_domain->data["domain_description"])
 			{
 				$obj_domain->data["domain_description"] = "Reverse domain for range ". $obj_domain->data["ipv4_network"] ."/". $obj_domain->data["ipv4_cidr"];
 			}
+		}
+		elseif ($obj_domain->data["domain_type"] == "domain_reverse_ipv6")
+		{
+			// fetch domain data
+			$obj_domain->data["ipv6_network"]			= security_form_input_predefined("ipv6_cidr", "ipv6_network", 1, "Must supply full IPv6 network address");
+			//$obj_domain->data["ipv6_autofill"]			= security_form_input_predefined("checkbox", "ipv6_autofill", 0, "");
+			//$obj_domain->data["ipv6_autofill_forward"]		= security_form_input_predefined("checkbox", "ipv6_autofill_forward", 0, "");
+			$obj_domain->data["ipv6_autofill_reverse_from_forward"]	= security_form_input_predefined("checkbox", "ipv6_autofill_reverse_from_forward", 0, "");
+			//$obj_domain->data["ipv6_autofill_domain"]		= security_form_input_predefined("any", "ipv6_autofill_domain", 0, "");
+			$obj_domain->data["domain_description"]			= security_form_input_predefined("any", "domain_description", 0, "");
+
+
+			// check CIDR
+			$matches = explode("/", $obj_domain->data["ipv6_network"]);
+			if (!empty($matches[0]) && !empty($matches[1]))
+			{
+				// set network
+				$obj_domain->data["ipv6_network"]	= $matches[0];
+				$obj_domain->data["ipv6_cidr"]		= $matches[1];
+
+				// check CIDR
+				if ($obj_domain->data["ipv6_cidr"] > 128 || $obj_domain->data["ipv6_cidr"] < 1)
+				{
+					log_write("error", "process", "Invalid CIDR, IPv6 CIDRs are between /0 and /128");
+					error_flag_field("ipv6_network");
+				}
+
+				// generate domain name (IPv6 CIDR)
+				$obj_domain->data["domain_name"]	= ipv6_convert_arpa($obj_domain->data["ipv6_network"] ."/". $obj_domain->data["ipv6_cidr"]);
+
+				// if no description, set to original IP
+				if (!$obj_domain->data["domain_description"])
+				{
+					$obj_domain->data["domain_description"] = "Reverse domain for range ". $obj_domain->data["ipv6_network"] ."/". $obj_domain->data["ipv6_cidr"];
+				}
+
+			}
+
+		}
+		else
+		{
+			log_write("error", "process", "Unexpected domain type, unable to process.");
 		}
 
 	}
@@ -373,8 +387,6 @@ if (user_permissions_get('namedadmins'))
 			// update serial & NS records
 			$obj_domain->action_update_serial();
 			$obj_domain->action_update_ns();
-
-
 		}
 
 

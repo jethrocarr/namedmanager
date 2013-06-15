@@ -1482,6 +1482,12 @@ class domain_records extends domain
 	{
 		log_debug("domain", "Executing validate_custom_records(array_data)");
 
+		if (!isset($this->data))
+		{
+			// we need the domain details if we don't already have them
+			$this->load_data();
+		}
+
 		$data		= array();
 		$data_tmp	= array();
 
@@ -1592,7 +1598,7 @@ class domain_records extends domain
 
 
 				// verify name syntax
-				if ($data_tmp[$i]["name"] != "@" && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp[$i]["name"]))
+				if ($data_tmp[$i]["name"] != "@" && !preg_match("/^[A-Za-z0-9:._-]*$/", $data_tmp[$i]["name"]))
 				{
 					log_write("error", "process", "Sorry, the value you have entered for record ". $data_tmp[$i]["name"] ." contains invalid charactors");
 
@@ -1669,20 +1675,56 @@ class domain_records extends domain
 						break;
 
 						case "PTR":
-							// validate PTR
-							if (!preg_match("/^[0-9]*$/", $data_tmp[$i]["name"]))
+								
+							if (strpos($this->data["domain_name"], "in-addr.arpa"))
 							{
-								log_write("error", "process", "PTR reverse record for ". $data_tmp[$i]["content"] ." should be a single octet.");
-								error_flag_field("record_custom_". $i ."");
+								// IPv4 PTR Record
+								// We only pass through the 4th octet to the end user.
+								
+								if (!preg_match("/^[0-9]*$/", $data_tmp[$i]["name"]))
+								{
+									log_write("error", "process", "PTR reverse record for ". $data_tmp[$i]["content"] ." should be a single octet.");
+									error_flag_field("record_custom_". $i ."");
+								}
+
+								if (!preg_match("/^[A-Za-z0-9.-]*$/", $data_tmp[$i]["content"]))
+								{
+									log_write("error", "process", "PTR reverse record for ". $data_tmp[$i]["name"] ." is not correctly formatted.");
+									error_flag_field("record_custom_". $i ."");
+								}
+		
+							}
+							elseif (strpos($this->data["domain_name"], "ip6.arpa"))
+							{
+								// IPv6 PTR Record
+
+								// If the record is already in reverse ARPA format, we should convert it first
+								if (strpos($data_tmp[$i]["name"], "ip6.arpa"))
+								{
+									$data_tmp[$i]["name"] = ipv6_convert_fromarpa($data_tmp[$i]["name"]);
+								}
+
+								// We pass through a full IPv6 address and maybe a CIDR value - if provided,
+								// we should strip off the CIDR and then validate the address and process.
+								$data_tmp[$i]["name"] = preg_replace("/\/[0-9]*$/", '', $data_tmp[$i]["name"]);
+
+								if (!filter_var($data_tmp[$i]["name"], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6))
+								{
+									log_write("error", "process", "Provided PTR IPv6 address for ". $data_tmp[$i]["name"] ." is not a valid IPv6 address.");
+									error_flag_field("record_custom_". $i ."");
+								}
+
+								if (!preg_match("/^[A-Za-z0-9.-]*$/", $data_tmp[$i]["content"]))
+								{
+									log_write("error", "process", "Provided PTR IPv6 reverse record for ". $data_tmp[$i]["name"] ." is not correctly formatted.");
+									error_flag_field("record_custom_". $i ."");
+								}
+
+								// convert the record into PTR formatted value
+								$data_tmp[$i]["name"] = ipv6_convert_arpa($data_tmp[$i]["name"]);
 							}
 
-							if (!preg_match("/^[A-Za-z0-9.-]*$/", $data_tmp[$i]["content"]))
-							{
-								log_write("error", "process", "PTR reverse record for ". $data_tmp[$i]["name"] ." is not correctly formatted.");
-								error_flag_field("record_custom_". $i ."");
-							}
 						break;
-
 
 						case "NS":
 						case "MX":

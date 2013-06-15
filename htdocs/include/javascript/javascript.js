@@ -14,6 +14,14 @@ $(document).ready(function()
 				$(this).siblings("input[name$='helpmessagestatus']").val("true");
 			}
 		});
+
+		var autofill = $(this).siblings("input[name$='autofill']").val();
+
+		if (autofill.length > 0)
+		{
+			$(this).val(autofill);
+		}
+
 	});
 	
 	$(".helpmessage").live("focusin", function()
@@ -28,6 +36,13 @@ $(document).ready(function()
 				$(this).siblings("input[name$='helpmessagestatus']").val("true");
 			}
 		});
+		
+		var autofill = $(this).siblings("input[name$='autofill']").val();
+
+		if (autofill.length > 0)
+		{
+			$(this).val(autofill);
+		}
 	});
 });
 

@@ -148,6 +148,8 @@ function security_form_input($expression, $valuename, $numchars, $errormsg)
 	* float		Floating point integer
 	* ipv4		XXX.XXX.XXX.XXX IPv4 syntax
 	* ipv4_cidr	XXX.XXX.XXX.XXX/XX IPv4 with optional CIDR syntax
+	* ipv6		Valid IPv6 address
+	* ipv6_cidr	Valid IPv6 address with optional CIDR syntax
 	* checkbox	Checkbox - return 1 if set, 0 if not
 
 	For further details, refer to the commentsfor the security_form_input function.
@@ -394,6 +396,40 @@ function security_form_input_predefined ($type, $valuename, $numchar, $errormsg)
 
 		case "ipv4_cidr":
 			$expression = "/^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:[.](?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}[\/]*[1-9]*$/";
+		break;
+
+		case "ipv6":
+			if (filter_var($_POST[$valuename], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6))
+			{
+				return $_POST[$valuename];
+			}
+			else
+			{
+				// there has been an error - flag the hourmins field as being incorrect input
+				$_SESSION["error"]["message"][] = "Provided address is not a valid IPv6 address";
+				$_SESSION["error"]["". $valuename . "-error"] = 1;
+				$_SESSION["error"][$valuename] = 0;
+
+				return "error";
+			}
+		break;
+
+		case "ipv6_cidr":
+			list($network, $cidr) = split("/", $_POST[$valuename]);
+			
+			if (filter_var($network, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6))
+			{
+				return "$network/$cidr";
+			}
+			else
+			{
+				// there has been an error - flag the hourmins field as being incorrect input
+				$_SESSION["error"]["message"][] = "Provided address is not a valid IPv6 address";
+				$_SESSION["error"]["". $valuename . "-error"] = 1;
+				$_SESSION["error"][$valuename] = 0;
+
+				return "error";
+			}
 		break;
 
 		case "checkbox":

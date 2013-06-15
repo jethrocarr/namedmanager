@@ -1456,7 +1456,7 @@ function ipv4_split_to_class_c($address_with_cidr)
 	used for reverse DNS.
 
 	Fields
-	ipaddress
+	ipaddress (IPv4)
 
 	Returns
 	0		Invalid IP address
@@ -1476,6 +1476,80 @@ function ipv4_convert_arpa( $ipaddress )
 } // end of ipv4_convert_arpa
 
 
+/*
+	ipv6_convert_arpa
+
+	Converts the provided IPv6 address into the arpa format typically
+	used for reverse DNS. Supports both CIDR and non-CIDR format addresses
+
+	Fields
+	ipaddress (IPv6)
+
+	Returns
+	0	Invalid IP Address / Other Error
+	string	arpa format eg 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
+*/
+
+function ipv6_convert_arpa( $ipaddress )
+{
+	log_write("debug", "inc_misc", "Executing ipv6_convert_arpa( $ipaddress)");
+
+	if (preg_match("/^([0-9a-f:]*)\/([0-9]*)$/i", $ipaddress, $matches))
+	{
+		$cidr		= $matches[2];
+		$addr		= inet_pton($matches[1]);
+		$unpack		= unpack('H*hex', $addr);
+		$hex		= $unpack['hex'];
+		$hex_array	= str_split($hex);
+		
+		for ($i=0; $i < ($cidr / 4); $i++)
+		{
+			$hex_array2[$i] = $hex_array[$i];
+		}
+
+		$result		= implode('.', array_reverse($hex_array2)) . '.ip6.arpa';
+	}
+	else
+	{
+		$addr	= inet_pton($ipaddress);
+		$unpack	= unpack('H*hex', $addr);
+		$hex	= $unpack['hex'];
+		$result	= implode('.', array_reverse(str_split($hex))) . '.ip6.arpa';
+	}
+
+	return $result;
+
+} // end of ipv6_convert_arpa
+
+
+/*
+	ipv6_convert_fromarpa
+
+	Takes the provided apra/PTR format IPv6 address and turns it into
+	a regular IPv6 address.
+
+	Fields
+	ipaddress_arpa (IPv6 arpa record, eg 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.)
+
+	Returns
+	0	Invalid IP Address / Other Error
+	string	IPv6 address, eg 2001:db8::1
+*/
+
+
+function ipv6_convert_fromarpa ($arpa)
+{
+	// credit to http://stackoverflow.com/questions/6619682/convert-ipv6-to-nibble-format-for-ptr-records
+	log_write("debug", "inc_misc", "Executing ipv6_convert_fromarpa($arpa)");
+
+	$mainptr	= substr($arpa, 0, strlen($arpa)-9);
+	$pieces		= array_reverse(explode(".",$mainptr));  
+        $hex		= implode("",$pieces);
+	$ipbin		= pack('H*', $hex);
+	$ipv6addr	= inet_ntop($ipbin);
+
+	return $ipv6addr;
+}
 
 
 /*
