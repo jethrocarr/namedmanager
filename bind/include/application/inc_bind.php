@@ -251,7 +251,17 @@ class bind_api extends soap_api
 			{
 				fwrite($fh, "zone \"". $domain["domain_name"] ."\" IN {\n");
 				fwrite($fh, "\ttype master;\n");
-				fwrite($fh, "\tfile \"". $domain["domain_name"] .".zone\";\n");
+				
+				if (!empty($GLOBALS["config"]["bind"]["zonefullpath"]))
+				{
+					// unusual, needed if Bind lacks a directory configuration option
+					fwrite($fh, "\tfile \"". $GLOBALS["config"]["bind"]["zonefiledir"] ."". $domain["domain_name"] .".zone\";\n");
+				}
+				else
+				{
+					fwrite($fh, "\tfile \"". $domain["domain_name"] .".zone\";\n");
+				}
+
 				fwrite($fh, "\tallow-update { none; };\n");
 				fwrite($fh, "};\n");
 			}

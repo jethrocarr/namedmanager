@@ -60,6 +60,17 @@ $config["bind"]["verify_config"]	= "/usr/sbin/named-checkconf";		// Used to veri
 
 
 
+/*
+	Unusual Compatibility Options
+*/
+
+// Include a full path to the zonefiles in Bind - useful if Bind lacks a
+// directory configuration or you really, really to store you zonefiles
+// in a different location
+//
+// $config["bind"]["zonefullpath"]		= "on";	
+
+
 // force debugging on for all users + scripts
 // (note: debugging can be enabled on a per-user basis by an admin via the web interface)
 //$_SESSION["user"]["debug"] = "on";
