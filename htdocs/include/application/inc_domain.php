@@ -863,6 +863,16 @@ class domain
 
 
 		/*
+			Update configuration status versions - this will trigger the name servers to delete
+			the old domain
+		*/
+
+		$sql_obj		= New sql_query;
+		$sql_obj->string	= "UPDATE `config` SET value='". time() ."' WHERE name='SYNC_STATUS_CONFIG' LIMIT 1";
+		$sql_obj->execute();
+
+
+		/*
 			Un-associated any matched log entries
 			
 			(note: logging is always local)
