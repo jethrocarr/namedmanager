@@ -1513,6 +1513,7 @@ class domain_records extends domain
 				$data_tmp[$i]["type"]			= @security_script_input_predefined("any", $data_orig[$i]["type"], 1);
 				$data_tmp[$i]["ttl"]			= @security_script_input_predefined("int", $data_orig[$i]["ttl"], 1);
 				$data_tmp[$i]["name"]			= @security_script_input_predefined("any", $data_orig[$i]["name"], 1);
+				$data_tmp[$i]["prio"]			= @security_script_input_predefined("int", $data_orig[$i]["prio"], 0);
 				$data_tmp[$i]["content"]		= @security_script_input_predefined("any", $data_orig[$i]["content"], 1);
 				$data_tmp[$i]["reverse_ptr"]		= @security_script_input_predefined("checkbox", $data_orig[$i]["reverse_ptr"], 1);
 				$data_tmp[$i]["reverse_ptr_orig"]	= @security_script_input_predefined("checkbox", $data_orig[$i]["reverse_ptr_orig"], 1);
