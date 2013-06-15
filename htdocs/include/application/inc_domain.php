@@ -847,6 +847,14 @@ class domain
 
 
 		/*
+			Delete association with name server group
+		*/
+
+		$this->sql_obj->string	= "DELETE FROM `dns_domains_groups` WHERE id_domain='". $this->id ."' LIMIT 1";
+		$this->sql_obj->execute();
+
+
+		/*
 			Delete domain records
 		*/
 			

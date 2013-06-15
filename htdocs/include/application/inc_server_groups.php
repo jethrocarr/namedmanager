@@ -340,6 +340,9 @@ class name_server_group
 
 		/*
 			Delete Name Server Group
+
+			Note: no need to delete anything from dns_domains_groups, as the name server group
+			must be empty before it can be deleted.
 		*/
 			
 		$sql_obj->string	= "DELETE FROM name_servers_groups WHERE id='". $this->id ."' LIMIT 1";
