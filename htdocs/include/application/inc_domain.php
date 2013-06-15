@@ -1617,8 +1617,19 @@ class domain_records extends domain
 
 
 				// verify name syntax
-				if ($data_tmp[$i]["name"] != "@" && !preg_match("/^[A-Za-z0-9:._-]*$/", $data_tmp[$i]["name"]))
+				if ($data_tmp[$i]["name"] == "*" || $data_tmp[$i]["name"] == "*.{$this->data["domain_name"]}")
 				{
+					// wildcard records are annoying - wildcards must be standalone, and can't be part of a sring
+					// OK  -> *
+					// OK  -> *.example.com
+					// BAD -> abc*.example.com
+					// BAD -> std*abc.example.com
+
+					// nothing todo
+				}
+				elseif ($data_tmp[$i]["name"] != "@" && !preg_match("/^[A-Za-z0-9:._-]*$/", $data_tmp[$i]["name"]))
+				{
+					// all other record types
 					log_write("error", "process", "Sorry, the value you have entered for record ". $data_tmp[$i]["name"] ." contains invalid charactors");
 
 					error_flag_field("record_custom_". $i ."");
