@@ -423,7 +423,7 @@ class bind_api extends soap_api
 				// change @ to . for hostmaster email address. Any . preceeding @, need to become \.
 				$tmp_soa_hostmaster = explode("@", $domain["soa_hostmaster"]);
 
-				$domain["soa_hostmaster"] = str_replace(".", "\.", $tmp_soa_hostmaster[0]) ."@". $tmp_soa_hostmaster[1];
+				$domain["soa_hostmaster"] = str_replace(".", "\.", $tmp_soa_hostmaster[0]) .".". $tmp_soa_hostmaster[1];
 
 				// create SOA record from domain information
 				fwrite($fh, "@\t\tIN SOA ". $domain["soa_ns_primary"] .". ". $domain["soa_hostmaster"] .". (\n");
