@@ -512,7 +512,7 @@ class page_output
 					{
 						$obj_ptr->load_data_record();
 
-						if ($record["name"] == "@" || $record["name"] == "*"|| $record["name"] == "*.{$this->obj_domain->data["domain_name"]}")
+						if ($record["name"] == "@" || $record["name"] == "*" || preg_match("/^\*\.[A-Za-z0-9:._-]+$/", $record["name"]))
 						{
 							$record["name"] = $this->obj_domain->data["domain_name"];
 						}

@@ -312,7 +312,7 @@ if (user_permissions_get("namedadmins"))
 
 
 						// make sure we are using the FQDN
-						if ($record["name"] == "@" || $record["name"] == "*" || $record["name"] == "*.{$obj_domain->data["domain_name"]}")
+						if ($record["name"] == "@" || $record["name"] == "*" || preg_match("/^\*\.[A-Za-z0-9:._-]+$/", $record["name"]))
 						{
 							// @ is a special value, means set to the domain name
 							// * is a wild card, reverse DNS can only be the domain name itself

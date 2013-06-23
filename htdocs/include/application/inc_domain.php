@@ -1617,7 +1617,7 @@ class domain_records extends domain
 
 
 				// verify name syntax
-				if ($data_tmp[$i]["name"] == "*" || $data_tmp[$i]["name"] == "*.{$this->data["domain_name"]}")
+				if ($data_tmp[$i]["name"] == "*" || preg_match("/^\*\.[A-Za-z0-9:._-]+$/", $data_tmp[$i]["name"]))
 				{
 					// wildcard records are annoying - wildcards must be standalone, and can't be part of a sring
 					// OK  -> *
