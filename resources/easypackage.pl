@@ -67,8 +67,10 @@ system("cp -avr * /tmp/$name_withversion/");
 # we have finished with the orignal source
 chdir("/tmp");
 
-# remove SVN stuff
+# remove repository files
 system("find $name_withversion/* -type d | grep .svn | sed \"s/^/rm -rf /\" | sh");
+system("find $name_withversion/* -type d | grep .git | sed \"s/^/rm -rf /\" | sh");
+system("find $name_withversion/* -type f | grep .gitignore | sed \"s/^/rm -f /\" | sh");
 
 # remove a config file if one exists
 system("rm -f $name_withversion/htdocs/include/config-settings.php");
