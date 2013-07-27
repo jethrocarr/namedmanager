@@ -23,7 +23,7 @@ class page_output
 
 	function page_output()
 	{
-		$this->mode	= security_script_input('/^[0-9]*$/', $_GET["mode"]);
+		$this->mode	= @security_script_input('/^[0-9]*$/', $_GET["mode"]);
 
 		if (!$this->mode)
 		{
@@ -138,7 +138,7 @@ class page_output
 			$structure = NULL;
 			$structure["fieldname"] 	= "domain_type";
 			$structure["type"]		= "radio";
-			$structure["values"]		= array("domain_standard", "domain_reverse_ipv4");
+			$structure["values"]		= array("domain_standard", "domain_reverse_ipv4", "domain_reverse_ipv6");
 			$structure["options"]["req"]	= "yes";
 			$structure["defaultvalue"]	= "domain_standard";
 			$this->obj_form->add_input($structure);
@@ -154,6 +154,13 @@ class page_output
 			$structure["type"]			= "text";
 			$structure["options"]["req"]		= "yes";
 			$structure["defaultvalue"]		= "help_ipv4_help";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 		= "ipv6_help";
+			$structure["type"]			= "text";
+			$structure["options"]["req"]		= "yes";
+			$structure["defaultvalue"]		= "help_ipv6_help";
 			$this->obj_form->add_input($structure);
 
 			$structure = NULL;
@@ -186,11 +193,56 @@ class page_output
 			$this->obj_form->add_input($structure);
 	*/
 
+
+			$structure = NULL;
+			$structure["fieldname"] 	= "ipv6_network";
+			$structure["type"]		= "input";
+			$structure["options"]["help"]	= "eg: 2001:db8::/48";
+			$structure["options"]["label"]	= " always include a /cidr value (/1 though to /64)";
+			$structure["options"]["req"]	= "yes";
+			$this->obj_form->add_input($structure);
+
+/*
+			$structure = NULL;
+			$structure["fieldname"] 	= "ipv6_autofill";
+			$structure["type"]		= "checkbox";
+			$structure["options"]["label"]	= lang_trans("help_ipv6_autofill");
+			$structure["options"]["req"]	= "yes";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 	= "ipv6_autofill_forward";
+			$structure["type"]		= "checkbox";
+			$structure["options"]["label"]	= lang_trans("help_ipv6_autofill_forward");
+			$structure["options"]["req"]	= "yes";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 	= "ipv6_autofill_reverse_from_forward";
+			$structure["type"]		= "checkbox";
+			$structure["options"]["label"]	= lang_trans("help_ipv6_autofill_reverse_from_forward");
+			$structure["options"]["req"]	= "yes";
+			$this->obj_form->add_input($structure);
+
+			$structure = NULL;
+			$structure["fieldname"] 	= "ipv6_autofill_domain";
+			$structure["type"]		= "input";
+			$structure["options"]["help"]	= "eg: static.example.com";
+			$structure["options"]["req"]	= "yes";
+			$this->obj_form->add_input($structure);
+*/
+
+
 			$this->obj_form->add_action("domain_type", "default", "domain_name", "show");
 			$this->obj_form->add_action("domain_type", "default", "ipv4_help", "hide");
 			$this->obj_form->add_action("domain_type", "default", "ipv4_network", "hide");
 	//		$this->obj_form->add_action("domain_type", "default", "ipv4_subnet", "hide");
 	//		$this->obj_form->add_action("domain_type", "default", "ipv4_autofill", "hide");
+			$this->obj_form->add_action("domain_type", "default", "ipv6_help", "hide");
+			$this->obj_form->add_action("domain_type", "default", "ipv6_network", "hide");
+	//		$this->obj_form->add_action("domain_type", "default", "ipv4_subnet", "hide");
+	//		$this->obj_form->add_action("domain_type", "default", "ipv4_autofill", "hide");
+
 
 			$this->obj_form->add_action("domain_type", "domain_standard", "domain_name", "show");
 
@@ -199,7 +251,21 @@ class page_output
 			$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_network", "show");
 	//		$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_subnet", "show");
 	//		$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv4_autofill", "show");
-		
+			$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv6_help", "hide");
+			$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv6_network", "hide");
+	//		$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv6_subnet", "hide");
+	//		$this->obj_form->add_action("domain_type", "domain_reverse_ipv4", "ipv6_autofill", "hide");
+
+			$this->obj_form->add_action("domain_type", "domain_reverse_ipv6", "domain_name", "hide");
+			$this->obj_form->add_action("domain_type", "domain_reverse_ipv6", "ipv4_help", "hide");
+			$this->obj_form->add_action("domain_type", "domain_reverse_ipv6", "ipv4_network", "hide");
+	//		$this->obj_form->add_action("domain_type", "domain_reverse_ipv6", "ipv4_subnet", "hide");
+	//		$this->obj_form->add_action("domain_type", "domain_reverse_ipv6", "ipv4_autofill", "hide");
+			$this->obj_form->add_action("domain_type", "domain_reverse_ipv6", "ipv6_help", "show");
+			$this->obj_form->add_action("domain_type", "domain_reverse_ipv6", "ipv6_network", "show");
+	//		$this->obj_form->add_action("domain_type", "domain_reverse_ipv6", "ipv6_subnet", "hide");
+	//		$this->obj_form->add_action("domain_type", "domain_reverse_ipv6", "ipv6_autofill", "hide");
+
 
 	//		$this->obj_form->add_action("ipv4_autofill", "default", "ipv4_autofill_domain", "hide");
 	//		$this->obj_form->add_action("ipv4_autofill", "1", "ipv4_autofill_domain", "show");
@@ -256,7 +322,7 @@ class page_output
 
 
 			// define main domain subforms
-			$this->obj_form->subforms["domain_details"]	= array("domain_type", "domain_name", "ipv4_help", "ipv4_network", "domain_description");
+			$this->obj_form->subforms["domain_details"]	= array("domain_type", "domain_name", "ipv4_help", "ipv4_network", "ipv6_help", "ipv6_network", "domain_description");
 			$this->obj_form->subforms["domain_soa"]		= array("soa_hostmaster", "soa_serial", "soa_refresh", "soa_retry", "soa_expire", "soa_default_ttl");
 
 

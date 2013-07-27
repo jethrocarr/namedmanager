@@ -1533,7 +1533,7 @@ function ipv6_convert_arpa( $ipaddress )
 
 	Returns
 	0	Invalid IP Address / Other Error
-	string	IPv6 address, eg 2001:db8::1
+	string	IPv6 address, eg 2001:db8::1 or 2001:db8::/32
 */
 
 
@@ -1544,9 +1544,42 @@ function ipv6_convert_fromarpa ($arpa)
 
 	$mainptr	= substr($arpa, 0, strlen($arpa)-9);
 	$pieces		= array_reverse(explode(".",$mainptr));  
-        $hex		= implode("",$pieces);
+	$pieces2	= $pieces;
+
+	if (count($pieces) < 32)
+	{
+		// network? append the zeros to make the conversion work
+		$missing = 32 - count($pieces);
+
+		for ($i=0; $i < $missing; $i++)
+		{
+			$pieces2[] = '0';
+		}
+	}
+
+        $hex		= implode("",$pieces2);
 	$ipbin		= pack('H*', $hex);
 	$ipv6addr	= inet_ntop($ipbin);
+
+	// Is it a network address and requires a subnet mask? If so, we can tell by
+	// the length of the record and calculate the range from that
+	//
+	// TODO / Warning: This logic always assumes you have an arpa address that is dividable
+	// by 4 (eg /48, /52, /56, etc). It's possible to have weirder subnets (eg /49) but
+	// there's little/no good way to detect if this is the case without already knowing
+	// the subnet mask.
+	//
+	// Of course if I'm wrong and you can fix this, please send me a patch and I'll add
+	// a comment proclaiming your coding glory. :-)
+	//
+	// We only really use this function for making it easier to import IPv6 domains
+	// from zonefiles anyway....
+	//
+	if (count($pieces) < 32)
+	{
+		$ipv6cidr = count($pieces) * 4;
+		$ipv6addr = $ipv6addr .'/'. $ipv6cidr;
+	}
 
 	return $ipv6addr;
 }

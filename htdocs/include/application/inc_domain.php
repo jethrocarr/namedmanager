@@ -168,11 +168,21 @@ class domain
 			// load domain group membership
 			$this->sql_obj->string	= "SELECT id_group FROM dns_domains_groups WHERE id_domain='". $this->id ."'";
 			$this->sql_obj->execute();
-			$this->sql_obj->fetch_array();
 
-			foreach ($this->sql_obj->data as $data_group)
+			if ($this->sql_obj->num_rows())
 			{
-				$this->data["groups"][]	= $data_group["id_group"];
+				$this->sql_obj->fetch_array();
+
+				foreach ($this->sql_obj->data as $data_group)
+				{
+					$this->data["groups"][]	= $data_group["id_group"];
+				}
+			}
+			else
+			{
+				// no group membership - this would typically only occur
+				// for a newly imported domain
+				$this->data["groups"] = array();
 			}
 
 /*

@@ -130,7 +130,7 @@ if (user_permissions_get("namedadmins"))
 						// ignore any blank lines
 						if ($line == "")
 						{
-							next;
+							continue;
 						}
 
 
@@ -208,7 +208,7 @@ if (user_permissions_get("namedadmins"))
 
 						}
 
-						if ($file_soa == 1)
+						if (!empty($file_soa))
 						{
 							// process SOA header lines
 							$file_soa_line .= rtrim($line) ." ";
@@ -452,7 +452,7 @@ if (user_permissions_get("namedadmins"))
 
 
 									// verify required fields provided
-									if (!$data_tmp["prio"] || !$data_tmp["content"])
+									if (!isset($data_tmp["prio"]) || empty($data_tmp["content"]))
 									{
 										log_write("warning", "process", "Unable to process line \"$line\"");
 										
@@ -483,6 +483,7 @@ if (user_permissions_get("namedadmins"))
 
 									$data_tmp = array();
 									$data_tmp["type"]	= "CNAME";
+									$data_tmp["prio"]	= 0;
 
 									if (preg_match("/^(\S*)\sIN\sCNAME/", $line, $matches))
 									{
@@ -535,6 +536,7 @@ if (user_permissions_get("namedadmins"))
 
 									$data_tmp = array();
 									$data_tmp["type"]	= $matches[1];
+									$data_tmp["prio"]	= 0;
 
 									// name information
 									if (preg_match("/^(\S*)\s(\S*)\s*IN/", $line, $matches))
@@ -615,17 +617,15 @@ if (user_permissions_get("namedadmins"))
 
 					$data["domain_type"] == "domain_standard";
 
-					foreach ($data["records"] as $record)
+					if (strpos($data["domain_name"], "in-addr.arpa"))
 					{
-						if ($record["type"] == "PTR")
-						{
-							$data["domain_type"] = "domain_reverse_ipv4";
-
-							break;
-						}
+						$data["domain_type"] = "domain_reverse_ipv4";
 					}
 
-
+					if (strpos($data["domain_name"], "ip6.arpa"))
+					{
+						$data["domain_type"] = "domain_reverse_ipv6";
+					}
 
 					
 					/*
@@ -674,6 +674,11 @@ if (user_permissions_get("namedadmins"))
 						}
 					}
 
+					if ($data["domain_type"] == "domain_reverse_ipv6")
+					{
+						// default to assigning the network address to the domain name
+						$data["ipv6_network"] = ipv6_convert_fromarpa($data["domain_name"]);
+					}
 
 					/*
 						Enable for detailed import debugging
@@ -765,13 +770,34 @@ if (user_permissions_get("namedadmins"))
 			$obj_domain->data["domain_name"]		= security_form_input_predefined("any", "domain_name", 1, "");
 			$obj_domain->data["domain_description"]		= security_form_input_predefined("any", "domain_description", 0, "");
 		}
-		else
+		elseif ($obj_domain->data["domain_type"] == "domain_reverse_ipv4")
 		{
 			// fetch domain data
-//			$obj_domain->data["ipv4_help"]			= security_form_input_predefined("any", "ipv4_help", 1, "");
-			$obj_domain->data["ipv4_network"]		= security_form_input_predefined("ipv4", "ipv4_network", 1, "Must supply full IPv4 network address");
-//			$obj_domain->data["ipv4_subnet"]		= security_form_input_predefined("int", "ipv4_subnet", 1, "");
-			$obj_domain->data["domain_description"]		= security_form_input_predefined("any", "domain_description", 0, "");
+			$obj_domain->data["ipv4_network"]			= security_form_input_predefined("ipv4_cidr", "ipv4_network", 1, "Must supply full IPv4 network address");
+			$obj_domain->data["domain_description"]			= security_form_input_predefined("any", "domain_description", 0, "");
+
+
+			// check CIDR
+			$matches = explode("/", $obj_domain->data["ipv4_network"]);
+			if (!empty($matches[0]) && !empty($matches[1]))
+			{
+				// set network
+				$obj_domain->data["ipv4_network"]	= $matches[0];
+				$obj_domain->data["ipv4_cidr"]		= $matches[1];
+
+
+				// check CIDR
+				if ($obj_domain->data["ipv4_cidr"] > 24)
+				{
+					log_write("error", "process", "CIDRs greater than /24 can not be used for reverse domains.");
+					error_flag_field("ipv4_network");
+				}
+			}
+			else
+			{
+				// no CIDR
+				$obj_domain->data["ipv4_cidr"]		= "24";
+			}
 
 
 			// calculate domain name
@@ -782,12 +808,53 @@ if (user_permissions_get("namedadmins"))
 				$obj_domain->data["domain_name"]	= $tmp_network[2] .".". $tmp_network[1] .".". $tmp_network[0] .".in-addr.arpa";
 			}
 
-
 			// if no description, set to original IP
 			if (!$obj_domain->data["domain_description"])
 			{
-				$obj_domain->data["domain_description"] = "Reverse domain for range ". $obj_domain->data["ipv4_network"] ."";
+				$obj_domain->data["domain_description"] = "Reverse domain for range ". $obj_domain->data["ipv4_network"] ."/". $obj_domain->data["ipv4_cidr"];
 			}
+		}
+		elseif ($obj_domain->data["domain_type"] == "domain_reverse_ipv6")
+		{
+			// fetch domain data
+			$obj_domain->data["ipv6_network"]			= security_form_input_predefined("ipv6_cidr", "ipv6_network", 1, "Must supply full IPv6 network address");
+			//$obj_domain->data["ipv6_autofill"]			= security_form_input_predefined("checkbox", "ipv6_autofill", 0, "");
+			//$obj_domain->data["ipv6_autofill_forward"]		= security_form_input_predefined("checkbox", "ipv6_autofill_forward", 0, "");
+			$obj_domain->data["ipv6_autofill_reverse_from_forward"]	= security_form_input_predefined("checkbox", "ipv6_autofill_reverse_from_forward", 0, "");
+			//$obj_domain->data["ipv6_autofill_domain"]		= security_form_input_predefined("any", "ipv6_autofill_domain", 0, "");
+			$obj_domain->data["domain_description"]			= security_form_input_predefined("any", "domain_description", 0, "");
+
+
+			// check CIDR
+			$matches = explode("/", $obj_domain->data["ipv6_network"]);
+			if (!empty($matches[0]) && !empty($matches[1]))
+			{
+				// set network
+				$obj_domain->data["ipv6_network"]	= $matches[0];
+				$obj_domain->data["ipv6_cidr"]		= $matches[1];
+
+				// check CIDR
+				if ($obj_domain->data["ipv6_cidr"] > 128 || $obj_domain->data["ipv6_cidr"] < 1)
+				{
+					log_write("error", "process", "Invalid CIDR, IPv6 CIDRs are between /0 and /128");
+					error_flag_field("ipv6_network");
+				}
+
+				// generate domain name (IPv6 CIDR)
+				$obj_domain->data["domain_name"]	= ipv6_convert_arpa($obj_domain->data["ipv6_network"] ."/". $obj_domain->data["ipv6_cidr"]);
+
+				// if no description, set to original IP
+				if (!$obj_domain->data["domain_description"])
+				{
+					$obj_domain->data["domain_description"] = "Reverse domain for range ". $obj_domain->data["ipv6_network"] ."/". $obj_domain->data["ipv6_cidr"];
+				}
+
+			}
+
+		}
+		else
+		{
+			log_write("error", "process", "Unexpected domain type, unable to process.");
 		}
 
 
@@ -816,9 +883,10 @@ if (user_permissions_get("namedadmins"))
 
 
 		/*
-			Domain Record Validation
+			Fetch all the provides records and only pass through the oneds we have flagged
+			for import to the validator and processor.
 		*/
-		
+			
 		$data["num_records"]	= @security_form_input_predefined("int", "num_records", 0, "");
 
 		for ($i = 0; $i < $data["num_records"]; $i++)
@@ -833,6 +901,9 @@ if (user_permissions_get("namedadmins"))
 			$data_tmp["name"]		= @security_form_input_predefined("any", "record_". $i ."_name", 0, "");
 			$data_tmp["content"]		= @security_form_input_predefined("any", "record_". $i ."_content", 0, "");
 			$data_tmp["import"]		= @security_form_input_predefined("checkbox", "record_". $i ."_import", 0, "");
+			$data_tmp["delete_undo"]	= 0;
+			$data_tmp["reverse_ptr"]	= 0;
+			$data_tmp["reverse_ptr_orig"]	= 0;
 			
 
 			// only process records that are to be imported
@@ -842,139 +913,28 @@ if (user_permissions_get("namedadmins"))
 				continue;
 			}
 
-
-
-			/*
-				Error Handling
-			*/
-
-			// verify name syntax
-			if ($data_tmp["name"] != "@" && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp["name"]))
-			{
-				log_write("error", "process", "Sorry, the value you have entered for record ". $data_tmp["name"] ." contains invalid charactors");
-
-				error_flag_field("record_". $i ."");
-			}
-
-			// validate content and name formatting per domain type
-			if (!empty($data_tmp["name"]))
-			{
-				switch ($data_tmp["type"])
-				{
-					case "A":
-						// validate IPv4
-						if (!preg_match("/^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:[.](?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$/", $data_tmp["content"]))
-						{
-							// invalid IP address
-							log_write("error", "process", "A record for ". $data_tmp["name"] ." did not validate as an IPv4 address");
-							error_flag_field("record_". $i ."_content");
-						}
-					break;
-
-					case "AAAA":
-						// validate IPv6
-						if (filter_var($data_tmp["content"], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) == FALSE)
-						{
-							// invalid IP address
-							log_write("error", "process", "AAAA record for ". $data_tmp["name"] ." did not validate as an IPv6 address");
-							error_flag_field("record_". $i ."_content");
-						}
-					break;
-
-					case "CNAME":
-						// validate CNAME
-						if ($data_tmp["content"] != "@" && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp["content"]))
-						{
-							// invalid CNAME
-							log_write("error", "process", "CNAME record for ". $data_tmp["name"] ." contains invalid characters.");
-							error_flag_field("record_". $i ."_name");
-						}
-
-						// make sure it's not an IP
-						if (filter_var($data_tmp["content"], FILTER_VALIDATE_IP) == $data_tmp["content"])
-						{
-							// CNAME is pointing at an IP
-							log_write("error", "process", "CNAME record for ". $data_tmp["name"] ." is incorrectly referencing an IP address.");
-							error_flag_field("record_". $i ."_content");
-						}
-					break;
-
-					case "SRV":
-						// validate SRV name (_service._proto.name)
-						if (!preg_match("/^_[A-Za-z0-9.-]*\._[A-Za-z]*\.[A-Za-z0-9.-]*$/", $data_tmp["name"]))
-						{
-							log_write("error", "process", "SRV record for ". $data_tmp["name"] ." is not correctly formatted - name must be: _service._proto.name");
-							error_flag_field("record_". $i ."_name");
-						}
-
-						// validate SRV content (priority, weight, port, target/host)
-						if (!preg_match("/^[0-9]*\s[0-9]*\s[0-9]*\s[A-Za-z0-9.-]*$/", $data_tmp["content"]))
-						{
-							log_write("error", "process", "SRV record for ". $data_tmp["name"] ." is not correctly formatted - content must be: priority weight port target/hostname");
-							error_flag_field("record_". $i ."_content");
-						}
-					break;
-
-					case "SPF":
-					case "TXT":
-						// TXT string could be almost anything, just make sure it's quoted.
-						$data_tmp["content"] = str_replace("'", "", stripslashes($data_tmp["content"]));
-						$data_tmp["content"] = str_replace('"', "", stripslashes($data_tmp["content"]));
-
-						$data_tmp["content"] = '"'. $data_tmp["content"] .'"';
-					break;
-
-					case "PTR":
-						// validate PTR
-						if (!preg_match("/^[0-9]*$/", $data_tmp["name"]))
-						{
-							log_write("error", "process", "PTR reverse record for ". $data_tmp["content"] ." should be a single octet.");
-							error_flag_field("record_". $i ."_name");
-						}
-
-						if (!preg_match("/^[A-Za-z0-9.-]*$/", $data_tmp["content"]))
-						{
-							log_write("error", "process", "PTR reverse record for ". $data_tmp["name"] ." is not correctly formatted.");
-							error_flag_field("record_". $i ."_content");
-						}
-					break;
-
-					case "NS":
-					case "MX":
-						// validate origin
-						if ($data_tmp["name"] != "@" && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp["name"]))
-						{
-							// invalid
-							log_write("error", "process", $data_tmp["type"] ." origin of ". $data_tmp["name"] ." contains invalid characters.");
-							error_flag_field("record_". $i ."_name");
-						}
-
-						// validate content/record as IP or hostname
-						if (filter_var($data_tmp["content"], FILTER_VALIDATE_IP) == FALSE && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp["content"]))
-						{
-							// invalid target host
-							log_write("error", "process", $data_tmp["type"] ." target/host for ". $data_tmp["name"] ." contains invalid characters.");
-							error_flag_field("record_". $i ."_content");
-						}
-					break;
-
-					default:
-						log_write("error", "process", "Unknown record type ". $data_tmp["type"] ."");
-
-					break;
-				}
-
-			} // end if name
-
-
-			// remove excess "." which might have been added
+			// remove excess "." which might have been added from imported file
 			$data_tmp["name"]	= rtrim($data_tmp["name"], ".");
 			$data_tmp["content"]	= rtrim($data_tmp["content"], ".");
 
-
-			// add to processing array
+			// append the array
 			$data["records"][] = $data_tmp;
 		}
+
+
+
+		/*
+			Validate all imported records against standard validation function.
+		*/
+		$obj_domain_records               = New domain_records;
+//		$obj_domain_records->id           = $obj_domain->id;
+
+		$data = stripslashes_deep($data); // strip quoting, we'll do it as part of the following process
+
+		$data_validated = $obj_domain_records->validate_custom_records($data['records']);
+
+		$data['records'] = $data_validated['records'];
+//		$data['reverse'] = $data_validated['reverse'];
 
 
 		/*
@@ -988,7 +948,6 @@ if (user_permissions_get("namedadmins"))
 		$obj_domain->data["soa_retry"]				= security_form_input_predefined("int", "soa_retry", 1, "");
 		$obj_domain->data["soa_expire"]				= security_form_input_predefined("int", "soa_expire", 1, "");
 		$obj_domain->data["soa_default_ttl"]			= security_form_input_predefined("int", "soa_default_ttl", 1, "");
-
 
 
 
