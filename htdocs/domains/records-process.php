@@ -282,6 +282,10 @@ if (user_permissions_get("namedadmins"))
 
 					/*
 						Update reverse PTR (if required)
+
+						At this stage we have already validated the reverse IP domains and we know
+						that the reverse request is valid and what the id of the domain is. Really
+						all that we need to do is set the details for the record create/update
 					*/
 					if ($record["reverse_ptr"])
 					{
@@ -303,12 +307,24 @@ if (user_permissions_get("namedadmins"))
 
 
 						// fetch host portion of IP address
-						$tmp					= explode(".", $record["content"]);
+						switch (ip_type_detect($record["content"]))
+						{
+							case "6":
+								$ip_ptr = ipv6_convert_arpa( $record["content"] );
+							break;
+
+							case "4":
+							default:
+								$tmp	= explode(".", $record["content"]);
+								$ip_ptr = $tmp[3];
+							break;
+						}
+
 
 						// standard reverse record details
 						$obj_ptr->data_record["type"]		= "PTR";
 						$obj_ptr->data_record["ttl"]		= $record["ttl"];
-						$obj_ptr->data_record["name"]		= $tmp["3"];
+						$obj_ptr->data_record["name"]		= $ip_ptr;
 
 
 						// make sure we are using the FQDN

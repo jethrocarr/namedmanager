@@ -1196,16 +1196,76 @@ class domain_records extends domain
 	{
 		log_debug("domain_records", "Executing find_reverse_record($ip_address)");
 
-		// convert address
-		$ip_arpa = ipv4_convert_arpa( $ip_address );
+
+		/*
+			With IPv4 we are dealing with /24s... for IPv6, we need to
+			convert the record to ARPA and see which domain it belongs to
+		*/
+
+		switch (ip_type_detect( $ip_address ))
+		{
+			case "4":
+				$ip_arpa = ipv4_convert_arpa( $ip_address );
+			
+				$tmp				= explode(".", $ip_address);
+				$ip_ptr_name			= $tmp[3];
+			break;
+
+			case "6":
+				$ip_arpa = ipv6_convert_arpa( $ip_address );
+				$ip_ptr  = $ip_arpa;
+
+				// We fetch a list of all the IPv6 reverse domains
+				// Note: this is cached in memory after first lookup for duration of this page session
+				$reverse_ipv6_domains = array();
+
+				$this->sql_obj->string	= "SELECT domain_name FROM `dns_domains` WHERE domain_name LIKE '%ip6.arpa'";
+				$this->sql_obj->execute();
+
+				if ($this->sql_obj->num_rows())
+				{
+					$this->sql_obj->fetch_array();
+
+					foreach ($this->sql_obj->data as $data_row)
+					{
+						$reverse_ipv6_domains[] = $data_row["domain_name"];
+					}
+				}
+
+				if (!$reverse_ipv6_domains)
+				{
+					return 0;
+				}
+
+				// chomp the arpa address till we find the longest match
+				foreach ($reverse_ipv6_domains as $domain)
+				{
+					if ($ip_arpa == "")
+					{
+						// no matching domain
+						return 0;
+					}
+
+					if ($ip_arpa == $domain)
+					{
+						break;
+					}
+
+					$ip_arpa = substr( $ip_arpa, 1 );
+				}
+
+				// get domain name for final domain
+				$ip_arpa	= $domain;
+				$ip_ptr_name	= $ip_ptr;
+			break;
+
+			default:
+				return 0;
+			break;
+		}
 
 
-		// determine host extensions
-		$tmp				= explode(".", $ip_address);
-		$this->data_record["name"]	= $tmp[3];
-
-
-		// fetch domain
+		// Fetch domain ID based on the arpa name of the domain
 		$this->sql_obj->string	= "SELECT id FROM `dns_domains` WHERE domain_name='". $ip_arpa ."' LIMIT 1";
 		$this->sql_obj->execute();
 
@@ -1218,9 +1278,8 @@ class domain_records extends domain
 
 			log_write("debug", "domain_records", "Found matching domain ". $ip_arpa ." with ID of ". $this->id ."");
 
-
 			// now fetch the ID for the record that belongs to this domain
-			$this->sql_obj->string	= "SELECT id FROM `dns_records` WHERE id_domain='". $this->id ."' AND name='". $this->data_record["name"] ."' LIMIT 1";
+			$this->sql_obj->string	= "SELECT id FROM `dns_records` WHERE id_domain='". $this->id ."' AND name='". $ip_ptr_name ."' LIMIT 1";
 			$this->sql_obj->execute();
 
 			if ($this->sql_obj->num_rows())
