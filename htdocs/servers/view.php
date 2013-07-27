@@ -185,7 +185,7 @@ class page_output
 				$this->obj_form->structure["server_type"]["defaultvalue"]		= $this->obj_name_server->data["server_type"];
 				$this->obj_form->structure["api_auth_key"]["defaultvalue"]		= $this->obj_name_server->data["api_auth_key"];
 
-				if ($this->obj_name_server->data["sync_status_config"])
+				if (!empty($this->obj_name_server->data["sync_status_config"]))
 				{
 					$this->obj_form->structure["sync_status_config"]["defaultvalue"]	= "<span class=\"table_highlight_important\">". lang_trans("status_unsynced") ."</span> Last synced on ". time_format_humandate($this->obj_name_server->data["api_sync_config"]) ." ". date("H:i:s", $this->obj_name_server->data["api_sync_log"]) ."";
 				}
@@ -197,7 +197,7 @@ class page_output
 
 				if ($GLOBALS["config"]["FEATURE_LOGS_ENABLE"])
 				{
-					if ($this->obj_name_server->data["sync_status_log"])
+					if (!empty($this->obj_name_server->data["sync_status_log"]))
 					{
 						$this->obj_form->structure["sync_status_log"]["defaultvalue"]		= "<span class=\"table_highlight_important\">". lang_trans("status_unsynced") ."</span> Logging appears stale, last synced on ". time_format_humandate($this->obj_name_server->data["api_sync_log"]) ." ". date("H:i:s", $this->obj_name_server->data["api_sync_log"]) ."";
 					}
