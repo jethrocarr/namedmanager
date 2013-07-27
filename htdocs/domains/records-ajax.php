@@ -503,28 +503,36 @@ class page_output
 				}
 				elseif ($record["type"] != "PTR")
 				{
-					// check if this record has a reverse PTR value
-					$obj_ptr = New domain_records;
-
-					$obj_ptr->find_reverse_domain($record["content"]);
-
-					if ($obj_ptr->id_record)
+					if ($record["type"] == "A" || $record["type"] == "AAAA")
 					{
-						$obj_ptr->load_data_record();
+						// check if this record has a reverse PTR value
+						$obj_ptr = New domain_records;
 
-						if ($record["name"] == "@" || $record["name"] == "*" || preg_match("/^\*\.[A-Za-z0-9:._-]+$/", $record["name"]))
+						$obj_ptr->find_reverse_domain($record["content"]);
+
+						if ($obj_ptr->id_record)
 						{
-							$record["name"] = $this->obj_domain->data["domain_name"];
+							$obj_ptr->load_data_record();
+
+							if ($record["name"] == "@" || $record["name"] == "*" || preg_match("/^\*\.[A-Za-z0-9:._-]+$/", $record["name"]))
+							{
+								$record["name"] = $this->obj_domain->data["domain_name"];
+							}
+
+							if ($obj_ptr->data_record["content"] == $record["name"] || $obj_ptr->data_record["content"] == ($record["name"] .".". $this->obj_domain->data["domain_name"]))
+							{
+								$this->obj_form->structure["record_custom_". $i ."_reverse_ptr"]["defaultvalue"] = "on";
+								$this->obj_form->structure["record_custom_". $i ."_reverse_ptr_orig"]["defaultvalue"] = "on";
+							}
 						}
 
-						if ($obj_ptr->data_record["content"] == $record["name"] || $obj_ptr->data_record["content"] == ($record["name"] .".". $this->obj_domain->data["domain_name"]))
-						{
-							$this->obj_form->structure["record_custom_". $i ."_reverse_ptr"]["defaultvalue"] = "on";
-							$this->obj_form->structure["record_custom_". $i ."_reverse_ptr_orig"]["defaultvalue"] = "on";
-						}
+						unset($obj_ptr);
 					}
-
-					unset($obj_ptr);
+					else
+					{
+						// reverse PTR not valid for this record type
+						$this->obj_form->structure["record_custom_". $i ."_reverse_ptr"]["options"]["disabled"] = "yes";
+					}
 				}
 
 				$i++;

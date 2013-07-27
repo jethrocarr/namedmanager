@@ -147,7 +147,7 @@ $(document).ready(function()
 	 * 	Change columns for custom records on change
 	 */
 	$("select[name^='record_custom_']").live("change", function()
-	{
+	{	
 		if ($(this).val() == "CNAME")
 		{
 			$(this).parent().siblings().children("input[name$='_ttl']").attr("disabled", "disabled");
@@ -161,6 +161,11 @@ $(document).ready(function()
 			$(this).parent().siblings().children("input[name$='_reverse_ptr']").removeAttr("disabled");
 			change_help_message($(this).parent().siblings().children("input[name$='_name']"), "Record name, eg www");
 			change_help_message($(this).parent().siblings().children("input[name$='_content']"), "Target IP, eg 192.168.0.1");
+		}
+
+		if ($(this).val() != "A" && $(this).val() != "AAAA")
+		{
+			$(this).parent().siblings().children("input[name$='_reverse_ptr']").attr("disabled", "disabled");
 		}
 	});
 
@@ -397,6 +402,12 @@ function add_recordrow_custom()
 					change_help_message($(this).parent().siblings().children("input[name$='_name']"), "Record name, eg www");
 					change_help_message($(this).parent().siblings().children("input[name$='_content']"), "Target IP, eg 192.168.0.1");
 				}
+
+				if ($(this).val() != "A" && $(this).val() != "AAAA")
+				{
+					$(this).parent().siblings().children("input[name$='_reverse_ptr']").attr("disabled", "disabled");
+				}
+
 			});
 	$("input[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);
 	$("textarea[name^='record_custom_" + (num_records_custom-1) + "']").change(add_recordrow_custom);	

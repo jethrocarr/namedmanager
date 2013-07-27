@@ -1597,7 +1597,7 @@ class domain_records extends domain
 				$data_tmp[$i]["delete_undo"]		= @security_script_input_predefined("any", $data_orig[$i]["delete_undo"], 1);
 				
 
-				if ($data_tmp[$i]["mode"] != "delete" && $data_tmp[$i]["mode"] != "update")
+				if (empty($data_tmp[$i]["mode"]) || ($data_tmp[$i]["mode"] != "delete" && $data_tmp[$i]["mode"] != "update"))
 				{
 					// mode undetermined, run check
 					if ($data_tmp[$i]["id"] && $data_tmp[$i]["delete_undo"] == "true")
@@ -1836,32 +1836,39 @@ class domain_records extends domain
 					// verify reverse PTR options
 					if ($data_tmp[$i]["reverse_ptr"])
 					{
-						// check if the appropiate reverse DNS domain exists
-						$obj_record = New domain_records;
-
-						if (!$obj_record->find_reverse_domain($data_tmp[$i]["content"]))
+						if ($data_tmp[$i]["type"] == "A" || $data_tmp[$i]["type"] == "AAAA")
 						{
-							// no match
-							log_write("error", "process", "Sorry, we can't set a reverse PTR for ". $data_tmp[$i]["content"] ." --&gt; ". $data_tmp[$i]["name"] .", since there is no reverse domain record for that IP address");
+							// check if the appropiate reverse DNS domain exists
+							$obj_record = New domain_records;
 
-							error_flag_field("record_custom_". $i ."");
+							if (!$obj_record->find_reverse_domain($data_tmp[$i]["content"]))
+							{
+								// no match
+								log_write("error", "process", "Sorry, we can't set a reverse PTR for ". $data_tmp[$i]["content"] ." --&gt; ". $data_tmp[$i]["name"] .", since there is no reverse domain record for that IP address");
 
+								error_flag_field("record_custom_". $i ."");
+							}
+							else
+							{
+								// match, record the domain ID and record ID to save a lookup
+								$data_tmp[$i]["reverse_ptr_id_domain"]	= $obj_record->id;
+								$data_tmp[$i]["reverse_ptr_id_record"]	= $obj_record->id_record;
+							}
+
+
+							// add to the reverse domain list - we use this list to avoid reloading for every record
+							if (@!in_array($obj_record->id, $data["reverse"]))
+							{
+								$data["reverse"][] = $obj_record->id;
+							}
+
+							unset($obj_record);
 						}
 						else
 						{
-							// match, record the domain ID and record ID to save a lookup
-							$data_tmp[$i]["reverse_ptr_id_domain"]	= $obj_record->id;
-							$data_tmp[$i]["reverse_ptr_id_record"]	= $obj_record->id_record;
+							log_write("error", "process", "A reverse PTR record is only valid for an A or AAAA record");
+							error_flag_field("record_custom_". $i ."");
 						}
-
-
-						// add to the reverse domain list - we use this list to avoid reloading for every record
-						if (@!in_array($obj_record->id, $data["reverse"]))
-						{
-							$data["reverse"][] = $obj_record->id;
-						}
-
-						unset($obj_record);
 					}
 
 
