@@ -1,6 +1,6 @@
 Summary: A web-based management system for DNS, consisting of a PHP web interface and some PHP CLI components to hook into FreeRadius.
 Name: namedmanager
-Version: 1.5.1
+Version: 1.6.0
 Release: 1%{dist}
 License: AGPLv3
 URL: http://www.amberdms.com/namedmanager
@@ -172,7 +172,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/namedmanager/resources
 %{_datadir}/namedmanager/sql
 
-%doc %{_datadir}/namedmanager/README
+%doc %{_datadir}/namedmanager/README.md
 %doc %{_datadir}/namedmanager/docs/AUTHORS
 %doc %{_datadir}/namedmanager/docs/CONTRIBUTORS
 %doc %{_datadir}/namedmanager/docs/COPYING
@@ -189,6 +189,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Sun Jul 28 2013 Jethro Carr <jethro.carr@amberdms.com> 1.6.0
+- Released version 1.6.0 [stable]
+- Various useful bug fixes
+- Addition of IPv6 PTR domain support
 * Fri Feb 15 2013 Jethro Carr <jethro.carr@amberdms.com> 1.5.1
 - Released version 1.5.1 [stable] [bugfixes]
 * Sun Dec  9 2012 Jethro Carr <jethro.carr@amberdms.com> 1.5.0
