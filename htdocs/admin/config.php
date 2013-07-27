@@ -107,7 +107,9 @@ class page_output
 		$structure = NULL;
 		$structure["fieldname"]					= "ZONE_DB_TYPE";
 		$structure["type"]					= "radio";
-		$structure["values"]					= array("zone_internal", "powerdns_mysql");
+		$structure["values"]					= array("zone_internal");
+		// Long term plan is to support multiple backends, but we don't have this capability yet.
+		//$structure["values"]					= array("zone_internal", "powerdns_mysql");
 		$structure["options"]["autoselect"]			= "yes";
 		$structure["options"]["no_translate_fieldname"]		= "yes";
 		$this->obj_form->add_input($structure);
