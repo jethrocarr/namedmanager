@@ -19,6 +19,24 @@ require("../include/application/main.php");
 
 if (user_permissions_get("namedadmins"))
 {
+
+	/*
+		There's a pretty common issue where when importing large domains, PHP cuts off the POST
+		half-way due to max-input limits. To handle this better, we check for presence of a final
+		end-of-form value and return a useful error if we don't have it.
+	*/
+
+	if (!isset($_POST["mode"]))
+	{
+		log_write("error", "process", "Unable to import domain - you have too many records to be posted with your current PHP configuration. You need to increase the max_input_vars parameter (10,000 is a good level for most users) and then re-try this import. Take care to increase limits in other security layers like Suhosin if you're using it. <a href=\"https://projects.jethrocarr.com/p/oss-namedmanager/page/Troubleshooting/\" target=\"new\">See this troubleshooting document for more details</a>.");
+		header("Location: ../index.php?page=domains/import.php&mode=1");
+		exit(0);
+	}
+
+
+
+
+
 	// fetch upload mode
 	$mode	= @security_form_input_predefined("int", "mode", 1, "");
 
@@ -745,7 +763,6 @@ if (user_permissions_get("namedadmins"))
 			After records have been validated, they are posted back to this page for final processing and importing into the database.
 		*/
 
-
 			
 
 		/*
@@ -877,8 +894,6 @@ if (user_permissions_get("namedadmins"))
 				error_flag_field("domain_name");
 			}
 		}
-
-
 
 
 
