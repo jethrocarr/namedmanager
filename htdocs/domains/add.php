@@ -110,7 +110,7 @@ class page_output
 		$structure["fieldname"] 	= "ipv6_network";
 		$structure["type"]		= "input";
 		$structure["options"]["help"]	= "eg: 2001:db8::/48";
-		$structure["options"]["label"]	= " always include a /cidr value (minimum /64)";
+		$structure["options"]["label"]	= " always include a /cidr value (/1 though to /64)";
 		$structure["options"]["req"]	= "yes";
 		$this->obj_form->add_input($structure);
 
