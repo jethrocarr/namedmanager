@@ -64,9 +64,12 @@ function security_form_input($expression, $valuename, $numchars, $errormsg)
 	$input = $_POST[$valuename];
 	
 	// if there is a help message set, delete the content
-	if ($_POST[ $valuename ."_helpmessagestatus"] == "true")
+	if (isset($_POST[ $valuename ."_helpmessagestatus"]))
 	{
-		$input = "";
+		if ($_POST[ $valuename ."_helpmessagestatus"] == "true")
+		{
+			$input = "";
+		}
 	}
 
 

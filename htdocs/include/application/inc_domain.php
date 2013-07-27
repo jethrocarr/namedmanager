@@ -991,6 +991,7 @@ class domain
 			// default PTR style entry
 			$obj_record->data_record["type"]	= "PTR";
 			$obj_record->data_record["name"]	= $i;
+			$obj_record->data_record["prio"]	= 0;
 			$obj_record->data_record["content"]	= $tmp_network[0] ."-". $tmp_network[1] ."-". $tmp_network[2] ."-$i.". $this->data["ipv4_autofill_domain"];
 			$obj_record->data_record["ttl"]		= $this->data["soa_default_ttl"];
 

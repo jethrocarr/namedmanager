@@ -295,7 +295,7 @@ if (user_permissions_get('namedadmins'))
 			lower CIDRs, we need to generate multiple /24 domains.
 		*/
 
-		if ($obj_domain->data["ipv4_cidr"] > 1 && $obj_domain->data["ipv4_cidr"] < 24)
+		if (!empty($obj_domain->data["ipv4_cidr"]) && ($obj_domain->data["ipv4_cidr"] > 1 && $obj_domain->data["ipv4_cidr"] < 24))
 		{
 			/*
 				Large reverse IPv4 domain, requires splitting into multiple domains.
@@ -370,7 +370,7 @@ if (user_permissions_get('namedadmins'))
 			$obj_domain->action_update();
 
 			// handle IPv4 reverse domains
-			if ($obj_domain->data["ipv4_autofill_domain"])
+			if (!empty($obj_domain->data["ipv4_autofill_domain"]))
 			{
 				// this is a new domain, we need to seed the domain, by calculating all the addresses
 				// in the domain and then creating a record for each one.
@@ -379,7 +379,7 @@ if (user_permissions_get('namedadmins'))
 			}
 
 			// handle IPv4 forward domains
-			if ($obj_domain->data["ipv4_autofill_forward"])
+			if (!empty($obj_domain->data["ipv4_autofill_forward"]))
 			{
 				$obj_domain->action_autofill_forward();
 			}

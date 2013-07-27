@@ -1018,12 +1018,15 @@ class user_auth
 					for ($i=0; $i < $obj_ldap->data["count"]; $i++)
 					{
 						// run through members and see if our user belongs
-						for ($j=0; $j < $obj_ldap->data[$i]["memberuid"]["count"]; $j++)
+						if (!empty($obj_ldap->data[$i]["memberuid"]["count"]))
 						{
-							if ($obj_ldap->data[$i]["memberuid"][$j] == $_SESSION["user"]["name"])
+							for ($j=0; $j < $obj_ldap->data[$i]["memberuid"]["count"]; $j++)
 							{
-								// user has an entry for that permission - save to cache
-								$GLOBALS["cache"]["user"]["perms"][ $obj_ldap->data[$i]["cn"][0] ] = 1;
+								if ($obj_ldap->data[$i]["memberuid"][$j] == $_SESSION["user"]["name"])
+								{
+									// user has an entry for that permission - save to cache
+									$GLOBALS["cache"]["user"]["perms"][ $obj_ldap->data[$i]["cn"][0] ] = 1;
+								}
 							}
 						}
 					} // end of loop through groups
