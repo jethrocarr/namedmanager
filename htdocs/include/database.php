@@ -18,6 +18,11 @@ if (!$db_selected)
 	die("Unable to connect to DB:" . mysql_error());
 
 
+// Disable SQL modes for this session to ensure backwards compat with
+// newer MySQL version (> 5.6) using STRICT modes.
+
+mysql_query("SET SESSION sql_mode='';", $link);
+
 
 
 /*
