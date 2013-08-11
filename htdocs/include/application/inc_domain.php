@@ -1249,20 +1249,23 @@ class domain_records extends domain
 				}
 
 				// chomp the arpa address till we find the longest match
-				foreach ($reverse_ipv6_domains as $domain)
+				while ($ip_arpa)
 				{
+					foreach ($reverse_ipv6_domains as $domain)
+					{
+						if ($ip_arpa == $domain)
+						{
+							break 2;
+						}
+					}
+
+					$ip_arpa = substr( $ip_arpa, 1 );
+
 					if ($ip_arpa == "")
 					{
 						// no matching domain
 						return 0;
 					}
-
-					if ($ip_arpa == $domain)
-					{
-						break;
-					}
-
-					$ip_arpa = substr( $ip_arpa, 1 );
 				}
 
 				// get domain name for final domain
