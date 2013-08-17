@@ -71,7 +71,7 @@ function error_render_message()
 function error_render_nologin()
 {
 	// check if the user is yet to login, or if they have been logged out due to inactivity.
-	if ($_SESSION["user"]["timeout"])
+	if (!empty($_SESSION["user"]["timeout"]))
 	{
 		// user has been logged out due to time.
 		$_SESSION["error"]["message"] = array("You have been logged out due to inactivity. You need to login again to continue from where you were. Please <a href=\"index.php?page=user/login.php\">click here</a> to login.");

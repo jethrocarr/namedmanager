@@ -36,12 +36,20 @@ function lang_trans($label)
 {
 	log_write("debug", "inc_language", "Executing lang_trans($label)");
 
-
+	//
 	// see if the value is already cached
 	if (isset($GLOBALS["cache"]["lang"][$label]))
 	{
 		// return cached label
-		return $GLOBALS["cache"]["lang"][$label];
+		//if user can edit translations, surround in {{}}
+		if(isset($_SESSION["user"]["translation"]) && ($_SESSION["user"]["translation"] == "show_all_translatable_fields"))
+		{
+			return "{{".$GLOBALS["cache"]["lang"][$label]."}} (".$label.")";
+		}
+		else
+		{
+			return $GLOBALS["cache"]["lang"][$label];
+		}
 	}
 	else
 	{
@@ -56,8 +64,15 @@ function lang_trans($label)
 			*/
 
 			$GLOBALS["cache"]["lang"][ $label ] = $label;
-
-			return $label;
+			//if translation mode is turned on, surround non-translated field with [[]]
+			if(isset($_SESSION["user"]["translation"]) && ($_SESSION["user"]["translation"]=="show_all_translatable_fields" || $_SESSION["user"]["translation"]=="show_only_non-translated_fields"))
+			{
+				return "[[".$label."]]";
+			}
+			else
+			{
+				return $label;
+			}
 		}
 		else
 		{
@@ -76,7 +91,15 @@ function lang_trans($label)
 
 
 				// done
-				return $sql_obj->data[0]["translation"];
+				//if user can edit translations, surround in {{}}
+				if($_SESSION["user"]["translation"]=="show_all_translatable_fields")
+				{
+					return "{{".$sql_obj->data[0]["translation"]."}} (".$label.")";
+				}
+				else
+				{
+					return $sql_obj->data[0]["translation"];
+				}
 			}
 			else
 			{
@@ -87,8 +110,16 @@ function lang_trans($label)
 				// the cache to prevent extra lookups.
 
 				$GLOBALS["cache"]["lang"][ $label ] = $label;
-
-				return $label;
+				
+				//if translation mode is turned on, surround non-translated field with [[]]
+				if($_SESSION["user"]["translation"]=="show_all_translatable_fields" || $_SESSION["user"]["translation"]=="show_only_non-translated_fields")
+				{
+					return "[[".$label."]]";
+				}
+				else
+				{
+					return $label;
+				}
 			}
 
 			unset($sql_obj);
@@ -118,7 +149,7 @@ function language_translate($language, $label_array)
 	log_write("warning", "language", "Executing language_translate($language, label_array) -- DEPRECATED function");
 	
 	if (!$language || !$label_array)
-		print "Warning: Invalid input recieved for function language_translate<br>";
+		print "Warning: Invalid input received for function language_translate<br>";
 	
 
 	// store labels to fetch from DB in here
@@ -129,7 +160,15 @@ function language_translate($language, $label_array)
 	{
 		if (isset($GLOBALS["cache"]["lang"][$label]))
 		{
-			$result[$label] = $GLOBALS["cache"]["lang"][$label];
+			//if user can edit translations, surround in {{}}
+			if ( isset($_SESSION["user"]["translation"]) && ( $_SESSION["user"]["translation"]=="show_all_translatable_fields"))
+			{			
+				$result[$label] = "{{".$GLOBALS["cache"]["lang"][$label]."}} (".$label.")";
+			}
+			else
+			{
+				$result[$label] = $GLOBALS["cache"]["lang"][$label];
+			}
 		}
 		else
 		{
@@ -142,8 +181,16 @@ function language_translate($language, $label_array)
 				// the cache to prevent extra lookups.
 
 				$GLOBALS["cache"]["lang"][ $label ] = $label;
-
-				$result[$label] = $label;
+				
+				//if translation mode is turned on, surround non-translated field with [[]]
+				if ( isset($_SESSION["user"]["translation"]) && ($_SESSION["user"]["translation"]=="show_all_translatable_fields" || $_SESSION["user"]["translation"]=="show_only_non-translated_fields"))
+				{
+					$result[$label] = "[[".$label."]]";
+				}
+				else
+				{
+					$result[$label] = $label;
+				}
 			}
 			else
 			{
@@ -190,7 +237,15 @@ function language_translate($language, $label_array)
 			$sql_obj->fetch_array();
 			foreach ($sql_obj->data as $data)
 			{
-				$result[ $data["label"] ]			= $data["translation"];
+				//if user can edit translations, surround in {{}}
+				if ($_SESSION["user"]["translation"]=="show_all_translatable_fields")
+				{
+					$result[ $data["label"] ]		= "{{".$data["translation"]."}} (".$label.")";
+				}
+				else
+				{
+					$result[ $data["label"] ]		= $data["translation"];
+				}
 				$GLOBALS["cache"]["lang"][ $data["label"] ]	= $data["translation"];
 			}
 		}
@@ -207,7 +262,15 @@ function language_translate($language, $label_array)
 	{
 		if (!$result[$label])
 		{
-			$result[$label]				= $label;
+			//if translation mode is turned on, surround non-translated field with [[]]
+			if( isset($_SESSION["user"]["translation"]) && ($_SESSION["user"]["translation"]=="show_all_translatable_fields" || $_SESSION["user"]["translation"]=="show_only_non-translated_fields"))
+			{
+				$result[$label]			= "[[".$label."]]";
+			}
+			else
+			{
+				$result[$label]			= $label;
+			}
 			$GLOBALS["cache"]["lang"][$label]	= $label;
 		}
 	}
@@ -236,7 +299,15 @@ function language_translate_string($language, $label)
 	if (isset($GLOBALS["cache"]["lang"][$label]))
 	{
 		// return cached label
-		return $GLOBALS["cache"]["lang"][$label];
+		//if user can edit translations, surround in {{}}
+		if (isset($_SESSION["user"]["translation"]) && ($_SESSION["user"]["translation"]=="show_all_translatable_fields"))
+		{
+			return "{{".$GLOBALS["cache"]["lang"][$label]."}} (".$label.")";
+		}
+		else
+		{
+			return $GLOBALS["cache"]["lang"][$label];
+		}
 	}
 	else
 	{
@@ -249,8 +320,16 @@ function language_translate_string($language, $label)
 			// the cache to prevent extra lookups.
 
 			$GLOBALS["cache"]["lang"][ $label ] = $label;
-
-			return $label;
+			
+			//if translation mode is turned on, surround non-translated field with [[]]
+			if(isset($_SESSION["user"]["translation"]) && ($_SESSION["user"]["translation"] == "show_all_translatable_fields" || $_SESSION["user"]["translation"] == "show_only_non-translated_fields"))
+			{
+				return "[[".$label."]]";
+			}
+			else
+			{
+				return $label;
+			}
 		}
 		else
 		{
@@ -269,7 +348,15 @@ function language_translate_string($language, $label)
 
 
 				// done
-				return $sql_obj->data[0]["translation"];
+				//if user can edit translations, surround in {{}}
+				if ($_SESSION["user"]["translation"]=="show_all_translatable_fields")
+				{
+					return "{{".$sql_obj->data[0]["translation"]."}} (".$label.")";
+				}
+				else
+				{
+					return $sql_obj->data[0]["translation"];
+				}
 			}
 			else
 			{
@@ -280,8 +367,16 @@ function language_translate_string($language, $label)
 				// the cache to prevent extra lookups.
 
 				$GLOBALS["cache"]["lang"][ $label ] = $label;
-
-				return $label;
+				
+				//if translation mode is turned on, surround non-translated field with [[]]
+				if($_SESSION["user"]["translation"]=="show_all_translatable_fields" || $_SESSION["user"]["translation"]=="show_only_non-translated_fields")
+				{
+					return "[[".$label."]]";
+				}
+				else
+				{
+					return $label;
+				}
 			}
 
 			unset($sql_obj);

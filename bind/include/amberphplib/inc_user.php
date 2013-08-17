@@ -41,12 +41,46 @@ class user_auth
 		log_debug("user_auth", "Executing user_auth()");
 
 		// fetch authentication method from the database. If that fails, default to sql
-		$this->method = sql_get_singlevalue("SELECT value FROM `config` WHERE name='AUTH_METHOD' LIMIT 1");
+		$this->method = $GLOBALS["config"]["AUTH_METHOD"];
 
 		if (!$this->method)
 		{
 			$this->method = "sql";
 		}
+	}
+
+
+	/*
+	   * Checks for alternative session database store (shared)
+	   */
+	function getSessionDatabase($sql_obj) {
+
+		global $config, $session_store_ok;
+
+		// default to storing user session data in this applications database
+		if(!isset($config['session_store'])) {
+			return $sql_obj;	
+		}
+
+		// to stop many errors on failures return
+		if(isset($session_store_ok) && !$session_store_ok) {
+			return New sql_query;
+		}
+
+		if(!$sql_obj->session_init("mysql", $config['session_store']['db_host'], $config['session_store']['db_name'], $config['session_store']['db_user'], $config['session_store']['db_pass'])) {
+
+			if(!isset($session_store_ok) || $session_store_ok) {
+				$session_store_ok = false;
+				log_write("error",'process', 'Unable to connect to session store database. Reverting to local store session storage method. Please check configuration.');
+				log_debug("getSessionDatabase", "falling back to local session store as remote store could not be contacted");
+			}
+
+			$session_sql_obj = New sql_query;
+			return $session_sql_obj;
+		}
+
+		return $sql_obj;
+
 	}
 
 
@@ -78,17 +112,79 @@ class user_auth
 		}
 		else
 		{
+			// determine timeout
+			if (empty($GLOBALS["config"]["SESSION_TIMEOUT"]))
+			{
+				// default == two hours (in seconds)
+				$session_timeout = 7200;
+			}
+			else
+			{
+				// use configured setting
+				$session_timeout = $GLOBALS["config"]["SESSION_TIMEOUT"];
+			}
+
 			// get user session data
 			$sql_session_obj		= New sql_query;
-			$sql_session_obj->string 	= "SELECT id, time FROM `users_sessions` WHERE authkey='" . $_SESSION["user"]["authkey"] . "' AND ipaddress='" . $_SERVER["REMOTE_ADDR"] . "' LIMIT 1";
+			$sql_session_obj->string 	= "SELECT id, time, ipv4, ipv6 FROM `users_sessions` WHERE authkey='" . $_SESSION["user"]["authkey"] . "' LIMIT 1";
 			$sql_session_obj->execute();
 
 			if ($sql_session_obj->num_rows())
 			{
 				$sql_session_obj->fetch_array();
 
+				
+				// Verify the IP address
+				//
+				// This check is designed to reduce the risk of any theft of session information, by forcing the session
+				// to be linked to the user's IP  - stealing session data and connecting from another location will
+				// be denied.
+				//
+				// There is some trickiness to support IPv4/IPv6 mixed environments, as sometimes browers will swap between
+				// IPv4 and IPv6 addressing in a session, so we trust the first IPv4 and the first IPv6 addresses that the
+				// host identifies with, then deny all future ones.
+				//
+				if (ip_type_detect($_SERVER["REMOTE_ADDR"]) == 6)
+				{
+					if (!empty($sql_session_obj->data[0]["ipv6"]))
+					{
+						if ($_SERVER["REMOTE_ADDR"] != $sql_session_obj->data[0]["ipv6"])
+						{
+							// the current IPv6 address does not match the one for this session
+							// denied
+							return 0;
+						}
+					}
+					else
+					{
+						// this session hasn't connected via IPv6 before, add it to the session info.
+						$sql_obj		= New sql_query;
+						$sql_obj->string	= "UPDATE `users_sessions` SET ipv6='". $_SERVER["REMOTE_ADDR"] ."' WHERE authkey='". $_SESSION["user"]["authkey"] ."' LIMIT 1";
+						$sql_obj->execute();
+					}
+				}
+				else
+				{
+					if (!empty($sql_session_obj->data[0]["ipv4"]))
+					{
+						if ($_SERVER["REMOTE_ADDR"] != $sql_session_obj->data[0]["ipv4"])
+						{
+							// the current IPv4 address does not match the one for this session
+							// denied
+							return 0;
+						}
+					}
+					else
+					{
+						// this session hasn't connected via IPv4 before, add it to the session info.
+						$sql_obj		= New sql_query;
+						$sql_obj->string	= "UPDATE `users_sessions` SET ipv4='". $_SERVER["REMOTE_ADDR"] ."' WHERE authkey='". $_SESSION["user"]["authkey"] ."' LIMIT 1";
+						$sql_obj->execute();
+					}
+				}
+
 				$time = time();
-				if ($time < ($sql_session_obj->data[0]["time"] + 7200))
+				if ($time < ($sql_session_obj->data[0]["time"] + $session_timeout))
 				{
 					// we want to update the time value in the database, but we don't want to do this
 					// on every single page load - no need, and a waste of performance.
@@ -99,6 +195,7 @@ class user_auth
 					{
 						// update time field
 						$sql_obj		= New sql_query;
+						$sql_obj		= $this->getSessionDatabase($sql_obj);
 						$sql_obj->string	= "UPDATE `users_sessions` SET time='$time' WHERE authkey='". $_SESSION["user"]["authkey"] ."' LIMIT 1";
 						$sql_obj->execute();
 					}
@@ -403,13 +500,24 @@ class user_auth
 					$obj_ldap->srvcfg["host"]		= $GLOBALS["config"]["ldap_host"];
 					$obj_ldap->srvcfg["port"]		= $GLOBALS["config"]["ldap_port"];
 					$obj_ldap->srvcfg["base_dn"]		= $GLOBALS["config"]["ldap_dn"];
-					$obj_ldap->srvcfg["user"]		= $GLOBALS["config"]["ldap_manager_user"];
-					$obj_ldap->srvcfg["password"]		= $GLOBALS["config"]["ldap_manager_pwd"];
+					// use the ldap_manager_user if its set, else attempt a bind with the supplied credentials
+					if(isset($GLOBALS["config"]["ldap_manager_user"])) {
+						$obj_ldap->srvcfg["user"]		= $GLOBALS["config"]["ldap_manager_user"];
+						$obj_ldap->srvcfg["password"]		= $GLOBALS["config"]["ldap_manager_pwd"];
+					} else {
+						$obj_ldap->srvcfg["user"] = 'uid=' . $username . ',ou=People,' . $GLOBALS["config"]["ldap_dn"];
+						$obj_ldap->srvcfg["password"] = $password;
+					}
 				}
 
 				// connect to LDAP server
-				if (!$obj_ldap->connect())
+				if ( ( $conn = $obj_ldap->connect() ) <= 0)
 				{
+					if($conn == -1 && !isset($GLOBALS["config"]["ldap_manager_user"]) ) {
+                                                log_debug("user_auth", "Authentication failed due to incorrect password/username combination");
+						return -1;
+					}
+
 					log_write("error", "user_auth", "An error occurred in the authentication backend, please contact your system administrator");
 					return -1;
 				}
@@ -420,22 +528,167 @@ class user_auth
 				// run query against users
 				$obj_ldap->search("uid=$username", array("uidnumber", "userpassword"));
 
+				if(!isset($GLOBALS["config"]["ldap_manager_user"]) && isset($obj_ldap->data[0]["uidnumber"][0])) {
+					//authentication has been done by the user supplied credentials and hasn't failed, so we should have a user id here now
+					return $obj_ldap->data[0]["uidnumber"][0];
+				}
+
 				if ($obj_ldap->data_num_rows)
 				{
 					// make sure that both a UID and password exists
 					if ($obj_ldap->data[0]["userpassword"][0] && $obj_ldap->data[0]["uidnumber"][0])
 					{
-						if (preg_match("/^{SSHA}/", $obj_ldap->data[0]["userpassword"][0]))
-						{
-							// verify SSHA
-							$orig_hash	= base64_decode(substr($obj_ldap->data[0]["userpassword"][0], 6));
-							$orig_salt	= substr($orig_hash, 20);
-							$orig_hash	= substr($orig_hash, 0, 20);
-							$new_hash	= pack("H*", sha1($password . $orig_salt));
+						// fetch the hash type
+						preg_match("/^{(\S*)}/", $obj_ldap->data[0]["userpassword"][0], $matches);
 
-							if ($orig_hash == $new_hash)
+						if ($matches[1])
+						{
+							switch ($matches[1])
 							{
-								// successful authentication! :-D
+								case "SSHA":
+									//
+									// SSHA: Used by default by ldapauthmanager and is the default of slappasswd
+									//
+
+									log_debug("user_auth", "User password encrypted as SSHA format");
+
+									// verify SSHA
+									$orig_hash	= base64_decode(substr($obj_ldap->data[0]["userpassword"][0], 6));
+									$orig_salt	= substr($orig_hash, 20);
+									$orig_hash	= substr($orig_hash, 0, 20);
+									$new_hash	= pack("H*", sha1($password . $orig_salt));
+
+									if ($orig_hash == $new_hash)
+									{
+										// successful authentication! :-D
+										log_debug("user_auth", "Authentication successful");
+
+										return $obj_ldap->data[0]["uidnumber"][0];
+									}
+									else
+									{
+										// incorrect password supplied
+										log_debug("user_auth", "Authentication failed due to incorrect password/username combination");
+										return 0;
+									}
+								break;
+
+								case "crypt":
+
+									//
+									// CRYPT: Used as the default by Linux servers, often a MD5 hash rather than original crypt, however
+									// 	  the algorithm and salting method can vary, so we have to do some detection.
+									//
+									
+									log_debug("user_auth", "User password encrypted as CRYPT format");
+
+
+									// fetch the hash only (no header)
+									$orig_hash	= substr($obj_ldap->data[0]["userpassword"][0], 7);
+
+
+									// match the type of hash - it may or may not be MD5
+									if (substr($orig_hash, 0, 3) == '$1$')
+									{
+										// MD5
+										log_debug("user_auth", "Password algorithm is MD5");
+
+										// generate a hash with the salt
+										$orig_salt	= substr($orig_hash, 0, 12);
+										$new_hash	= crypt($password, $orig_salt);
+									}
+									else
+									{
+										// unsupported hash type
+										log_debug("user_auth", "Authentication failed due to unsupported hash \"$orig_hash\" with {crypt} header");
+										return -1;
+									}
+
+									// authenticate the hashes
+									if ($orig_hash == $new_hash)
+									{
+										// successful authentication! :-D
+										log_debug("user_auth", "Authentication successful");
+
+										return $obj_ldap->data[0]["uidnumber"][0];
+									}
+									else
+									{
+										// incorrect password supplied
+										log_debug("user_auth", "Authentication failed due to incorrect password/username combination");
+										return 0;
+									}
+								break;
+
+
+								case "MD5":
+								case "SHA":
+									
+									// unknown password crypt format
+									log_debug("user_auth", "Passwords in crypt format \"". $matches[1] ."\" are intentionally unsupported due to lack of salting - use SSHA or SMD5 instead");
+									return -1;
+
+								break;
+
+
+								case "{clear}":
+								case "{cleartext}":
+									
+									//
+									//	Plaintext LDAP Passwords
+									//
+									//	Plaintext passwords are a pretty nasty thing from the POV of a web-based application developer, however
+									//	are still somewhat common in the telco user space, with technologies like CHAP relying on plaintext
+									//	passwords in order for their on-wire encryption to work.
+									//
+									//	We support them here for this reason alone.
+									//
+
+									log_debug("user_auth", "User password NOT ENCRYPTED, using plaintext WITH header");
+
+
+									if ($obj_ldap->data[0]["userpassword"][0] == $password)
+									{
+										log_debug("user_auth", "Authentication successful");
+
+										return $obj_ldap->data[0]["uidnumber"][0];
+									}
+									else
+									{
+										// incorrect password supplied
+										log_debug("user_auth", "Authentication failed due to incorrect password/username combination");
+										return 0;
+									}
+
+								break;
+
+
+								default:
+									
+									// unknown password crypt format
+									log_debug("user_auth", "Unknown password crypt format \"". $matches[1] ."\"");
+									return -1;
+
+								break;
+							}
+						}
+						else
+						{
+							/*
+								Plaintext LDAP Passwords
+
+								Plaintext passwords are a pretty nasty thing from the POV of a web-based application developer, however
+								are still somewhat common in the telco user space, with technologies like CHAP relying on plaintext
+								passwords in order for their on-wire encryption to work.
+
+								We support them here for this reason alone.
+							*/
+
+							log_debug("user_auth", "User password NOT ENCRYPTED, using plaintext WITHOUT header");
+
+
+							if ($obj_ldap->data[0]["userpassword"][0] == $password)
+							{
 								log_debug("user_auth", "Authentication successful");
 
 								return $obj_ldap->data[0]["uidnumber"][0];
@@ -446,11 +699,8 @@ class user_auth
 								log_debug("user_auth", "Authentication failed due to incorrect password/username combination");
 								return 0;
 							}
-						}
-						else
-						{
-							// unknown password crypt format
-							log_debug("user_auth", "Unknown password crypt format!");
+
+
 							return -1;
 						}
 					}
@@ -639,6 +889,7 @@ class user_auth
 		$time_expired = $time - 43200;
 
 		$sql_obj		= New sql_query;
+		$sql_obj		= $this->getSessionDatabase($sql_obj);
 		$sql_obj->string	= "DELETE FROM `users_sessions` WHERE time < '$time_expired'";
 		$sql_obj->execute();
 
@@ -649,6 +900,7 @@ class user_auth
 			log_write("debug", "inc_users", "User account does not permit concurrent logins, removing all old sessions");
 
 			$sql_obj		= New sql_query;
+			$sql_obj		= $this->getSessionDatabase($sql_obj);
 			$sql_obj->string	= "DELETE FROM `users_sessions` WHERE userid='". $userid ."'";
 			$sql_obj->execute();
 		}
@@ -656,7 +908,16 @@ class user_auth
 
 		// create session entry for user login
 		$sql_obj		= New sql_query;
-		$sql_obj->string	= "INSERT INTO `users_sessions` (userid, authkey, ipaddress, time) VALUES ('$userid', '$authkey', '$ipaddress', '$time')";
+		
+		if (ip_type_detect($ipaddress) == 6)
+		{
+			$sql_obj->string	= "INSERT INTO `users_sessions` (userid, authkey, ipv6, time) VALUES ('$userid', '$authkey', '$ipaddress', '$time')";
+		}
+		else
+		{
+			$sql_obj->string	= "INSERT INTO `users_sessions` (userid, authkey, ipv4, time) VALUES ('$userid', '$authkey', '$ipaddress', '$time')";
+		}
+
 		$sql_obj->execute();
 
 
@@ -706,6 +967,7 @@ class user_auth
 		{
 			// remove session entry from DB
 			$sql_obj		= New sql_query;
+			$sql_obj		= $this->getSessionDatabase($sql_obj);
 			$sql_obj->string	= "DELETE FROM `users_sessions` WHERE authkey='" . $_SESSION["user"]["authkey"] . "' LIMIT 1";
 			$sql_obj->execute();
 		}
@@ -731,9 +993,20 @@ class user_auth
 		This function is automatically executed when required by the permissions_get(type)
 		function.
 
-		The lookup occurs once for each page load, whilst this does place a bit more load
-		on the server, it's better than caching for the entire session, since otherwise
-		that cache could become stale if the user permissions get changed.
+		By default the caching is only during the duration of the page load, however if
+		the AUTH_PERMS_CACHE value is set to enabled in the config database, the caching
+		will last across the session.
+
+		Typically you want to only cache for the duration of the page rather than the entire
+		session, since any user permission changes will take immediate effect and the impact on
+		the database should be minimal.
+
+		However there are something circumstances where loading the permissions for every page
+		load can cause annoyances, for example when using LDAP authentication it will cause a request
+		against the LDAP session for every page load.
+
+		Of course, session caching means that the user permissions can become stale and users must then
+		logout and back in to get new permissions.
 
 		Returns
 		0		Failure
@@ -746,6 +1019,20 @@ class user_auth
 		// erase any existing cache
 		$GLOBALS["cache"]["user"]["perms"] = array();
 
+
+		// check permissions cache option - should we cache over a session or not?
+		if ($GLOBALS["config"]["AUTH_PERMS_CACHE"] == "enabled")
+		{
+			// check for cache
+			if (isset($_SESSION["user"]["cache"]["perms"]))
+			{
+				log_write("debug", "user_auth", "Loading user permissions from session cache");
+
+				$GLOBALS["cache"]["user"]["perms"] = $_SESSION["user"]["cache"]["perms"];
+
+				return 1;
+			}
+		}
 
 		// make sure the user is logged in
 		if (!$this->check_online())
@@ -797,17 +1084,18 @@ class user_auth
 					for ($i=0; $i < $obj_ldap->data["count"]; $i++)
 					{
 						// run through members and see if our user belongs
-						for ($j=0; $j < $obj_ldap->data[$i]["memberuid"]["count"]; $j++)
+						if (!empty($obj_ldap->data[$i]["memberuid"]["count"]))
 						{
-							if ($obj_ldap->data[$i]["memberuid"][$j] == $_SESSION["user"]["name"])
+							for ($j=0; $j < $obj_ldap->data[$i]["memberuid"]["count"]; $j++)
 							{
-								// user has an entry for that permission - save to cache
-								$GLOBALS["cache"]["user"]["perms"][ $obj_ldap->data[$i]["cn"][0] ] = 1;
+								if ($obj_ldap->data[$i]["memberuid"][$j] == $_SESSION["user"]["name"])
+								{
+									// user has an entry for that permission - save to cache
+									$GLOBALS["cache"]["user"]["perms"][ $obj_ldap->data[$i]["cn"][0] ] = 1;
+								}
 							}
 						}
 					} // end of loop through groups
-
-					return 1;
 				}
 				else
 				{
@@ -838,6 +1126,7 @@ class user_auth
 						// save the permissions that the user has access to, to the cache
 						$GLOBALS["cache"]["user"]["perms"][ $data_perms["type"] ] = 1;
 					}
+	
 				}
 				else
 				{
@@ -848,6 +1137,12 @@ class user_auth
 
 		} // end of method processing.
 
+
+		// if enabled, save in session cache
+		if ($GLOBALS["config"]["AUTH_PERMS_CACHE"] == "enabled")
+		{
+			$_SESSION["user"]["cache"]["perms"] = $GLOBALS["cache"]["user"]["perms"];
+		}
 
 		// complete without error
 		return 1;
@@ -895,7 +1190,7 @@ class user_auth
 			}
 
 			// return permissions value
-			if ($GLOBALS["cache"]["user"]["perms"][$type])
+			if (!empty($GLOBALS["cache"]["user"]["perms"][$type]))
 			{
 				return 1;
 			}

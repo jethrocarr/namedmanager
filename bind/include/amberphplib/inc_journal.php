@@ -197,7 +197,7 @@ class journal_base
 				}
 
 			}
-			elseif (isset($_SESSION["form"][$this->journalname]["filters"]))
+			else if (isset($_SESSION["form"][$this->journalname]["filters"]))
 			{
 				log_debug("journal_base", "Loading options form from session data");
 			
@@ -1359,7 +1359,7 @@ class journal_process extends journal_base
 
 		// defaults
 		$this->structure["userid"]	= $_SESSION["user"]["id"];
-		$this->structure["timestamp"]	= mktime();
+		$this->structure["timestamp"]	= time();
 	}
 
 
@@ -1547,7 +1547,7 @@ class journal_process extends journal_base
 		/*
 			If no ID supplied, create a new journal entry first
 		*/
-		if (!$this->structure["id"])
+		if (empty($this->structure["id"]))
 		{
 			$mode = "create";
 
@@ -1559,6 +1559,22 @@ class journal_process extends journal_base
 		else
 		{
 			$mode = "update";
+		}
+
+
+		/*
+			Handle some optional fields
+		*/
+
+		if (!isset($this->structure["content"]))
+		{
+			$this->structure["content"] = "";
+		}
+
+		if (!isset($this->structure["userid"]))
+		{
+			// automated system user
+			$this->structure["userid"] = 0;
 		}
 
 
@@ -1580,31 +1596,44 @@ class journal_process extends journal_base
 
 		/*
 			If journal entry is a file, upload the data
-		*/
-		if ($this->structure["type"] == "file" && $_FILES["upload"]["size"] > 1)
-		{
-			// output file data
-			$file_obj			= New file_storage;
-			$file_obj->data["type"]		= "journal";
-			$file_obj->data["customid"]	= $this->structure["id"];
 
-			if ($file_obj->load_data_bytype())
+			TODO: this currently only works for form uploads
+		*/
+		if ($this->structure["type"] == "file")
+		{
+			if (isset($_FILES["upload"]["name"]))
 			{
-				log_debug("journal_process", "Old file exists, will overwrite.");
-			
-				// unset the title variable - otherwise the action_update_form function will retain the existing title
-				$file_obj->data["file_name"] = NULL;
+				log_write("debug", "journal_process", "Uploading file against journal entry from POST form data");
+
+
+				// output file data
+				$file_obj			= New file_storage;
+				$file_obj->data["type"]		= "journal";
+				$file_obj->data["customid"]	= $this->structure["id"];
+
+				if ($file_obj->load_data_bytype())
+				{
+					log_debug("journal_process", "Old file exists, will overwrite.");
+				
+					// unset the title variable - otherwise the action_update_form function will retain the existing title
+					$file_obj->data["file_name"] = NULL;
+				}
+				else
+				{
+					log_debug("journal_process", "No previous file exists, performing clean upload.");
+				}
+
+						
+				// call the upload function
+				if (!$file_obj->action_update_form("upload"))
+				{
+					log_write("error", "journal_process", "Unable to upload file for journal entry id ". $this->structure["id"] . "");
+				}
 			}
 			else
 			{
-				log_debug("journal_process", "No previous file exists, performing clean upload.");
-			}
-
-					
-			// call the upload function
-			if (!$file_obj->action_update_form("upload"))
-			{
-				log_write("error", "journal_process", "Unable to upload file for journal entry id ". $this->structure["id"] . "");
+				// not uploading
+				log_write("debug", "journal_process", "No file POST data provided, not uploading file to journal - assuming manual DB upload");
 			}
 		}
 
@@ -1624,13 +1653,16 @@ class journal_process extends journal_base
 		{
 			$sql_obj->trans_commit();
 
-			if ($mode == "update")
+			if ($this->structure["type"] != "event")
 			{
-				log_write("notification", "journal_process", "Journal entry updated successfully.");
-			}
-			else
-			{
-				log_write("notification", "journal_process", "New record added to the journal successfully.");
+				if ($mode == "update")
+				{
+					log_write("notification", "journal_process", "Journal entry updated successfully.");
+				}
+				else
+				{
+					log_write("notification", "journal_process", "New record added to the journal successfully.");
+				}
 			}
 
 			return 1;
@@ -1766,7 +1798,7 @@ function journal_quickadd_event($journalname, $customid, $message)
 		
 	$journal->prepare_set_title($message);
 
-	return $journal->action_create();
+	return $journal->action_update();
 }
 
 

@@ -63,6 +63,15 @@ function security_form_input($expression, $valuename, $numchars, $errormsg)
 	// get post data
 	$input = $_POST[$valuename];
 	
+	// if there is a help message set, delete the content
+	if (isset($_POST[ $valuename ."_helpmessagestatus"]))
+	{
+		if ($_POST[ $valuename ."_helpmessagestatus"] == "true")
+		{
+			$input = "";
+		}
+	}
+
 
 	// strip any HTML tags
 	$input = strip_tags($input);
@@ -113,7 +122,7 @@ function security_form_input($expression, $valuename, $numchars, $errormsg)
 		if ($errormsg == "")
 		{
 			$translation	= language_translate_string($_SESSION["user"]["lang"], $valuename);
-			$errormsg	= "Sorry, \"$translation\" must be at least $numchars charactors.";
+			$errormsg	= "Sorry, \"$translation\" must be at least $numchars characters.";
 		}
 
 		// report the error
@@ -141,6 +150,9 @@ function security_form_input($expression, $valuename, $numchars, $errormsg)
 	* money		0.2f floating point money value - the security function will perform padding
 	* float		Floating point integer
 	* ipv4		XXX.XXX.XXX.XXX IPv4 syntax
+	* ipv4_cidr	XXX.XXX.XXX.XXX/XX IPv4 with optional CIDR syntax
+	* ipv6		Valid IPv6 address
+	* ipv6_cidr	Valid IPv6 address with optional CIDR syntax
 	* checkbox	Checkbox - return 1 if set, 0 if not
 
 	For further details, refer to the commentsfor the security_form_input function.
@@ -294,7 +306,11 @@ function security_form_input_predefined ($type, $valuename, $numchar, $errormsg)
 				$translation	= language_translate_string($_SESSION["user"]["lang"], $valuename);
 				$errormsg	= "Invalid $translation supplied, please correct.";
 			}
-
+			// replace configs with standard symbols for processing
+			$config_array = array($GLOBALS["config"]["CURRENCY_DEFAULT_SYMBOL"], $GLOBALS["config"]["CURRENCY_DEFAULT_THOUSANDS_SEPARATOR"], $GLOBALS["config"]["CURRENCY_DEFAULT_DECIMAL_SEPARATOR"]);
+			$default_array = array("", "", ".");
+			$formatted_string = str_replace($config_array, $default_array, $_POST[$valuename]);
+			$_POST[$valuename] = $formatted_string;
 			// verify as a floating point number
 			$expression = "/^[0-9]*.[0-9]*$/";
 			$value = security_form_input($expression, $valuename, $numchar, $errormsg);
@@ -336,18 +352,100 @@ function security_form_input_predefined ($type, $valuename, $numchar, $errormsg)
 		case "email":
 			$expression = "/^([A-Za-z0-9._-])+\@(([A-Za-z0-9-])+\.)+([A-Za-z0-9])+$/";
 		break;
+		
+		case "multiple_email":
+			// Single email address
+			$email_regex = "/^<?(([A-Za-z0-9._-])+\@(([A-Za-z0-9-])+\.)+([A-Za-z0-9])+)>?$/";	
+			
+			// Whole email address string
+			$expression = "/^(([A-Za-z0-9._-])+\@(([A-Za-z0-9-])+\.)+([A-Za-z0-9])+,?\s?)+$/";
+			
+			// grab submitted data from $_POST 
+			$unsafe_email_addresses = $_POST[$valuename];	
+			
+			// split at spaces and commas
+			$email_address_string_parts = preg_split("/[\s,]+/", $unsafe_email_addresses);
+			
+			$email_addresses = array();
+			foreach($email_address_string_parts as $email_address_string_part)
+			{
+				// check each item against the email address regex, capture the email address
+				preg_match($email_regex, $email_address_string_part, $matches);
+				// if we have an email address, add it to the array
+				if($matches[1] != '')
+				{
+					$email_addresses[] = $matches[1];
+				}
+			}
+			// implode the email addresses using a comma and a space
+			$new_email_address_string = implode(", ",$email_addresses);
+			
+			// recheck the string., if it passes, return it
+			preg_match($expression, $new_email_address_string, $matches);
+			if($matches[0] == $new_email_address_string)
+			{
+				return $matches[0];
+			} 
+			else
+			{
+				return "error";
+			}
+		break;
+		
 
 		case "ipv4":
 			$expression = "/^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:[.](?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$/";
 		break;
 
+		case "ipv4_cidr":
+			$expression = "/^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:[.](?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}[\/]*[1-9]*$/";
+		break;
+
+		case "ipv6":
+			if (filter_var($_POST[$valuename], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6))
+			{
+				return $_POST[$valuename];
+			}
+			else
+			{
+				// there has been an error - flag the hourmins field as being incorrect input
+				$_SESSION["error"]["message"][] = "Provided address is not a valid IPv6 address";
+				$_SESSION["error"]["". $valuename . "-error"] = 1;
+				$_SESSION["error"][$valuename] = 0;
+
+				return "error";
+			}
+		break;
+
+		case "ipv6_cidr":
+			list($network, $cidr) = split("/", $_POST[$valuename]);
+			
+			if (filter_var($network, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6))
+			{
+				return "$network/$cidr";
+			}
+			else
+			{
+				// there has been an error - flag the hourmins field as being incorrect input
+				$_SESSION["error"]["message"][] = "Provided address is not a valid IPv6 address";
+				$_SESSION["error"]["". $valuename . "-error"] = 1;
+				$_SESSION["error"][$valuename] = 0;
+
+				return "error";
+			}
+		break;
+
 		case "checkbox":
 			if ($_POST[$valuename])
 			{
+				$_SESSION["error"][$valuename] = 1;
+
 				return 1;
 			}
 			else
 			{
+				$_SESSION["error"][$valuename] = 0;
+
 				return 0;
 			}
 		break;
@@ -364,45 +462,64 @@ function security_form_input_predefined ($type, $valuename, $numchar, $errormsg)
 
 
 /*
-	security_script_input ($expression, $value)
+	security_script_input
 
 	Checks data that gets provided to a script (eg: returned error messages,
-	get commands, etc). If data passes, it gets returned. If it doesn't NULL
-	is returned, and the value is set to "error".
-	
-	Success: Returns the value.
-	Failure: Returns "error".
+	get commands, etc) - simular to security_form_input.
+
+	Values
+	expression		Regex to use for the validation
+	value			Value to check
+	mode			0 -  standard check, return error in string if wrong - USE FOR SQL COMMANDS
+				1 -  error handling, return value but raise error - USE FOR SMOOTH ERROR HANDLING
+
+	Returns
+	value			Validated value
+	"error"			An error occured in mode 1
 */
-function security_script_input ($expression, $value)
+function security_script_input ($expression, $value, $mode = 0)
 {
 	// if the input matches the regex, all is good, otherwise set to "error".
 	if (preg_match($expression, $value))
 	{
-	        // check if magic quotes is on or off and process the input correctly.
-	        //
-	        // this prevents SQL injections, by backslashing -- " ' ` \ -- etc.
-	        //
-		if (get_magic_quotes_gpc() == 0)
-		{
-			$value = addslashes($value);
-		}
+		$value = addslashes($value);
 
 		return $value;
 	}
 	else
 	{
-		return "error";
+		// failure to validate
+
+
+		if ($mode)
+		{
+			$valuename = vname($valuename);
+
+			$_SESSION["error"]["message"][]		= "Invalid ". lang_trans($valuename) ." supplied, please correct.";
+			$_SESSION["error"][$valuename]		= 0;
+
+			return $value;
+		}
+		else
+		{
+			return "error";
+		}
 	}		
 }
 
 
 
 /*
-	security_script_predefined ($value)
+	security_script_predefined
 	
 	Wrapper function for the security_script_input function with various
-	pre-defined checks. This function is simular in to security_form_predefined but
-	is simpler since it doesn't have all the complex error handling code
+	pre-defined checks. This function is simular in to security_form_predefined but somewhat
+	simplier due to less pre-processing being required.
+
+	Values
+	type		Predefined regex type.
+	value		Value to check.
+	mode		See security_script_input.
 
 	"type" options:
 	* any		Allow any input (note: HTML tags will still be stripped)
@@ -413,10 +530,11 @@ function security_script_input ($expression, $value)
 	* money		0.2f floating point money value - the security function will perform padding
 	* float		Floating point integer
 	* ipv4		XXX.XXX.XXX.XXX IPv4 syntax
+	* checkbox	Returns bool 0/1 depends on value contents
 
 	For further details, refer to the commentsfor the security_form_input function.
 */
-function security_script_input_predefined ($type, $value)
+function security_script_input_predefined ($type, $value, $mode = 0)
 {
 	$expression = NULL;
 
@@ -431,6 +549,18 @@ function security_script_input_predefined ($type, $value)
 	{
 		case "any":
 			$expression = "/^[\S\s]*$/";
+		break;
+
+		case "checkbox":
+			// simple bool state, never an error return
+			if ($value)
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
 		break;
 
 		case "date":
@@ -491,10 +621,18 @@ function security_script_input_predefined ($type, $value)
 
 	}
 
-	return @security_script_input($expression, $value);
+	return @security_script_input($expression, $value, $mode);
 }
 
 
+function stripslashes_deep($value)
+{
+    $value = is_array($value) ?
+                array_map('stripslashes_deep', $value) :
+                stripslashes($value);
+
+    return $value;
+}
 
 
 ?>

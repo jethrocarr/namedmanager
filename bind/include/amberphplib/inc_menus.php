@@ -137,7 +137,7 @@ class menu_main
 
 
 		$sql_menu_obj		= New sql_query;
-		$sql_menu_obj->string	= "SELECT link, topic, parent FROM menu WHERE permid IN (". format_arraytocommastring($user_permissions) .") ORDER BY priority DESC";
+		$sql_menu_obj->string	= "SELECT link, topic, parent, config FROM menu WHERE permid IN (". format_arraytocommastring($user_permissions) .") ORDER BY priority DESC";
 		$sql_menu_obj->execute();
 
 		if (!$sql_menu_obj->num_rows())
@@ -150,12 +150,57 @@ class menu_main
 		// fetch menu entires
 		$sql_menu_obj->fetch_array();
 
-
 		// array to store the order of the menu items
 		$this->menu_order = array();
 	
 		// keep track of the topic we are looking for
 		$target_topic = "";
+
+
+
+		/*
+			Apply config filtering
+
+			Some applications have the need to be able to enable/disable specific features
+			using boolean options in the config table - by setting the name of the value in
+			the config column on the menu entries, a check will be made, and if the menu entry
+			config option is unset, the menu options will not be displayed.
+
+			This is typically used for hiding disabled features where for whatever reason, the
+			feature can not be disabled using permissions groups.
+		*/
+
+		for ($i=0; $i < $sql_menu_obj->data_num_rows; $i++)
+		{
+			// check feature option (if set)
+			if (!empty($sql_menu_obj->data[$i]["config"]))
+			{
+				@list($config_name, $config_value) = explode('=', $sql_menu_obj->data[$i]["config"], 2);
+
+				if (!$GLOBALS["config"][ $config_name ])
+				{
+					// config is disabled for this feature
+					unset($sql_menu_obj->data[$i]);
+				}
+				else
+				{
+					if ($config_value)
+					{
+						// do value matching
+						if ($GLOBALS["config"][ $config_name ] != $config_value)
+						{
+
+							// non match, failed
+							unset($sql_menu_obj->data[$i]);
+
+						}
+					}
+
+					// default is that menu item is enabled since config option exists
+				}
+			}
+		}
+
 
 
 		/*
@@ -184,6 +229,7 @@ class menu_main
 		// loop though the menu items 
 		foreach ($sql_menu_obj->data as $data)
 		{
+			// add each item to menu array
 			if ($target_topic != "top")
 			{
 				if (!$target_topic)
@@ -254,13 +300,13 @@ class menu_main
 		log_debug("menu_main", "Executing render_menu_standard()");
 
 
-		print "<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\">";
+		print "<table class=\"menu_table\">";
 
 		// run through the menu order
 		for ($i = 0; $i <= count($this->menu_order); $i++)
 		{
 			print "<tr>";
-			print "<td width=\"100%\" cellpadding=\"0\" cellborder=\"0\" cellspacing=\"0\">";
+			print "<td>";
 			print "<ul id=\"menu\">";
 
 
@@ -274,22 +320,29 @@ class menu_main
 						// if this entry has no topic, it only exists for the purpose of getting a parent
 						// link highlighted. In this case, ignore the current entry.
 
-						if ($data["topic"])
-						{
-							// highlight the entry, if it's the parent of the next sub menu, or if this is a sub menu.
-							if (isset($this->menu_order[$i + 1]) && $this->menu_order[$i + 1] == $data["topic"])
-							{
-								print "<li><a style=\"background-color: #7e7e7e;\" href=\"index.php?page=". $data["link"] ."\" title=". lang_trans($data["topic"]) .">". lang_trans($data["topic"]) ."</a></li>";
-							}
-							elseif ($data["link"] == $this->page)
-							{
-								print "<li><a style=\"background-color: #7e7e7e;\" href=\"index.php?page=". $data["link"] ."\" title=". lang_trans($data["topic"]) .">". lang_trans($data["topic"]) ."</a></li>";
-							}
-							else
-							{
-								print "<li><a href=\"index.php?page=". $data["link"] ."\" title=". lang_trans($data["topic"]) .">". lang_trans($data["topic"]) ."</a></li>";
-							}
-						}
+  						if ($data["topic"])
+  						{
+ 
+ 							$link_prefix = "index.php?page=";
+ 							if(strtolower(substr($data['link'], 0, 4)) == 'http') {
+ 								log_debug("menu_main", "found http in link: " . $data['link']);
+ 								$link_prefix = '';
+ 							}
+ 
+ 							// highlight the entry, if it's the parent of the next sub menu, or if this is a sub menu.
+  							if (isset($this->menu_order[$i + 1]) && $this->menu_order[$i + 1] == $data["topic"])
+  							{
+ 								print "<li><a class=\"menu_current\" href=\"" . $link_prefix . $data["link"] ."\" title=". lang_trans($data["topic"]) .">". lang_trans($data["topic"]) ."</a></li>";
+  							}
+  							elseif ($data["link"] == $this->page)
+  							{
+ 								print "<li><a class=\"menu_current\" href=\"" . $link_prefix . $data["link"] ."\" title=". lang_trans($data["topic"]) .">". lang_trans($data["topic"]) ."</a></li>";
+  							}
+  							else
+  							{
+ 								print "<li><a href=\"" . $link_prefix . $data["link"] ."\" title=". lang_trans($data["topic"]) .">". lang_trans($data["topic"]) ."</a></li>";
+  							}
+  						}
 					}
 				}
 
@@ -610,9 +663,9 @@ class menu_nav
 	{
 		log_debug("menu_nav", "Executing render_html()");
 
-		print "<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\">";
+		print "<table class=\"menu_nav_table\">";
 		print "<tr>";
-		print "<td width=\"100%\" cellpadding=\"0\" cellborder=\"0\" cellspacing=\"0\">";
+		print "<td>";
 
 		print "<ul id=\"navmenu\">";
 
@@ -623,7 +676,7 @@ class menu_nav
 				// are we viewing the current page?
 				if ($this->structure["selected"] == $this->structure["links"][$i])
 				{
-					print "<li><a style=\"background-color: #60ae62;\" href=\"index.php?". $this->structure["links"][$i] ."\" title=\"". $this->structure["title"][$i] ."\">". $this->structure["title"][$i] ."</a></li>";
+					print "<li><a class=\"menu_nav_current\" href=\"index.php?". $this->structure["links"][$i] ."\" title=\"". $this->structure["title"][$i] ."\">". $this->structure["title"][$i] ."</a></li>";
 				}
 				else
 				{
