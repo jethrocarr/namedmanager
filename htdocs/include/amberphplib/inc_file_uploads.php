@@ -471,7 +471,7 @@ class file_storage
 
 		$this->data["file_size"]	= filesize($filepath);
 
-		if (!$this->data["file_name"])
+		if (empty($this->data["file_name"]))
 		{
 			// no filename supplied, take the filename of the provided file path
  			$this->data["file_name"] = format_file_name($filepath);
@@ -751,21 +751,7 @@ class file_storage
 		
 		// set the relevant content type
 		$file_extension = format_file_extension($this->data["file_name"]);
-
-		switch ($file_extension)
-		{
-			case "pdf": $ctype="application/pdf"; break;
-			case "exe": $ctype="application/octet-stream"; break;
-			case "zip": $ctype="application/zip"; break;
-			case "doc": $ctype="application/msword"; break;
-			case "xls": $ctype="application/vnd.ms-excel"; break;
-			case "ppt": $ctype="application/vnd.ms-powerpoint"; break;
-			case "gif": $ctype="image/gif"; break;
-			case "png": $ctype="image/png"; break;
-			case "jpeg":
-			case "jpg": $ctype="image/jpg"; break;
-			default: $ctype="application/force-download";
-		}
+		$ctype		= format_file_contenttype($file_extension);
 		
 		header("Pragma: public"); // required
 		header("Expires: 0");

@@ -51,8 +51,16 @@ class table
 	var $sql_obj;				// object used for SQL string, queries and data
 	var $obj_ldap;				// object used for LDAP queries
 	
-
 	var $render_columns;			// human readable column names
+	
+	var $limit_rows;			// maximum number of table rows to disable at any stage - if the max is reached,
+						// more/next buttons are rendered - note: this limit functionality only takes place
+						// *AFTER* any DB queries have been made, due to the need to filter only for HTML
+						// output as well as needing to handle any structure of data.
+	var $limit_start;			// internal only: start of displayed range
+	var $limit_stop;			// internal only: end of displayed range
+
+	
 
 
 	/*
@@ -64,6 +72,17 @@ class table
 	{
 		// init the SQL structure
 		$this->sql_obj = New sql_query;
+
+		// defaults
+		if (!empty($GLOBALS["config"]["TABLE_LIMIT"]))
+		{
+			$this->limit_rows = $GLOBALS["config"]["TABLE_LIMIT"];
+		}
+		
+		if (!empty($_SESSION["user"]["table_limit"]))
+		{
+			$this->limit_rows = $_SESSION["user"]["table_limit"];
+		}
 	}
 
 
@@ -78,6 +97,7 @@ class table
 				timestamp	- UNIX style timestamp field (converts to date + time)
 				timestamp_date	- UNIX style timestamp field (converts to date only)
 				money		- displays a financial value correctly
+				money_float	- displays a financial value without rounding
 				price		- legacy use - just calls money
 				precentage	- does formatting for display percentages
 				hourmins	- input is a number of seconds, display as H:MM
@@ -624,7 +644,7 @@ class table
 			else
 			{
 				// do translation
-				$this->render_columns[$column] = language_translate_string($this->language, $column);
+				$this->render_columns[$column] = lang_trans($column);
 			}
 		}
 
@@ -693,6 +713,7 @@ class table
 
 			case "price":
 			case "money":
+			case "money_float":
 
 				// TODO: This exists here to work around a PHP bug - it seems that if
 				// we don't have it, even though $row will equal 0, it will still match
@@ -721,7 +742,14 @@ class table
 				}
 				else
 				{
-					$result = format_money($this->data[$row][$column]);
+					if ($this->structure[$column]["type"] == "money_float")
+					{
+						$result = format_money($this->data[$row][$column], NULL, 4);
+					}
+					else
+					{
+						$result = format_money($this->data[$row][$column]);
+					}
 				}
 			break;
 
@@ -917,6 +945,7 @@ class table
 				foreach ($column_a1 as $column)
 				{
 					$form->render_field($column);
+					print "<br>";
 				}
 
 				print "</td>";
@@ -927,6 +956,7 @@ class table
 				foreach ($column_a2 as $column)
 				{
 					$form->render_field($column);
+					print "<br>";
 				}
 
 				print "</td>";
@@ -1130,6 +1160,92 @@ class table
 	{
 		log_debug("table", "Executing render_table_prepare()");
 
+
+
+		/*
+			Configure Row Limits
+
+			We do the limits post-query, since we often get data sources from means other than
+			the SQL database - in such situations, we can't filter until after the query has executed.
+
+			Even if we did limit the SQL query, we would still need to run one query to get the full DB
+			row count, so we can adjust the UI based on the number of rows possible.
+		*/
+
+		// set start/end
+		if ($this->limit_rows)
+		{
+			if ($_SESSION["form"][$this->tablename]["limit_start"])
+			{
+				$this->limit_start = $_SESSION["form"][$this->tablename]["limit_start"];
+			}
+			else
+			{
+				$this->limit_start = 0;
+			}
+
+			if ($_SESSION["form"][$this->tablename]["limit_end"])
+			{
+				$this->limit_end = $_SESSION["form"][$this->tablename]["limit_end"];
+			}
+			else
+			{
+				$this->limit_end = $this->limit_rows + $range_start;
+			}
+	
+		}
+		else
+		{
+			$this->limit_start	= 0;
+			$this->limit_end	= $this->data_num_rows;
+		}
+
+		// handle user requests for more
+		if (isset($_GET["table_limit"]))
+		{
+			if ($_GET["table_limit"] == "less")
+			{
+				// reduce start/end
+				$this->limit_start	= $this->limit_start - $this->limit_rows;
+				$this->limit_end	= $this->limit_end - $this->limit_rows;
+			}
+			elseif ($_GET["table_limit"] == "more")
+			{
+				// increase start/end
+				$this->limit_start	= $this->limit_start + $this->limit_rows;
+				$this->limit_end	= $this->limit_end + $this->limit_rows;
+
+			}
+
+		} // end of limit options
+
+
+		// apply sane constraints
+		if ($this->limit_start < 0)
+		{
+			$this->limit_start = 0;
+		}
+
+		if ($this->limit_end < $this->limit_rows)
+		{
+			$this->limit_end = $this->limit_rows;
+		}
+
+		if ($this->limit_start > $this->data_num_rows )
+		{
+			$this->limit_start = $this->data_num_rows - $this->limit_rows;
+		}
+
+		if ($this->limit_end > $this->data_num_rows)
+		{
+			$this->limit_end = $this->data_num_rows;
+		}
+
+
+		// save session limit options
+		$_SESSION["form"][$this->tablename]["limit_start"]	= $this->limit_start;
+		$_SESSION["form"][$this->tablename]["limit_end"]	= $this->limit_end;
+
 		
 		// translate the column labels
 		$this->render_column_names();
@@ -1137,7 +1253,7 @@ class table
 		$total_rows_incrementing = 0;
 		
 		// format data rows
-		for ($i=0; $i < $this->data_num_rows; $i++)
+		for ($i=$this->limit_start; $i < $this->limit_end; $i++)
 		{
 			// content for columns
 			foreach ($this->columns as $columns)
@@ -1348,7 +1464,7 @@ class table
 		print "</tr>\n";
 
 		// display data
-		for ($i=0; $i < $this->data_num_rows; $i++)
+		for ($i=$this->limit_start; $i < $this->limit_end; $i++)
 		{
 			if (isset($this->data[$i]["options"]["css_class"]))
 			{
@@ -1365,13 +1481,13 @@ class table
 				$content = $this->data_render[$i][$columns];
 
 				// start cell
-				print "\t<td valign=\"top\">";
+				print "\t<td valign=\"top\" class=\"$columns\">";
 
 				// hyperlink?
 				if (isset($this->links_columns[ $columns ]))
 				{
 					$link		= $this->links_columns[ $columns ];
-					$linkname	= language_translate_string($this->language, $link);
+					$linkname	= lang_trans($link);
 					$link_valid	= 1;
 
 					
@@ -1379,7 +1495,7 @@ class table
 						check if there are any logic options we need to process
 
 						This is used to provide the capabilities such as optional hyperlinks that
-						only appear for same table rows.
+						only appear for some table rows.
 					*/
 
 					// if statements
@@ -1572,13 +1688,13 @@ class table
 
 				if ($links_count)
 				{
-					print "\t<td align=\"right\" nowrap>";
+					print "\t<td align=\"right\" class=\"table_links\" nowrap>";
 	
 					foreach ($links_available as $link)
 					{
 						$count++;
 						
-						$linkname	= language_translate_string($this->language, $link);
+						$linkname	= lang_trans($link);
 						$link_valid	= 1;
 
 						
@@ -1642,14 +1758,18 @@ class table
 							// There are two ways:
 							// 1. (default) Link to index.php
 							// 2. Set the ["options]["full_link"] value to yes to force a full link
+							if (empty($this->links[$link]["options"]["class"]))
+							{
+								$this->links[$link]["options"]["class"] = "";
+							}
 
 							if (isset($this->links[$link]["options"]["full_link"]) && $this->links[$link]["options"]["full_link"] == "yes")
 							{
-								print "<a class=\"button_small\" href=\"". $this->links[$link]["page"] ."?libfiller=n";
+								print "<a class=\"button_small ". $this->links[$link]["options"]["class"] ."\" href=\"". $this->links[$link]["page"] ."?libfiller=n";
 							}
 							else
 							{
-								print "<a class=\"button_small\" href=\"index.php?page=". $this->links[$link]["page"] ."";
+								print "<a class=\"button_small ". $this->links[$link]["options"]["class"] ."\" href=\"index.php?page=". $this->links[$link]["page"] ."";
 							}
 
 							// add each option
@@ -1664,7 +1784,7 @@ class table
 								{
 									print "&$getfield=". $this->links[$link]["options"][$getfield]["value"];
 								}
-								else
+								elseif (isset($this->links[$link]["options"][$getfield]["column"]))
 								{
 									print "&$getfield=". $this->data[$i][ $this->links[$link]["options"][$getfield]["column"] ];
 								}
@@ -1754,6 +1874,28 @@ class table
 		print "</table>\n";
 		
 		
+		// limit filter buttons
+		if ($this->limit_start > 0)
+		{
+			$query = $_SERVER["QUERY_STRING"];
+			$query = preg_replace('/&table_limit=\S*/', '', $query);
+
+			print "<a class=\"button_small\" href=\"index.php?". $query ."&table_limit=less\">< less</a>";
+		}
+
+		if ($this->limit_end < $this->data_num_rows)
+		{
+			$query = $_SERVER["QUERY_STRING"];
+			$query = preg_replace('/&table_limit=\S*/', '', $query);
+
+			print "<a class=\"button_small\" href=\"index.php?". $query ."&table_limit=more\">more ></a>";
+		}
+		
+		if ($this->limit_end != $this->data_num_rows || $this->limit_start != 0)
+		{
+			print "<font style=\"font-size: 10px;\">Total ". $this->data_num_rows ." entries</font>";
+		}
+
 	} // end of render_table_html
 
 
@@ -1768,7 +1910,10 @@ class table
 		log_debug("table", "Executing render_table_csv()");
 
 		// calculate all the totals and prepare processed values
-		$this->render_table_prepare();
+		if (!isset($this->data_render))
+		{
+			$this->render_table_prepare();
+		}
 
 		// display header row
 		foreach ($this->columns as $column)
@@ -1861,7 +2006,10 @@ class table
 
 
 		// calculate all the totals and prepare processed values
-		$this->render_table_prepare();
+		if (!isset($this->data_render))
+		{
+			$this->render_table_prepare();
+		}
 
 
 
@@ -2029,7 +2177,7 @@ class table
 		$template_pdf->prepare_add_file("company_logo", "png", "COMPANY_LOGO", 0);
 
 		// table name
-		$template_pdf->prepare_add_field("table_name", language_translate_string($this->language, $this->tablename));
+		$template_pdf->prepare_add_field("table_name", lang_trans($this->tablename));
 
 
 		// table options
@@ -2037,7 +2185,7 @@ class table
 
 		// add date created option
 		$structure			= array();
-		$structure["option_name"]	= language_translate_string($this->language, "date_created");
+		$structure["option_name"]	= lang_trans("date_created");
 		$structure["option_value"]	= time_format_humandate();
 		$structure_main[]		= $structure;
 
@@ -2045,7 +2193,7 @@ class table
 		{
 			$structure = array();
 
-			$structure["option_name"] = language_translate_string($this->language, $filtername);
+			$structure["option_name"] = lang_trans($filtername);
 
 			switch ($this->filter[$filtername]["type"])
 			{

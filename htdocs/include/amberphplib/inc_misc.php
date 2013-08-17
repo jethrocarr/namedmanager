@@ -210,6 +210,29 @@ function format_file_extension($filename)
 
 
 /*
+	format_file_noextension
+
+	Returns everything but the file extension
+
+	Values
+	filename	Filename or path
+
+	Returns
+	string		file name without extension
+*/
+function format_file_noextension($filename)
+{
+	log_debug("misc", "Executing format_file_noextension($filename)");
+
+	// note: we can't use strstr to search before needle, as it's PHP 5.3.0+ only :'(
+
+	$extension = strtolower(substr(strrchr($filename,"."),1));
+	return str_replace(".$extension", "", $filename);
+}
+
+
+
+/*
 	format_file_name
 
 	Returns the filename & extension of the supplied filepath - effectively strips
@@ -226,6 +249,47 @@ function format_file_name($filepath)
 	log_debug("misc", "Executing format_file_name($filepath)");
 
 	return substr(strrchr($filepath,"/"),1);
+}
+
+
+/*
+	format_file_contenttype
+
+	Returns the MIME content type of the supplied field extension.
+
+	Use with format_file_extension if you want to strip the extension information
+	from a filename.
+
+	Values
+	file_extension	Extension of filename (without the .)
+
+	Returns
+	string		Ctype
+*/
+
+function format_file_contenttype($file_extension)
+{
+	log_debug("misc". "Executing format_file_contenttype($file_extension)");
+
+	$ctype = NULL;
+
+	switch ($file_extension)
+	{
+		case "pdf": $ctype="application/pdf"; break;
+		case "exe": $ctype="application/octet-stream"; break;
+		case "zip": $ctype="application/zip"; break;
+		case "doc": $ctype="application/msword"; break;
+		case "xls": $ctype="application/vnd.ms-excel"; break;
+		case "ppt": $ctype="application/vnd.ms-powerpoint"; break;
+		case "gif": $ctype="image/gif"; break;
+		case "png": $ctype="image/png"; break;
+		case "jpeg":
+		case "jpg": $ctype="image/jpg"; break;
+		case "csv": $ctype="text/csv"; break;
+		default: $ctype="application/force-download";
+	}
+
+	return $ctype;
 }
 
 
@@ -409,9 +473,11 @@ function format_linkbox($type, $hyperlink, $text)
 	Formats the provided floating integer and adds the default currency and applies
 	rounding to it to make a number suitable for display.
 
-	Set nocurrency to 1 to disable addition of the currency symbol
+	Set nocurrency to 1 to disable addition of the currency symbol.
+
+	Set round to desired number of SF values, default is 2
 */
-function format_money($amount, $nocurrency = NULL)
+function format_money($amount, $nocurrency = NULL, $round = 2)
 {
 	log_debug("misc", "Executing format_money($amount)");
 	
@@ -420,7 +486,7 @@ function format_money($amount, $nocurrency = NULL)
 	$decimal	= $GLOBALS["config"]["CURRENCY_DEFAULT_DECIMAL_SEPARATOR"];
 
 	// formatting for readability
-	$amount 	= number_format($amount, "2", $decimal, $thousands);
+	$amount 	= number_format($amount, $round, $decimal, $thousands);
 
 
 	if ($nocurrency)
@@ -636,7 +702,7 @@ function time_format_humandate($date = NULL, $time = FALSE)
 	{
 		// user hasn't chosen a default time format yet - use the system
 		// default
-		$format = sql_get_singlevalue("SELECT value FROM config WHERE name='DATEFORMAT' LIMIT 1");
+		$format = $GLOBALS["config"]["DATEFORMAT"];
 	}
 
 
@@ -651,6 +717,10 @@ function time_format_humandate($date = NULL, $time = FALSE)
 
 		case "dd-mm-yyyy":
 			$string = date("d-m-Y", $timestamp);
+		break;
+
+		case "dd-Mmm-yyyy":
+			return date("d-M-Y", $timestamp);
 		break;
 		
 		case "yyyy-mm-dd":
@@ -954,83 +1024,157 @@ function log_notification_render()
 /*
 	log_debug_render()
 
-	Displays the debugging log
+	Displays the debugging log - suitable for both CLI and web UI display - could do
+	with some level of more modular split.
 */
 function log_debug_render()
 {
 	log_debug("inc_misc", "Executing log_debug_render()");
 
 
-	print "<p><b>Debug Output:</b></p>";
-	print "<p><i>Please be aware that debugging will cause some impact on performance and should be turned off in production.</i></p>";
-	
-	
-	// table header
-	print "<table class=\"table_content\" width=\"100%\" cellspacing=\"0\">";
-	
-	print "<tr class=\"header\">";
-		print "<td nowrap><b>Time</b></td>";
-		print "<td nowrap><b>Memory</b></td>";
-		print "<td nowrap><b>Type</b></td>";
-		print "<td nowrap><b>Category</b></td>";
-		print "<td><b>Message/Content</b></td>";
-	print "</tr>";
-
-	// get first time entry
-	$time_first = (float)$_SESSION["user"]["log_debug"][0]["time_sec"] + (float)$_SESSION["user"]["log_debug"][0]["time_usec"];
-
-	// count SQL queries
-	$num_sql_queries = 0;
-
-	// content
-	foreach ($_SESSION["user"]["log_debug"] as $log_record)
+	if (!empty($_SESSION["mode"]))
 	{
-		// get last time entry
-		$time_last = (float)$log_record["time_sec"] + (float)$log_record["time_usec"];
-
-
-		// choose formatting
-		switch ($log_record["type"])
+		if ($_SESSION["mode"] == "cli")
 		{
-			case "error":
-				print "<tr bgcolor=\"#ff5a00\">";
-			break;
+			/*
+				CLI Interface
 
-			case "warning":
-				print "<tr bgcolor=\"#ffeb68\">";
-			break;
+				Limited to a statistical display only.
+			*/
 
-			case "sql":
-				print "<tr bgcolor=\"#7bbfff\">";
-				$num_sql_queries++;
-			break;
+			// get first time entry
+			$time_first = (float)$_SESSION["user"]["log_debug"][0]["time_sec"] + (float)$_SESSION["user"]["log_debug"][0]["time_usec"];
 
-			default:
-				print "<tr>";
-			break;
-		}
+			// count SQL queries
+			$num_sql_queries	= 0;
+			$num_cache_hits		= 0;
 		
-		// display
-		print "<td nowrap>". $time_last  ."</td>";
-		print "<td nowrap>". format_size_human($log_record["memory"]) ."</td>";
-		print "<td nowrap>". $log_record["type"] ."</td>";
-		print "<td nowrap>". $log_record["category"] ."</td>";
-		print "<td>". $log_record["content"] ."</td>";
+			// run through the log to get stats
+			foreach ($_SESSION["user"]["log_debug"] as $log_record)
+			{
+				// get last time entry
+				$time_last = (float)$log_record["time_sec"] + (float)$log_record["time_usec"];
+
+				// last memmor
+				$memory_last = $log_record["memory"];
+
+				// choose formatting
+				switch ($log_record["type"])
+				{
+					case "sql":
+						$num_sql_queries++;
+					break;
+
+					case "cache":
+						$num_cache_hits++;
+					break;
+
+					default:
+						// nothing todo
+					break;
+				}
+			}
+			
+			// report completion time
+			$time_diff = ($time_last - $time_first);
+
+			// display
+			log_write("debug", "stats", "----");
+			log_write("debug", "stats", "Application execution time:\t". $time_diff  ." seconds");
+			log_write("debug", "stats", "Total Memory Consumption:\t". number_format($memory_last) ." bytes.");
+			log_write("debug", "stats", "SQL Queries Executed:\t". number_format($num_sql_queries) ." queries.");
+			log_write("debug", "stats", "Total Cache Hits:\t\t". number_format($num_cache_hits) ." cache lookups.");
+			log_write("debug", "stats", "----");
+
+		} // end if CLI
+
+	} // end if CLI
+	else
+	{
+		/*
+			Web Interface
+		*/
+
+
+		print "<p><b>Debug Output:</b></p>";
+		print "<p><i>Please be aware that debugging will cause some impact on performance and should be turned off in production.</i></p>";
+		
+		
+		// table header
+		print "<table class=\"table_content\" width=\"100%\" cellspacing=\"0\">";
+		
+		print "<tr class=\"header\">";
+			print "<td nowrap><b>Time</b></td>";
+			print "<td nowrap><b>Memory</b></td>";
+			print "<td nowrap><b>Type</b></td>";
+			print "<td nowrap><b>Category</b></td>";
+			print "<td><b>Message/Content</b></td>";
 		print "</tr>";
 
+		// get first time entry
+		$time_first = (float)$_SESSION["user"]["log_debug"][0]["time_sec"] + (float)$_SESSION["user"]["log_debug"][0]["time_usec"];
 
-	}
+		// count SQL queries
+		$num_sql_queries	= 0;
+		$num_cache_hits		= 0;
 
-	print "</table>";
+		// content
+		foreach ($_SESSION["user"]["log_debug"] as $log_record)
+		{
+			// get last time entry
+			$time_last = (float)$log_record["time_sec"] + (float)$log_record["time_usec"];
 
 
-	// report completion time
-	$time_diff = ($time_last - $time_first);
+			// choose formatting
+			switch ($log_record["type"])
+			{
+				case "error":
+					print "<tr bgcolor=\"#ff5a00\">";
+				break;
 
-	print "<p>Completed in $time_diff seconds.</p>";
+				case "warning":
+					print "<tr bgcolor=\"#ffeb68\">";
+				break;
 
-	// report number of SQL queries
-	print "<p>Executed $num_sql_queries of SQL queries</p>";
+				case "sql":
+					print "<tr bgcolor=\"#7bbfff\">";
+					$num_sql_queries++;
+				break;
+
+				case "cache":
+					print "<tr bgcolor=\"#ddf9ff\">";
+					$num_cache_hits++;
+				break;
+
+				default:
+					print "<tr>";
+				break;
+			}
+			
+			// display
+			print "<td nowrap>". $time_last  ."</td>";
+			print "<td nowrap>". format_size_human($log_record["memory"]) ."</td>";
+			print "<td nowrap>". $log_record["type"] ."</td>";
+			print "<td nowrap>". $log_record["category"] ."</td>";
+			print "<td>". $log_record["content"] ."</td>";
+			print "</tr>";
+
+
+		}
+
+		print "</table>";
+
+
+		// report completion time
+		$time_diff = ($time_last - $time_first);
+
+		print "<p>Completed in $time_diff seconds.</p>";
+
+		// report number of SQL queries
+		print "<p>Executed $num_sql_queries of SQL queries.</p>";
+		print "<p>Executed $num_cache_hits cache lookups.</p>";
+
+	} // end if web UI
 }
 
 
@@ -1596,6 +1740,41 @@ function sort_natural_ipaddress($a, $b)
 	return strnatcmp($a["ipaddress"], $b["ipaddress"]);
 }
 
+
+
+
+
+/*
+	DEBUGGING/PROGRAMMER ASSIST FUNCTIONS
+
+	The following functions are intended for developers working with the Amberphplib codebase
+	or wanting to run debug proceedures.
+*/
+
+
+/*
+	break_array
+
+	Displays the provided array and then terminates the application with die() if set.
+
+	Fields
+	array
+	die		1 == kill, 0 == continue
+
+*/
+
+function break_array($array, $die = 0)
+{
+	print "<pre>";
+	print_r($array);
+	print "</pre>";
+
+	if ($die)
+	{
+		die("Forced execute of break_array()");
+	}
+
+} // end of break_array
 
 
 

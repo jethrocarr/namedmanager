@@ -256,6 +256,11 @@ class sql_query
 	{
 		log_debug("sql_query", "Executing execute()");
 
+		// clear the object values to ensure clean operation if the
+		// object is re-used.
+		$this->data		= NULL;
+		$this->data_num_rows	= NULL;
+
 
 		// clear the object values to ensure clean operation if the
 		// object is re-used.
@@ -339,7 +344,6 @@ class sql_query
 
 		return $num;
 	}
-
 
 
 	/*
@@ -477,7 +481,7 @@ class sql_query
 	{
 		log_write("debug", "sql_query", "Executing trans_begin()");
 
-		if (isset($GLOBALS["sql"]["transaction"]))
+		if (!empty($GLOBALS["sql"]["transaction"]))
 		{
 			// a transaction is already running, do not try and start another one
 			log_debug("sql_query", "Transaction already active, not starting another");
@@ -952,7 +956,7 @@ function sql_get_singlevalue($string)
 
 	if (isset($GLOBALS["cache"]["sql"][$string]))
 	{
-		log_write("sql", "sql_query", "Fetching results from cache");
+		log_write("cache", "sql_query", "Fetching SQL results from cache");
 		return $GLOBALS["cache"]["sql"][$string];
 	}
 	else
@@ -970,7 +974,16 @@ function sql_get_singlevalue($string)
 		else
 		{
 			$sql_obj->fetch_array();
-			$GLOBALS["cache"]["sql"][$string] = $sql_obj->data[0]["value"];
+
+			// if the value is NULL/0/empty, we do not cache - this does mean we do increase lookups somewhat,
+			// but it also fixes issues where queries are used to check the original value of a record before updating
+			// it - which would then cause the cache to expire.
+
+			if (!empty($sql_obj->data[0]["value"]))
+			{
+				$GLOBALS["cache"]["sql"][$string] = $sql_obj->data[0]["value"];
+			}
+
 			return $sql_obj->data[0]["value"];
 		}
 	}
@@ -997,7 +1010,7 @@ function sql_get_singlerow($string)
 	// this function has been added.
 	if (isset($GLOBALS["cache"]["sql"][$string]))
 	{
-		log_write("sql", "sql_query", "Fetching results from cache");
+		log_write("cache", "sql_query", "Fetching SQL results from cache");
 		return $GLOBALS["cache"]["sql"][$string];
 	}
 	else
@@ -1079,5 +1092,130 @@ function sql_get_singlecol($string)
 		}
 	}
 }
+
+
+
+
+/*
+	sql_get_grouped
+
+	Fetches a key-value structure from a SQL database and labels in a grouped structure, useful
+	for dropdowns with multi levels of groups.
+
+	Example Table:
+
+	ID	| KEY		| PARENT
+	1	| Hardware	| 0 <none>
+	2	| Modems	| 1 <Hardware>
+	3	| Cables	| 1 <Hardware>
+	4	| Software	| 0 <none>
+	5	| Linux		| 4 Software
+
+	Example Output:
+
+	ID/KEY
+	Hardware
+	-- Modems
+	-- Cables
+	Software
+	-- Linux
+
+
+	Fields
+	$sql_query	SQL query to execute to load fields "value_id", "value_key", "value_parent".
+
+	Returns
+	array []	["id"]				ID of the group, eg "3"
+			["id_parent"]			ID of the parent, eg "1"
+			["level"]			Level of the group, eg "2"
+			["key_orig"]			Original key string, eg "Cables"
+			["key_formatted"]		Formatted string, eg "-- Cables"
+
+*/
+
+function sql_get_grouped_structure($sql_query)
+{
+	log_write("debug", "inc_sql", "Executing function sql_get_grouped($sql_query)");
+
+	// so many bugs are caused by forgetting to request fields from the DB as "value", so
+	// this function has been added.
+	if (!strstr($sql_query, 'value_id') || 
+		!strstr($sql_query, 'value_key') || 
+		!strstr($sql_query, 'value_parent'))
+	{
+		die("Error: SQL queries to sql_get_singlevalue must request the field with the name of \"value_id\", \"value_key\" and \"value_parent\". Eg: \"SELECT id as value_id, name as value_key, parent as value_parent FROM mytable WHERE id=foo\"");
+	}
+
+
+	// query the database
+	$obj_sql		= New sql_query;
+	$obj_sql->string	= $sql_query;
+	$obj_sql->execute();
+
+	if ($obj_sql->num_rows())
+	{
+		$obj_sql->fetch_array();
+
+		// sort the data by parent ID and index by id, add a prefix to make it associative
+		$sorted_data = array();
+
+		foreach ($obj_sql->data as $data_row)
+		{	
+			$data_clean = array();
+
+			$data_clean['id']		= $data_row["value_id"];
+			$data_clean['id_parent']	= $data_row["value_parent"];
+			$data_clean['level']		= 0;
+			$data_clean['key_orig']		= $data_row["value_key"];
+			$data_clean['key_formatted']	= $data_row["value_key"];
+			
+			$sorted_data['pid_'.$data_row['value_parent']]['id_'.$data_row['value_id']]	= $data_clean;
+		}
+		
+		$regenerated_list = array();
+
+		// add the items with no parent  and unset the parent group
+		$regenerated_list = $sorted_data['pid_0'];
+		unset($sorted_data['pid_0']);
+
+
+		// loop while there is still sorted data remaining
+		while(count($sorted_data) > 0)
+		{
+			// loop through the sorted data
+			foreach($sorted_data as $sorted_key => $sorted_rows) 
+			{
+
+				// obtain the parent ID from the key
+				$parent_id = (int)str_replace("pid_", '', $sorted_key);
+				if(isset($regenerated_list['id_'.$parent_id])) 
+				{	
+					// generate the target parent key, increment the level and modify the name of the items
+					$parent_key	= "id_$parent_id";
+					$parent_level	= $regenerated_list['id_'.$parent_id]['level'];
+					$set_level	= $parent_level + 1;
+
+					foreach ($sorted_rows as $row_key => $row) 
+					{
+						$sorted_rows[$row_key]['level']		= $set_level;
+						$sorted_rows[$row_key]['key_formatted']	= str_repeat("-", $set_level)." ".$row['key_orig'];
+					}
+
+					$regenerated_list = array_insert_after($regenerated_list, $parent_key, $sorted_rows);
+
+					// unset the sorted data after adding it to the new list.
+					unset($sorted_data[$sorted_key]);
+				}			
+			}
+		}
+
+		return $regenerated_list;
+
+	} // end if rows
+
+	return 0;
+
+} // end of sql_get_grouped_structure
+
 
 ?>

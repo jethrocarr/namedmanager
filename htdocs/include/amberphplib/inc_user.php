@@ -50,6 +50,40 @@ class user_auth
 	}
 
 
+	/*
+	   * Checks for alternative session database store (shared)
+	   */
+	function getSessionDatabase($sql_obj) {
+
+		global $config, $session_store_ok;
+
+		// default to storing user session data in this applications database
+		if(!isset($config['session_store'])) {
+			return $sql_obj;	
+		}
+
+		// to stop many errors on failures return
+		if(isset($session_store_ok) && !$session_store_ok) {
+			return New sql_query;
+		}
+
+		if(!$sql_obj->session_init("mysql", $config['session_store']['db_host'], $config['session_store']['db_name'], $config['session_store']['db_user'], $config['session_store']['db_pass'])) {
+
+			if(!isset($session_store_ok) || $session_store_ok) {
+				$session_store_ok = false;
+				log_write("error",'process', 'Unable to connect to session store database. Reverting to local store session storage method. Please check configuration.');
+				log_debug("getSessionDatabase", "falling back to local session store as remote store could not be contacted");
+			}
+
+			$session_sql_obj = New sql_query;
+			return $session_sql_obj;
+		}
+
+		return $sql_obj;
+
+	}
+
+
 
 	/*
 		check_online()
@@ -78,6 +112,18 @@ class user_auth
 		}
 		else
 		{
+			// determine timeout
+			if (empty($GLOBALS["config"]["SESSION_TIMEOUT"]))
+			{
+				// default == two hours (in seconds)
+				$session_timeout = 7200;
+			}
+			else
+			{
+				// use configured setting
+				$session_timeout = $GLOBALS["config"]["SESSION_TIMEOUT"];
+			}
+
 			// get user session data
 			$sql_session_obj		= New sql_query;
 			$sql_session_obj->string 	= "SELECT id, time, ipv4, ipv6 FROM `users_sessions` WHERE authkey='" . $_SESSION["user"]["authkey"] . "' LIMIT 1";
@@ -138,7 +184,7 @@ class user_auth
 				}
 
 				$time = time();
-				if ($time < ($sql_session_obj->data[0]["time"] + 7200))
+				if ($time < ($sql_session_obj->data[0]["time"] + $session_timeout))
 				{
 					// we want to update the time value in the database, but we don't want to do this
 					// on every single page load - no need, and a waste of performance.
@@ -149,6 +195,7 @@ class user_auth
 					{
 						// update time field
 						$sql_obj		= New sql_query;
+						$sql_obj		= $this->getSessionDatabase($sql_obj);
 						$sql_obj->string	= "UPDATE `users_sessions` SET time='$time' WHERE authkey='". $_SESSION["user"]["authkey"] ."' LIMIT 1";
 						$sql_obj->execute();
 					}
@@ -453,13 +500,24 @@ class user_auth
 					$obj_ldap->srvcfg["host"]		= $GLOBALS["config"]["ldap_host"];
 					$obj_ldap->srvcfg["port"]		= $GLOBALS["config"]["ldap_port"];
 					$obj_ldap->srvcfg["base_dn"]		= $GLOBALS["config"]["ldap_dn"];
-					$obj_ldap->srvcfg["user"]		= $GLOBALS["config"]["ldap_manager_user"];
-					$obj_ldap->srvcfg["password"]		= $GLOBALS["config"]["ldap_manager_pwd"];
+					// use the ldap_manager_user if its set, else attempt a bind with the supplied credentials
+					if(isset($GLOBALS["config"]["ldap_manager_user"])) {
+						$obj_ldap->srvcfg["user"]		= $GLOBALS["config"]["ldap_manager_user"];
+						$obj_ldap->srvcfg["password"]		= $GLOBALS["config"]["ldap_manager_pwd"];
+					} else {
+						$obj_ldap->srvcfg["user"] = 'uid=' . $username . ',ou=People,' . $GLOBALS["config"]["ldap_dn"];
+						$obj_ldap->srvcfg["password"] = $password;
+					}
 				}
 
 				// connect to LDAP server
-				if (!$obj_ldap->connect())
+				if ( ( $conn = $obj_ldap->connect() ) <= 0)
 				{
+					if($conn == -1 && !isset($GLOBALS["config"]["ldap_manager_user"]) ) {
+                                                log_debug("user_auth", "Authentication failed due to incorrect password/username combination");
+						return -1;
+					}
+
 					log_write("error", "user_auth", "An error occurred in the authentication backend, please contact your system administrator");
 					return -1;
 				}
@@ -469,6 +527,11 @@ class user_auth
 
 				// run query against users
 				$obj_ldap->search("uid=$username", array("uidnumber", "userpassword"));
+
+				if(!isset($GLOBALS["config"]["ldap_manager_user"]) && isset($obj_ldap->data[0]["uidnumber"][0])) {
+					//authentication has been done by the user supplied credentials and hasn't failed, so we should have a user id here now
+					return $obj_ldap->data[0]["uidnumber"][0];
+				}
 
 				if ($obj_ldap->data_num_rows)
 				{
@@ -826,6 +889,7 @@ class user_auth
 		$time_expired = $time - 43200;
 
 		$sql_obj		= New sql_query;
+		$sql_obj		= $this->getSessionDatabase($sql_obj);
 		$sql_obj->string	= "DELETE FROM `users_sessions` WHERE time < '$time_expired'";
 		$sql_obj->execute();
 
@@ -836,6 +900,7 @@ class user_auth
 			log_write("debug", "inc_users", "User account does not permit concurrent logins, removing all old sessions");
 
 			$sql_obj		= New sql_query;
+			$sql_obj		= $this->getSessionDatabase($sql_obj);
 			$sql_obj->string	= "DELETE FROM `users_sessions` WHERE userid='". $userid ."'";
 			$sql_obj->execute();
 		}
@@ -902,6 +967,7 @@ class user_auth
 		{
 			// remove session entry from DB
 			$sql_obj		= New sql_query;
+			$sql_obj		= $this->getSessionDatabase($sql_obj);
 			$sql_obj->string	= "DELETE FROM `users_sessions` WHERE authkey='" . $_SESSION["user"]["authkey"] . "' LIMIT 1";
 			$sql_obj->execute();
 		}
@@ -1124,7 +1190,7 @@ class user_auth
 			}
 
 			// return permissions value
-			if ($GLOBALS["cache"]["user"]["perms"][$type])
+			if (!empty($GLOBALS["cache"]["user"]["perms"][$type]))
 			{
 				return 1;
 			}

@@ -103,7 +103,7 @@ class ldap_query
 		else
 		{
 			log_debug("ldap_query", "Unable to connect to LDAP database on ". $this->srvcfg["host"] ." as ". $this->srvcfg["user"] ."");
-			return 0;
+			return -1;
 		}
 
 

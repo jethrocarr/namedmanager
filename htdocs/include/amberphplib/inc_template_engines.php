@@ -232,10 +232,10 @@ class template_engine
 				 	{
 				 		$line_tmp = '';
 				 		$match = $matches[1];
-				 		if($current_level_part[$match] != $current_level[$fieldname][($key-1)][$match])
+				 		if ((!isset($current_level[$fieldname][($key-1)][$match]) && $current_level_part[$match])
+							|| ($current_level_part[$match] != $current_level[$fieldname][($key-1)][$match]))
 				 		{
 						 	$line_tmp = str_replace($matches[0], '', $line);
-						 	
 				 		}
 				 		else
 				 		{	// only print what is after the endif
@@ -404,7 +404,7 @@ class template_engine
 						 	{
 						 		$line_tmp = '';
 						 		$match = $matches[1];
-						 		if(($this->data[$match] != '') || ($this->data_array[$match][$j] != ''))
+						 		if (!empty($this->data[$match]) || !empty($this->data_array[$match][$j]))
 						 		{
 								 	$line_tmp = str_replace($matches[0], '', $line);
 								 	
@@ -420,23 +420,44 @@ class template_engine
 							// run through the loop items
 							foreach (array_keys($this->data_array[$fieldname][$j]) as $var)
 							{
-								$line_tmp = str_replace("($var)", $this->data_array[$fieldname][$j][$var], $line_tmp);
+								/*
+									TODO: Need to figure out exactly what is going on here... essentially
+									the non-array version of $this->data_array[$fieldname][$j][$var] are fine
+									but there are array versions mixed in too - appearing in ABS invoice line
+									items mostly.
+									
+									Unfortunatly the invoicing logic is quite complex and will need a code review
+									in the near future, there will be stuff here that could be optimised further.
+
+									For now, the check on array status is the workaround solution.
+								*/
+
+								if (!is_array($this->data_array[$fieldname][$j][$var]))
+								{
+									$line_tmp = str_replace("($var)", $this->data_array[$fieldname][$j][$var], $line_tmp);
+								}
+
 							}
 							
 							// if there are any items left that didn't get matched by any of the loop items, we should
 							// then run through the global variables, as there may be a match there
-							foreach (array_keys($this->data) as $var)
+							if (isset($this->data))
 							{
-								$line_tmp = str_replace("($var)", $this->data[$var], $line_tmp);
+								foreach (array_keys($this->data) as $var)
+								{
+									$line_tmp = str_replace("($var)", $this->data[$var], $line_tmp);
+								}
 							}
 						
 						
 							// And we also need to match any files, as well.
-							foreach (array_keys($this->data_files) as $var)
+							if (isset($this->data_files))
 							{
-								$line_tmp = str_replace("($var)", $this->data_files[$var]["filename_short"], $line_tmp);
+								foreach (array_keys($this->data_files) as $var)
+								{
+									$line_tmp = str_replace("($var)", $this->data_files[$var]["filename_short"], $line_tmp);
+								}
 							}
-							
 							
 							// append the rows to the processed item array
 							$repeated_processed_lines[$j][] = $line_tmp; 
@@ -729,7 +750,9 @@ class template_engine_latex extends template_engine
 		//
 
 		mkdir($tmp_filename ."_texlive", 0700);
-																								
+		
+		// get the current directory so that we can change back after switching to the tmp directory
+		$run_directory = getcwd();
 
 		// process with pdflatex
 		$app_pdflatex = sql_get_singlevalue("SELECT value FROM config WHERE name='APP_PDFLATEX' LIMIT 1");
@@ -738,8 +761,8 @@ class template_engine_latex extends template_engine
 		{
 			log_write("error", "process", "You have selected a template that requires the pdflatex application, however $app_pdflatex does not exist or is not executable by your webserver process");
 		}
-	
-		chdir("/tmp");
+
+		chdir("/tmp"); // TODO: this should be a configurable value, as it will break on non-NIX platforms
 		exec("HOME=/tmp/ $app_pdflatex $tmp_filename.tex", $output);
 		
 		foreach ($output as $line)
@@ -766,11 +789,18 @@ class template_engine_latex extends template_engine
 			// cleanup texlive home directory
 			system("rm -rf ". $tmp_filename ."_texlive");
 
+			// return back to original directory
+			chdir($run_directory);
+
 			return 1;
 		}
 		else
 		{
 			log_write("error", "template_engine_latex", "Unable to use pdflatex ($app_pdflatex) to generate PDF file");
+			
+			// return back to original directory
+			chdir($run_directory);
+			
 			return 0;
 		}
 		
@@ -919,6 +949,14 @@ class template_engine_htmltopdf extends template_engine
 			{
 				$temp_data['invoice_items'][$set_key] = $invoice_row;
 				$i++;
+
+				// if there are new lines in invoice description fields, increment
+				// the counter further to prevent wrap failure.
+				if (!empty($invoice_row["description"]))
+				{
+					$i = $i + substr_count($invoice_row["description"], '<br />');
+				}
+
 //				foreach($invoice_set['invoice_items'] as $row_key => $invoice_row)
 //				{
 //					$i++;
@@ -1041,6 +1079,10 @@ class template_engine_htmltopdf extends template_engine
 			Note: In future, this may be extended to support alternative HTML to PDF rendering engines
 		*/
 
+		// get the current directory so that we can change back after switching to the tmp directory
+		$run_directory = getcwd();
+
+
 		$app_wkhtmltopdf = sql_get_singlevalue("SELECT value FROM config WHERE name='APP_WKHTMLTOPDF' LIMIT 1");
 
 		if (!is_executable($app_wkhtmltopdf))
@@ -1049,12 +1091,50 @@ class template_engine_htmltopdf extends template_engine
 			return 0;
 		}
 	
-		chdir("/tmp");
-		exec("$app_wkhtmltopdf -B 5mm -L 5mm -R 5mm -T 5mm $tmp_filename.html $tmp_filename.pdf", $output);
+		chdir("/tmp");		// TODO: fix this to be a configurable value
+		exec("$app_wkhtmltopdf -B 5mm -L 5mm -R 5mm -T 5mm $tmp_filename.html $tmp_filename.pdf 2>&1", $output);
 
 		foreach ($output as $line)
 		{
 			log_debug("template_engine_htmltopdf", "wkhtmltopdf: $line");
+		}
+
+		if (in_array("wkhtmltopdf: cannot connect to X server", $output))
+		{
+			log_debug("template_engine_htmltopdf", "Known fault on older systems, unable to run wkhtmltopdf without X server instance");
+
+			/*
+				On older distribution versions of wkhtmltopdf, the shipped version of wkhtmltopdf/QT doesn't
+				work without a running X server.
+
+				This was fixed by patching both QT and wkhtmltopdf in later releases, however most distributions
+				don't appear to go to the extend of shipping this patched QT version. On RHEL platforms (as of RHEL 4/5/6), there is
+				no wkhtmltopdf, so we just ship a good package, on Ubuntu (as of 10.04 lts) where is the more limited package
+				we execute a wrapper script which runs a short lived Xorg session in a virtual framebuffer.
+
+				It's not perfect, in testing the PDFs are rendering nicely, apart from the page size being incorrect, regardless what paramaters
+				are passed to it - hence, we give the user a notification warning, so they know why the invoices are weird and how to fix it.
+
+				If we have numerious problems with a popular platform, then it will be worth Amberdms building packages for that platform, but
+				it's not a small effort.
+
+				TODO: Maybe we should have an external/natives/ static binary directory for some key essentials for common architectures?
+			*/
+
+			$install_directory	= dirname( __FILE__ );
+			$legacy_wrapper_cmd	= "$install_directory/../../external/legacy/wkhtmltopdf_x11wrap.sh $tmp_filename.html $tmp_filename.pdf 2>&1";
+
+			log_debug("template_engine_htmltopdf", "Executing $legacy_wrapper_cmd");
+
+			$output = array();
+			exec($legacy_wrapper_cmd, $output);
+	
+			foreach ($output as $line)
+			{
+				log_debug("template_engine_htmltopdf", "wkhtmltopdf (legacy wrapper): $line");
+			}
+
+			log_write("notification", "template_engine_htmltopdf", "Warning: Your server has a older/limited version of wkhtmltopdf installed, this can cause some performance and page-size rendering issues. If these cause you major issues, consider obtaining the static binary version and adjusting the configured executable path. A static version can be found on the wkhtmltopdf developer's website at http://code.google.com/p/wkhtmltopdf/downloads/list ");
 		}
 
 
@@ -1080,11 +1160,18 @@ class template_engine_htmltopdf extends template_engine
 			// cleanup texlive home directory
 			system("rm -rf ". $tmp_filename ."_html_data");
 
+			// return back to original directory
+			chdir($run_directory);
+
 			return 1;
 		}
 		else
 		{
 			log_write("error", "template_engine_htmltopdf", "Unable to use wkhtmltopdf ($app_wkhtmltopdf) to generate PDF file");
+
+			// return back to original directory
+			chdir($run_directory);
+
 			return 0;
 		}
 		

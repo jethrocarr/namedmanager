@@ -438,10 +438,14 @@ function security_form_input_predefined ($type, $valuename, $numchar, $errormsg)
 		case "checkbox":
 			if ($_POST[$valuename])
 			{
+				$_SESSION["error"][$valuename] = 1;
+
 				return 1;
 			}
 			else
 			{
+				$_SESSION["error"][$valuename] = 0;
+
 				return 0;
 			}
 		break;

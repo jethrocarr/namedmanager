@@ -61,7 +61,9 @@ function log_write($type, $category, $content)
 		{
 			if ($_SESSION["mode"] == "cli")
 			{
-				print "Debug: $content\n";
+				$content = str_replace("\n", "\\n", $content);	// fix newlines
+
+				print "Debug: ". sprintf("%-10.10s", $type) ." | ". sprintf("%-20.20s", $category) ." | $content\n";
 			}
 		}
 	}
@@ -97,7 +99,7 @@ function log_write($type, $category, $content)
 
 @log_debug("start", "");
 @log_debug("start", "AMBERPHPLIB STARTED");
-@log_debug("start", "Debugging for: ". $_SERVER["REQUEST_URI"] ."");
+@log_debug("start", "Debugging for: ". str_replace("&", " &", $_SERVER["REQUEST_URI"]) ."");
 @log_debug("start", "");
 
 
