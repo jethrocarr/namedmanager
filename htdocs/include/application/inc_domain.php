@@ -451,7 +451,7 @@ class domain
 		log_debug("domain", "Executing action_create()");
 
 		// create a new domain
-		$this->sql_obj->string	= "INSERT INTO `dns_domains` (domain_name) VALUES ('". $this->data["domain_name"] ."')";
+		$this->sql_obj->string	= "INSERT INTO `dns_domains` (domain_name, domain_description) VALUES ('". $this->data["domain_name"] ."', '')";
 		$this->sql_obj->execute();
 
 		$this->id = $this->sql_obj->fetch_insert_id();
@@ -1428,6 +1428,11 @@ class domain_records extends domain
 		if (!isset($this->data_record["name"]))
 		{
 			$this->data_record["name"]	= $this->data["name"];
+		}
+
+		if (empty($this->data_record["prio"]))
+		{
+			$this->data_record["prio"] = 0;
 		}
 
 

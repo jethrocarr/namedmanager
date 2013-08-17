@@ -159,7 +159,7 @@ class name_server
 
 		// create a new server
 		$sql_obj		= New sql_query;
-		$sql_obj->string	= "INSERT INTO `name_servers` (server_name, api_sync_config, api_sync_log) VALUES ('". $this->data["server_name"] ."', '1', '1')";
+		$sql_obj->string	= "INSERT INTO `name_servers` (server_name, server_description, api_sync_config, api_sync_log) VALUES ('". $this->data["server_name"] ."', '', '1', '1')";
 		$sql_obj->execute();
 
 		$this->id = $sql_obj->fetch_insert_id();

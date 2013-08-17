@@ -15,8 +15,8 @@
 */
 class changelog
 {
-	var $id_server;		// name server ID (if appropiate)
-	var $id_domain;		// domain ID (if appropiate)
+	var $id_server = 0;		// name server ID (if appropiate)
+	var $id_domain = 0;		// domain ID (if appropiate)
 
 	var $username;
 
