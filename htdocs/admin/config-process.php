@@ -62,6 +62,8 @@ if (user_permissions_get("namedadmins"))
 
 	$data["PAGINATION_DOMAIN_RECORDS"]	= security_form_input_predefined("int", "PAGINATION_DOMAIN_RECORDS", 1, "");
 	
+	$data["PHONE_HOME"]			= security_form_input_predefined("checkbox", "PHONE_HOME", 0, "");
+	
 
 
 

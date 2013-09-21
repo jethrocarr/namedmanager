@@ -230,6 +230,25 @@ class page_output
 		$this->obj_form->add_input($structure);
 
 
+		// amberstats phone home
+		$structure = NULL;
+		$structure["fieldname"]				= "PHONE_HOME";
+		$structure["type"]				= "checkbox";
+		$structure["options"]["label"]			= "Report back to the developers with application, OS, PHP version and a random unique ID so we can better improve this software. (all information is anonymous, private and greatly appreciated. We use this information to focus development and packaging on the main platforms our users are running to better meet your needs.";
+		$structure["options"]["no_translate_fieldname"]	= "yes";
+		$this->obj_form->add_input($structure);
+
+		$phone_home_info = New phone_home;
+		$phone_home_info->stats_generate();
+
+		$structure = NULL;
+		$structure["fieldname"]				= "PHONE_HOME_EXAMPLE";
+		$structure["type"]				= "text";
+		$structure["defaultvalue"]			= "<i>Actual information to be sent: ". format_arraytocommastring(array_values($phone_home_info->stats)) ."</i>";
+		$structure["options"]["no_fieldname"]		= "yes";
+		$structure["options"]["no_shift"]		= "yes";
+		$this->obj_form->add_input($structure);
+
 
 		// submit section
 		$structure = NULL;
@@ -247,6 +266,7 @@ class page_output
 		$this->obj_form->subforms["config_dateandtime"]		= array("DATEFORMAT", "TIMEZONE_DEFAULT");
 		$this->obj_form->subforms["config_logging"]		= array("FEATURE_LOGS_ENABLE", "FEATURE_LOGS_AUDIT", "FEATURE_LOGS_API", "LOG_UPDATE_INTERVAL", "LOG_RETENTION_PERIOD");
 		$this->obj_form->subforms["config_miscellaneous"]	= array("PAGINATION_DOMAIN_RECORDS");
+		$this->obj_form->subforms["config_amberstats"]		= array("PHONE_HOME", "PHONE_HOME_EXAMPLE");
 		$this->obj_form->subforms["submit"]			= array("submit");
 
 
