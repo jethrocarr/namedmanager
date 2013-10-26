@@ -12,7 +12,6 @@
 include_once("../include/config.php");
 include_once("../include/amberphplib/main.php");
 
-
 if (user_permissions_get("namedadmins"))
 {
 	/*
@@ -27,26 +26,26 @@ if (user_permissions_get("namedadmins"))
 	$data["ZONE_DB_USERNAME"]		= @security_form_input_predefined("any", "ZONE_DB_USERNAME", 1, "");
 	$data["ZONE_DB_PASSWORD"]		= @security_form_input_predefined("any", "ZONE_DB_PASSWORD", 0, "");
 
-	$data["DEFAULT_HOSTMASTER"]		= security_form_input_predefined("email", "DEFAULT_HOSTMASTER", 1, "");
-	$data["DEFAULT_TTL_SOA"]		= security_form_input_predefined("int", "DEFAULT_TTL_SOA", 1, "");
-	$data["DEFAULT_TTL_NS"]			= security_form_input_predefined("int", "DEFAULT_TTL_NS", 1, "");
-	$data["DEFAULT_TTL_MX"]			= security_form_input_predefined("int", "DEFAULT_TTL_MX", 1, "");
-	$data["DEFAULT_TTL_OTHER"]		= security_form_input_predefined("int", "DEFAULT_TTL_OTHER", 1, "");
+	$data["DEFAULT_HOSTMASTER"]		= @security_form_input_predefined("email", "DEFAULT_HOSTMASTER", 1, "");
+	$data["DEFAULT_TTL_SOA"]		= @security_form_input_predefined("int", "DEFAULT_TTL_SOA", 1, "");
+	$data["DEFAULT_TTL_NS"]			= @security_form_input_predefined("int", "DEFAULT_TTL_NS", 1, "");
+	$data["DEFAULT_TTL_MX"]			= @security_form_input_predefined("int", "DEFAULT_TTL_MX", 1, "");
+	$data["DEFAULT_TTL_OTHER"]		= @security_form_input_predefined("int", "DEFAULT_TTL_OTHER", 1, "");
 
-	$data["ADMIN_API_KEY"]			= security_form_input_predefined("any", "ADMIN_API_KEY", 1, "");
-
-	$data["DATEFORMAT"]			= security_form_input_predefined("any", "DATEFORMAT", 1, "");
-	$data["TIMEZONE_DEFAULT"]		= security_form_input_predefined("any", "TIMEZONE_DEFAULT", 1, "");
+	$data["ADMIN_API_KEY"]			= @security_form_input_predefined("any", "ADMIN_API_KEY", 1, "");
 	
-	$data["FEATURE_LOGS_ENABLE"]		= security_form_input_predefined("checkbox", "FEATURE_LOGS_ENABLE", 0, "");
+	$data["DATEFORMAT"]			= @security_form_input_predefined("any", "DATEFORMAT", 1, "");
+	$data["TIMEZONE_DEFAULT"]		= @security_form_input_predefined("any", "TIMEZONE_DEFAULT", 1, "");
+	
+	$data["FEATURE_LOGS_ENABLE"]		= @security_form_input_predefined("checkbox", "FEATURE_LOGS_ENABLE", 0, "");
 
 	if ($data["FEATURE_LOGS_ENABLE"])
 	{
-		$data["FEATURE_LOGS_API"]	= security_form_input_predefined("checkbox", "FEATURE_LOGS_API", 0, "");
-		$data["FEATURE_LOGS_AUDIT"]	= security_form_input_predefined("checkbox", "FEATURE_LOGS_AUDIT", 0, "");
-		$data["FEATURE_LOGS_PERIOD"]	= security_form_input_predefined("int", "FEATURE_LOGS_PERIOD", 0, "");
-		$data["LOG_RETENTION_PERIOD"]	= security_form_input_predefined("int", "LOG_RETENTION_PERIOD", 0, "");
-		$data["LOG_UPDATE_INTERVAL"]	= security_form_input_predefined("int", "LOG_UPDATE_INTERVAL", 1, "");
+		$data["FEATURE_LOGS_API"]	= @security_form_input_predefined("checkbox", "FEATURE_LOGS_API", 0, "");
+		$data["FEATURE_LOGS_AUDIT"]	= @security_form_input_predefined("checkbox", "FEATURE_LOGS_AUDIT", 0, "");
+		$data["FEATURE_LOGS_PERIOD"]	= @security_form_input_predefined("int", "FEATURE_LOGS_PERIOD", 0, "");
+		$data["LOG_RETENTION_PERIOD"]	= @security_form_input_predefined("int", "LOG_RETENTION_PERIOD", 0, "");
+		$data["LOG_UPDATE_INTERVAL"]	= @security_form_input_predefined("int", "LOG_UPDATE_INTERVAL", 1, "");
 
 		$data["LOG_RETENTION_CHECKTIME"]	= 0; // reset check time, so that the log retention processes run
 	}
@@ -60,16 +59,16 @@ if (user_permissions_get("namedadmins"))
 		$data["LOG_UPDATE_INTERVAL"]		= "5";
 	}
 
-	$data["PAGINATION_DOMAIN_RECORDS"]	= security_form_input_predefined("int", "PAGINATION_DOMAIN_RECORDS", 1, "");
+	$data["PAGINATION_DOMAIN_RECORDS"]	= @security_form_input_predefined("int", "PAGINATION_DOMAIN_RECORDS", 1, "");
 	
-	$data["PHONE_HOME"]			= security_form_input_predefined("checkbox", "PHONE_HOME", 0, "");
+	$data["PHONE_HOME"]			= @security_form_input_predefined("checkbox", "PHONE_HOME", 0, "");
 	
-
-
+		
 
 	/*
 		Test Zone Database
-	*/
+
+		Disabled for now, currently we only support our internal DB.
 
 	if ($data["ZONE_DB_TYPE"] == "powerdns_mysql")
 	{
@@ -96,6 +95,7 @@ if (user_permissions_get("namedadmins"))
 	{
 		log_write("notification", "process", "Using internal application database for record storage");
 	}
+	*/
 
 
 	/*
