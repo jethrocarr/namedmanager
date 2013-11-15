@@ -1435,6 +1435,13 @@ class domain_records extends domain
 			$this->data_record["prio"] = 0;
 		}
 
+		if (empty($this->data_record["ttl"]))
+		{
+			// can't have an empty TTL, must be "0" (eg CNAMEs)
+			$this->data_record["ttl"] = 0;
+		}
+
+
 
 
 		/*
