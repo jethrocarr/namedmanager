@@ -249,6 +249,29 @@ class bind_api extends soap_api
 		{
 			foreach ($this->domains as $domain)
 			{
+				// we can assume a utf8 filesystem, but bind requires we convert the domain names
+				// to an IDN format (eg παράδειγμα.δοκιμή -> xn--hxajbheg2az3al.xn--jxalpdlp) before
+				// it can resolve DNS requests.
+				//
+				// Requires PHP > 5.4 and/or PHP with intl package installed.
+
+				if (function_exists("idn_to_ascii"))
+				{
+					$domain["domain_name_idn"]	= $domain["domain_name"];
+					$domain["domain_name"]		= idn_to_ascii($domain["domain_name"]);
+				
+					if ($domain["domain_name"] != $domain["domain_name_idn"])
+					{
+						fwrite($fh, "// UTF-8 Compatibility: ". $domain["domain_name_idn"] ." renamed to ". $domain["domain_name"] ."\n");
+					}
+				}
+				else
+				{
+					// this will break international domains, but will work for all other domains
+					log_write("warning", "script", "idn/international functions not available on this server, UTF-8 domains may be handled incorrectly");
+				}
+
+
 				fwrite($fh, "zone \"". $domain["domain_name"] ."\" IN {\n");
 				fwrite($fh, "\ttype master;\n");
 				
@@ -334,7 +357,15 @@ class bind_api extends soap_api
 		{
 			foreach ($this->domains as $domain)
 			{
-				$domains_new[] = $domain["domain_name"];
+				// UTF-8 compatibility
+				if (function_exists("idn_to_ascii"))
+				{
+					$domains_new[] = idn_to_ascii($domain["domain_name"]);
+				}
+				else
+				{
+					$domains_new[] = $domain["domain_name"];
+				}
 			}
 		}
 
@@ -382,8 +413,13 @@ class bind_api extends soap_api
 		log_write("debug", "script", "Generating new zonefile for $domain_name");
 
 
+		// UTF-8 compatibility
+		if (function_exists("idn_to_ascii"))
+		{
+			$domain_name = idn_to_ascii($domain_name);
+		}
+	
 		$zonefile = $GLOBALS["config"]["bind"]["zonefiledir"] ."/". $domain_name .".zone";
-
 
 		// open zonefile for writing
 		if (!$fh = fopen("$zonefile.tmp", "w"))
@@ -416,6 +452,14 @@ class bind_api extends soap_api
 		{
 			if ($domain["id"] == $domain_id)
 			{
+				// UTF-8 compatibility
+				if (function_exists("idn_to_ascii"))
+				{
+					$domain["domain_name"]		= idn_to_ascii($domain["domain_name"]);
+					$domain["soa_hostmaster"]	= idn_to_ascii($domain["soa_hostmaster"]);
+					$domain["soa_ns_primary"]	= idn_to_ascii($domain["soa_ns_primary"]);
+				}
+
 				// header
 				fwrite($fh, "\$ORIGIN ". $domain["domain_name"] .".\n");
 				fwrite($fh, "\$TTL ". $domain["soa_default_ttl"] ."\n");
@@ -445,6 +489,13 @@ class bind_api extends soap_api
 
 		foreach ($this->records as $record)
 		{
+			// UTF-8 compatibility
+			if (function_exists("idn_to_ascii"))
+			{
+				$record["record_name"]		= idn_to_ascii($record["record_name"]);
+				$record["record_content"]	= idn_to_ascii($record["record_content"]);
+			}
+
 			if ($record["record_type"] == "NS")
 			{
 				// handle origin and content format
