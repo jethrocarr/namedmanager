@@ -1695,7 +1695,7 @@ class domain_records extends domain
 
 
 				// verify name syntax
-				if ($data_tmp[$i]["name"] == "*" || preg_match("/^\*\.[A-Za-z0-9:._-]+$/", $data_tmp[$i]["name"]))
+				if ($data_tmp[$i]["name"] == "*" || preg_match("/^\*\.[A-Za-z0-9\p{L}:._-]+$/", $data_tmp[$i]["name"]))
 				{
 					// wildcard records are annoying - wildcards must be standalone, and can't be part of a sring
 					// OK  -> *
@@ -1705,7 +1705,7 @@ class domain_records extends domain
 
 					// nothing todo
 				}
-				elseif ($data_tmp[$i]["name"] != "@" && !preg_match("/^[A-Za-z0-9:._-]*$/", $data_tmp[$i]["name"]))
+				elseif ($data_tmp[$i]["name"] != "@" && !preg_match("/^[A-Za-z0-9\p{L}:._-]*$/", $data_tmp[$i]["name"]))
 				{
 					// all other record types
 					log_write("error", "process", "Sorry, the value you have entered for record ". $data_tmp[$i]["name"] ." contains invalid charactors");
@@ -1741,7 +1741,7 @@ class domain_records extends domain
 
 						case "CNAME":
 							// validate CNAME
-							if ($data_tmp[$i]["content"] != "@" && !preg_match("/^[A-Za-z0-9._-]*$/", $data_tmp[$i]["content"]))
+							if ($data_tmp[$i]["content"] != "@" && !preg_match("/^[A-Za-z0-9\p{L}._-]*$/", $data_tmp[$i]["content"]))
 							{
 								// invalid CNAME
 								log_write("error", "process", "CNAME record for ". $data_tmp[$i]["name"] ." contains invalid characters.");
@@ -1759,14 +1759,14 @@ class domain_records extends domain
 
 						case "SRV":
 							// validate SRV name (_service._proto.name)
-							if (!preg_match("/^_[A-Za-z0-9.-]*\._[A-Za-z]*\.[A-Za-z0-9.-]*$/", $data_tmp[$i]["name"]))
+							if (!preg_match("/^_[A-Za-z0-9\p{L}.-]*\._[A-Za-z\p{L}]*\.[A-Za-z0-9\p{L}.-]*$/", $data_tmp[$i]["name"]))
 							{
 								log_write("error", "process", "SRV record for ". $data_tmp[$i]["name"] ." is not correctly formatted - name must be: _service._proto.name");
 								error_flag_field("record_custom_". $i ."");
 							}
 
 							// validate SRV content (priority, weight, port, target/host)
-							if (!preg_match("/^[0-9]*\s[0-9]*\s[0-9]*\s[A-Za-z0-9.-]*$/", $data_tmp[$i]["content"]))
+							if (!preg_match("/^[0-9]*\s[0-9]*\s[0-9]*\s[A-Za-z0-9\p{L}.-]*$/", $data_tmp[$i]["content"]))
 							{
 								log_write("error", "process", "SRV record for ". $data_tmp[$i]["name"] ." is not correctly formatted - content must be: priority weight port target/hostname");
 								error_flag_field("record_custom_". $i ."");
@@ -1795,7 +1795,7 @@ class domain_records extends domain
 									error_flag_field("record_custom_". $i ."");
 								}
 
-								if (!preg_match("/^[A-Za-z0-9.-]*$/", $data_tmp[$i]["content"]))
+								if (!preg_match("/^[A-Za-z0-9\p{L}.-]*$/", $data_tmp[$i]["content"]))
 								{
 									log_write("error", "process", "PTR reverse record for ". $data_tmp[$i]["name"] ." is not correctly formatted.");
 									error_flag_field("record_custom_". $i ."");
@@ -1822,7 +1822,7 @@ class domain_records extends domain
 									error_flag_field("record_custom_". $i ."");
 								}
 
-								if (!preg_match("/^[A-Za-z0-9.-]*$/", $data_tmp[$i]["content"]))
+								if (!preg_match("/^[A-Za-z0-9\p{L}.-]*$/", $data_tmp[$i]["content"]))
 								{
 									log_write("error", "process", "Provided PTR IPv6 reverse record for ". $data_tmp[$i]["name"] ." is not correctly formatted.");
 									error_flag_field("record_custom_". $i ."");

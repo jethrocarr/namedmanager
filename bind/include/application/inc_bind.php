@@ -531,6 +531,14 @@ class bind_api extends soap_api
 
 		foreach ($this->records as $record)
 		{
+			// UTF-8 compatibility
+			if (function_exists("idn_to_ascii"))
+			{
+				$record["record_name"]		= idn_to_ascii($record["record_name"]);
+				$record["record_content"]	= idn_to_ascii($record["record_content"]);
+			}
+
+
 			if ($record["record_type"] == "MX")
 			{
 				// handle origin and content format
@@ -557,6 +565,14 @@ class bind_api extends soap_api
 
 		foreach ($this->records as $record)
 		{
+			// UTF-8 compatibility
+			if (function_exists("idn_to_ascii"))
+			{
+				$record["record_name"]		= idn_to_ascii($record["record_name"]);
+				$record["record_content"]	= idn_to_ascii($record["record_content"]);
+			}
+
+
 			if ($record["record_type"] == "PTR")
 			{
 				if (strpos($record["record_name"], "ip6.arpa"))
@@ -577,6 +593,14 @@ class bind_api extends soap_api
 
 		foreach ($this->records as $record)
 		{
+			// UTF-8 compatibility
+			if (function_exists("idn_to_ascii"))
+			{
+				$record["record_name"]		= idn_to_ascii($record["record_name"]);
+				$record["record_content"]	= idn_to_ascii($record["record_content"]);
+			}
+
+
 			if ($record["record_type"] == "CNAME")
 			{
 				if (preg_match("/\./", $record["record_name"]) && preg_match("/". $domain_name ."$/", $record["record_name"]))
@@ -607,6 +631,14 @@ class bind_api extends soap_api
 
 		foreach ($this->records as $record)
 		{
+			// UTF-8 compatibility
+			if (function_exists("idn_to_ascii"))
+			{
+				$record["record_name"]		= idn_to_ascii($record["record_name"]);
+				$record["record_content"]	= idn_to_ascii($record["record_content"]);
+			}
+
+
 			if (!in_array($record["record_type"], array("NS", "MX", "PTR", "CNAME", "SOA")))
 			{
 				switch($record["record_type"])
