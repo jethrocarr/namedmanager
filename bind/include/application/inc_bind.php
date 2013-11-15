@@ -69,6 +69,13 @@ class bind_api extends soap_api
 
 	function check_domain_serial( $domain_name )
 	{
+		// UTF-8 compatibility
+		if (function_exists("idn_to_ascii"))
+		{
+			$domain_name = idn_to_ascii($domain_name);
+		}
+	
+
 		// set zonefile location
 		$zonefile = $GLOBALS["config"]["bind"]["zonefiledir"] ."/". $domain_name .".zone";
 
