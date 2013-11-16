@@ -626,6 +626,30 @@ if (user_permissions_get("namedadmins"))
 					} // end of zonefile line loop
 
 
+					/*
+						ASCII->UTF-8 translation
+
+						Bind zonefiles are stored in an ASCII format and any special characters need to be
+						converted back into their native UTF-8 version for storage in the DB.
+					*/
+
+					if (function_exists("idn_to_utf8"))
+					{
+						$data["domain_name"]		= idn_to_utf8($data["domain_name"]);
+						$data["domain_primary_ns"]	= idn_to_utf8($data["domain_primary_ns"]);
+						$data["soa_hostmaster"]		= idn_to_utf8($data["soa_hostmaster"]);
+
+						for ($i=0; $i < count($data["records"]); $i++)
+						{
+							$data["records"][$i]["name"]	= idn_to_utf8($data["records"][$i]["name"]);
+							$data["records"][$i]["content"]	= idn_to_utf8($data["records"][$i]["content"]);
+						}
+					}
+					else
+					{
+						log_write("warning", "process", 'Unable to do any IDN->UTF8 conversions');
+					}
+
 
 					/*
 						Domain Type Handling
