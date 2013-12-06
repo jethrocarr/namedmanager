@@ -17,5 +17,7 @@ require("inc_domain.php");
 require("inc_servers.php");
 require("inc_server_groups.php");
 
+// cloud providers
+require("inc_cloud_route53.php");
 
 ?>

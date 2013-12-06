@@ -39,19 +39,53 @@ if (user_permissions_get('namedadmins'))
 		}
 	}
 
-	// basic fields
-	$obj_name_server->data["server_name"]			= security_form_input("/^\S*$/", "server_name", 1, "Must be a valid hostname.");
-	$obj_name_server->data["server_description"]		= security_form_input_predefined("any", "server_description", 0, "");
-	$obj_name_server->data["id_group"]			= security_form_input_predefined("int", "id_group", 1, "");
-	$obj_name_server->data["server_primary"]		= security_form_input_predefined("checkbox", "server_primary", 0, "");
-	$obj_name_server->data["server_record"]			= security_form_input_predefined("checkbox", "server_record", 0, "");
+	
+	// Server/API Type
 
 	$obj_name_server->data["server_type"]			= security_form_input_predefined("any", "server_type", 1, "");
 
-	if ($obj_name_server->data["server_type"] == "api")
+	switch ($obj_name_server->data["server_type"])
 	{
-		$obj_name_server->data["api_auth_key"]		= security_form_input_predefined("any", "api_auth_key", 1, "");
+		case "route53":
+			$obj_name_server->data["server_name"]		= security_form_input("/^[\S\s]*$/", "server_name", 1, "Must be a simple string, eg \"Route53 Cloud\"");
+			$obj_name_server->data["server_primary"]	= 0;
+			$obj_name_server->data["server_record"]		= 1;
+
+			$obj_name_server->data["route53_access_key"]	= security_form_input_predefined("any", "route53_access_key", 1, "");
+			$obj_name_server->data["route53_secret_key"]	= security_form_input_predefined("any", "route53_secret_key", 0, "");
+
+			// we store both credentials in the single api filed as serialized keys
+			if (empty($obj_name_server->data["route53_secret_key"]) && !empty($obj_name_server->data["api_auth_key"]))
+			{
+				// we have existing credetials, unserize the old secret key and pass it back.
+				$keys = unserialize($obj_name_server->data["api_auth_key"]);
+
+				$obj_name_server->data["route53_secret_key"] = $keys["route53_secret_key"];
+			}
+			else
+			{
+				// new credentials,generate an array to serialize
+				$keys = array('route53_access_key' => $obj_name_server->data["route53_access_key"],
+						'route53_secret_key' => $obj_name_server->data["route53_secret_key"]);
+			}
+
+			$obj_name_server->data["api_auth_key"] = serialize($keys);
+		break;
+
+		case "api":
+		default:
+			$obj_name_server->data["server_name"]		= security_form_input("/^\S*$/", "server_name", 1, "Must be a valid hostname.");
+			$obj_name_server->data["server_primary"]	= security_form_input_predefined("checkbox", "server_primary", 0, "");
+			$obj_name_server->data["server_record"]		= security_form_input_predefined("checkbox", "server_record", 0, "");
+			$obj_name_server->data["api_auth_key"]		= security_form_input_predefined("any", "api_auth_key", 1, "");
+		break;
 	}
+
+
+	// Other basic fields
+	$obj_name_server->data["server_description"]		= security_form_input_predefined("any", "server_description", 0, "");
+	$obj_name_server->data["id_group"]			= security_form_input_predefined("int", "id_group", 1, "");
+
 
 
 
@@ -99,6 +133,33 @@ if (user_permissions_get('namedadmins'))
 
 		error_flag_field("id_group");
 		error_flag_field("server_record");
+	}
+
+
+	/*
+		Optional: Verify Amazon AWS Route53 Hosted DNS Provider
+	*/
+
+	if (!empty($obj_name_server->data["route53_access_key"]))
+	{
+
+		// verify the credentials are correct
+		try {
+			$route53 = Aws\Route53\Route53Client::factory(array(
+				'key'    => $obj_name_server->data["route53_access_key"],
+				'secret' => $obj_name_server->data["route53_secret_key"]
+			));
+
+			$query = $route53->listHostedZones();
+
+		}
+		catch (Aws\Route53\Exception\Route53Exception $e)
+		{
+			log_write("error", "process", "Unable to connect to Route53 with provided credentials");
+			log_write("error", "process", "Failure returned: ". $e->getExceptionCode() ."");
+			error_flag_field("route53_access_key");
+			error_flag_field("route53_secret_key");
+		}
 	}
 
 

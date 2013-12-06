@@ -456,7 +456,6 @@ class domain
 
 		$this->id = $this->sql_obj->fetch_insert_id();
 
-
 		return $this->id;
 
 	} // end of action_create
@@ -778,7 +777,7 @@ class domain
 		*/
 
 		$obj_ns_sql		= New sql_query;
-		$obj_ns_sql->string	= "SELECT name_servers.server_name as server_name FROM name_servers LEFT JOIN dns_domains_groups ON dns_domains_groups.id_group = name_servers.id_group WHERE dns_domains_groups.id_domain='". $this->id ."' AND name_servers.server_record='1'";
+		$obj_ns_sql->string	= "SELECT name_servers.id as server_id, name_servers.server_name as server_name, name_servers.server_type as server_type FROM name_servers LEFT JOIN dns_domains_groups ON dns_domains_groups.id_group = name_servers.id_group WHERE dns_domains_groups.id_domain='". $this->id ."' AND name_servers.server_record='1'";
 		$obj_ns_sql->execute();
 		$obj_ns_sql->fetch_array();
 
@@ -789,8 +788,35 @@ class domain
 			*/
 			foreach ($obj_ns_sql->data as $data_ns)
 			{
-				$this->sql_obj->string		= "INSERT INTO `dns_records` (id_domain, name, type, content, ttl) VALUES ('". $this->id ."', '". $this->data["domain_name"] ."', 'NS', '". $data_ns["server_name"] ."', '". $GLOBALS["config"]["DEFAULT_TTL_NS"] ."')";
-				$this->sql_obj->execute();
+				switch ($data_ns["server_type"])
+				{
+					case "route53":
+						// Route53 delegated name servers are recorded in the mapping table. We just take
+						// the values from that and create an NS record for each one.
+
+						$delegated_zones = sql_get_singlevalue("SELECT delegated_ns as value FROM cloud_zone_map WHERE id_name_server='". $data_ns["server_id"] ."' AND id_domain='". $this->id ."'");
+
+						if ($delegated_zones)
+						{
+							foreach (unserialize($delegated_zones) as $nameserver)
+							{
+								$this->sql_obj->string		= "INSERT INTO `dns_records` (id_domain, name, type, content, ttl) VALUES ('". $this->id ."', '". $this->data["domain_name"] ."', 'NS', '$nameserver', '". $GLOBALS["config"]["DEFAULT_TTL_NS"] ."')";
+								$this->sql_obj->execute();
+							}
+						}
+						else
+						{
+							log_write("warning", "inc_domains", "Domain is configured for Route53, but doesn't have delegated NS records yet.");
+						}
+					break;
+
+					case "api":
+					default:
+						// Create single NS entry for this Name Server
+						$this->sql_obj->string		= "INSERT INTO `dns_records` (id_domain, name, type, content, ttl) VALUES ('". $this->id ."', '". $this->data["domain_name"] ."', 'NS', '". $data_ns["server_name"] ."', '". $GLOBALS["config"]["DEFAULT_TTL_NS"] ."')";
+						$this->sql_obj->execute();
+					break;
+				}
 			}
 		}
 
@@ -849,6 +875,41 @@ class domain
 
 
 		/*
+			Delete domain from cloud providers (eg Route53)
+		*/
+
+		$obj_ns_sql		= New sql_query;
+		$obj_ns_sql->string	= "SELECT name_servers.id as server_id, name_servers.server_type as server_type FROM name_servers LEFT JOIN dns_domains_groups ON dns_domains_groups.id_group = name_servers.id_group WHERE dns_domains_groups.id_domain='". $this->id ."' AND name_servers.server_record='1'";
+		$obj_ns_sql->execute();
+		$obj_ns_sql->fetch_array();
+
+		if ($obj_ns_sql->num_rows())
+		{
+			foreach ($obj_ns_sql->data as $data_ns)
+			{
+				switch ($data_ns["server_type"])
+				{
+					case "route53":
+
+						$obj_route53 = New cloud_route53;
+
+						$obj_route53->select_account($data_ns["server_id"]);
+						$obj_route53->select_domain($this->id);
+
+						$obj_route53->action_delete_domain();
+
+					break;
+
+					default:
+						// nothing todo.
+					break;
+				}
+			}
+		}
+	
+
+
+		/*
 			Delete domain
 		*/
 			
@@ -860,7 +921,10 @@ class domain
 			Delete association with name server group
 		*/
 
-		$this->sql_obj->string	= "DELETE FROM `dns_domains_groups` WHERE id_domain='". $this->id ."' LIMIT 1";
+		$this->sql_obj->string	= "DELETE FROM `dns_domains_groups` WHERE id_domain='". $this->id ."'";
+		$this->sql_obj->execute();
+
+		$this->sql_obj->string	= "DELETE FROM `cloud_zone_map` WHERE id_domain='". $this->id ."'";
 		$this->sql_obj->execute();
 
 
@@ -1457,7 +1521,7 @@ class domain_records extends domain
 						."WHERE id='". $this->id_record ."' LIMIT 1";
 		$this->sql_obj->execute();
 
-	
+
 
 		/*
 			Commit
@@ -1533,7 +1597,6 @@ class domain_records extends domain
 			
 		$this->sql_obj->string	= "DELETE FROM `dns_records` WHERE id='". $this->id_record ."' LIMIT 1";
 		$this->sql_obj->execute();
-
 
 
 		/*

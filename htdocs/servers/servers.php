@@ -100,6 +100,21 @@ class page_output
 				$this->obj_table->data[$i]["sync_status_zones"]		= "<span class=\"table_highlight_open\">". lang_trans("status_databasesync") ."</span>";
 				$this->obj_table->data[$i]["sync_status_log"]		= "<span class=\"table_highlight_open\">". lang_trans("status_databasesync") ."</span>";
 			}
+
+			// overides for special server types
+			switch ($this->obj_table->data[$i]["server_type"])
+			{
+				case "route53":
+					// no logs on route53
+					$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_disabled\">". lang_trans("status_disabled") ."</span>";
+
+					// set primary and NS record for route53 hosts
+					$this->obj_table->data[$i]["server_primary"]	= 1;
+					$this->obj_table->data[$i]["server_record"]	= 1;
+				break;
+			}
+	
+
 		}
 
 	}

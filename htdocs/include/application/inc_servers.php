@@ -449,6 +449,9 @@ class name_server
 		$sql_obj->string	= "DELETE FROM name_servers WHERE id='". $this->id ."' LIMIT 1";
 		$sql_obj->execute();
 
+		$sql_obj->string	= "DELETE FROM cloud_zone_map WHERE id='". $this->id ."'";
+		$sql_obj->execute();
+
 
 		/*
 			Un-associated any matched log entries

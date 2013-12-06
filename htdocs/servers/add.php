@@ -53,6 +53,65 @@ class page_output
 		$this->obj_form->add_input($structure);
 
 
+
+		// api	
+		$structure = NULL;
+		$structure["fieldname"]		= "server_type";
+		$structure["type"]		= "radio";
+		$structure["values"]		= array("api", "route53");
+		
+		if ($GLOBALS["config"]["ZONE_DB_TYPE"] == "powerdns-mysql")
+		{
+			$structure["values"][] = "powerdns-compat";
+		}
+
+		$structure["defaultvalue"]	= "api";
+		$this->obj_form->add_input($structure);
+
+		$this->obj_form->add_action("server_type", "default", "api_auth_key", "hide");
+		$this->obj_form->add_action("server_type", "default", "server_primary", "show");
+		$this->obj_form->add_action("server_type", "default", "server_record", "show");
+		$this->obj_form->add_action("server_type", "default", "route53_access_key", "hide");
+		$this->obj_form->add_action("server_type", "default", "route53_secret_key", "hide");
+
+		$this->obj_form->add_action("server_type", "api", "api_auth_key", "show");
+		$this->obj_form->add_action("server_type", "api", "server_primary", "show");
+		$this->obj_form->add_action("server_type", "api", "server_record", "show");
+		$this->obj_form->add_action("server_type", "api", "route53_access_key", "hide");
+		$this->obj_form->add_action("server_type", "api", "route53_secret_key", "hide");
+
+		$this->obj_form->add_action("server_type", "route53", "api_auth_key", "hide");
+		$this->obj_form->add_action("server_type", "route53", "server_primary", "hide");
+		$this->obj_form->add_action("server_type", "route53", "server_record", "hide");
+		$this->obj_form->add_action("server_type", "route53", "route53_access_key", "show");
+		$this->obj_form->add_action("server_type", "route53", "route53_secret_key", "show");
+	
+		$structure = NULL;
+		$structure["fieldname"]		= "api_auth_key";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$structure["options"]["label"]	= " ". lang_trans("help_api_auth_key");
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
+		$structure["fieldname"]		= "route53_access_key";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$structure["options"]["label"]	= " ". lang_trans("route53_access_key");
+		$this->obj_form->add_input($structure);
+
+		$structure = NULL;
+		$structure["fieldname"]		= "route53_secret_key";
+		$structure["type"]		= "input";
+		$structure["options"]["req"]	= "yes";
+		$structure["options"]["help"]	= "Secret Key Hidden, Click to Change";
+		$structure["options"]["label"]	= " ". lang_trans("help_hosted_route53_secret_key");
+		$this->obj_form->add_input($structure);
+
+
+
+
+
 		// server attributes
 		$structure				= form_helper_prepare_radiofromdb("id_group", "SELECT id, group_name as label, group_description as label1 FROM name_servers_groups");
 		$structure["options"]["req"]		= "yes";
@@ -75,33 +134,6 @@ class page_output
 		$this->obj_form->add_input($structure);
 			
 
-
-
-		// api	
-		$structure = NULL;
-		$structure["fieldname"]		= "server_type";
-		$structure["type"]		= "radio";
-		$structure["values"]		= array("api");
-		
-		if ($GLOBALS["config"]["ZONE_DB_TYPE"] == "powerdns-mysql")
-		{
-			$structure["values"][] = "powerdns-compat";
-		}
-
-		$structure["defaultvalue"]	= "api";
-		$this->obj_form->add_input($structure);
-
-		$structure = NULL;
-		$structure["fieldname"]		= "api_auth_key";
-		$structure["type"]		= "input";
-		$structure["options"]["req"]	= "yes";
-		$structure["options"]["label"]	= " ". lang_trans("help_api_auth_key");
-		$this->obj_form->add_input($structure);
-
-		$this->obj_form->add_action("server_type", "default", "api_auth_key", "hide");
-		$this->obj_form->add_action("server_type", "api", "api_auth_key", "show");
-	
-
 		// submit section
 		$structure = NULL;
 		$structure["fieldname"] 	= "submit";
@@ -112,8 +144,8 @@ class page_output
 
 		// subforms
 		$this->obj_form->subforms["server_details"]	= array("server_name", "server_description");
+		$this->obj_form->subforms["server_type"]	= array("server_type", "api_auth_key", "route53_access_key", "route53_secret_key");
 		$this->obj_form->subforms["server_domains"]	= array("id_group", "server_primary", "server_record");
-		$this->obj_form->subforms["server_type"]	= array("server_type", "api_auth_key");
 		$this->obj_form->subforms["submit"]		= array("submit");
 
 
