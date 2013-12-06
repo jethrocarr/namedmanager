@@ -47,7 +47,7 @@ ini_set('memory_limit', '256M');		// NamedManager can be a bit RAM hungry, espec
 */
 
 // Initate session variables
-if ($_SERVER['SERVER_NAME'])
+if (isset($_SERVER['SERVER_NAME']))
 {
 	// proper session variables
 	session_name("namedmanager");

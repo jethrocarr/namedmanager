@@ -28,7 +28,7 @@ class changelog
 	function changelog()
 	{
 		// default to current user or "SYSTEM"
-		if ($_SESSION["user"]["name"])
+		if (isset($_SESSION["user"]["name"]))
 		{
 			$this->username = $_SESSION["user"]["name"];
 		}
