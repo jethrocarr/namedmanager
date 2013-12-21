@@ -423,6 +423,7 @@ class cloud_route53
 
 
 		// Existing Route53 Records
+		$soa_record		= array(); // we need to fetch and adjust the SOA record.
 		$merge_hash_route53	= array();
 		$data_records_route53	= array();
 
@@ -440,13 +441,6 @@ class cloud_route53
 			$tmp = array();
 			$id  = $ids[0];
 
-
-			// We want to exclude the SOA record, as we can't include it in our other
-			// comparisons betwee local and Route53.
-			if ($this->aws_records[$id]["type"] == "SOA")
-			{
-				continue;
-			}
 
 			// Exclude any NS records for the domain itself (but still include subdomains)
 			// AWS manages NS records for us, so we don't want to mess with them.
@@ -524,6 +518,13 @@ class cloud_route53
 				{
 					$tmp["Name"] .=  $this->obj_domain->data["domain_name"] .".";
 				}
+			}
+
+
+			// Capture a copy of the SOA record so we can update the SOA serial.
+			if ($this->aws_records[$id]["type"] == "SOA")
+			{
+				$soa_record = $tmp;
 			}
 
 
@@ -621,7 +622,7 @@ class cloud_route53
 
 		$data_change_batch = array();
 
-		foreach($ids_route53_deleted as $id)
+		foreach ($ids_route53_deleted as $id)
 		{
 			$tmp = array();
 			$tmp["Action"]			= "DELETE";
@@ -629,7 +630,7 @@ class cloud_route53
 			$data_change_batch[]		= $tmp;
 		}
 
-		foreach($ids_local_created as $id)
+		foreach ($ids_local_created as $id)
 		{
 			$tmp = array();
 			$tmp["Action"]			= "CREATE";
@@ -642,7 +643,21 @@ class cloud_route53
 
 
 		// Finally, append an SOA record that updates the current SOA to use the
-		// domain serial defined in the application.
+		// domain serial defined in the application, we don't need a DELETE record
+		// as one is automatically generated from the AWS/local diff process.
+
+		$tmp = array();
+		$tmp["Action"]				= "CREATE";
+		$tmp["ResourceRecordSet"]		= $soa_record;
+	
+		$soa_record_tmp				= explode(' ', $soa_record["ResourceRecords"][0]["Value"]);
+		$soa_record_tmp[2]			= $this->obj_domain->data["soa_serial"];
+	
+		$tmp["ResourceRecordSet"]["ResourceRecords"][0]["Value"] = implode(' ', $soa_record_tmp);
+		
+		$data_change_batch[]			= $tmp;
+
+
 
 
 
