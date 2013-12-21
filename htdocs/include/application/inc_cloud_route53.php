@@ -145,7 +145,7 @@ class cloud_route53
 
 		$this->aws_records = array();
 
-		$marker = 0;
+		$marker = "";
 
 		while (true)
 		{
@@ -155,9 +155,9 @@ class cloud_route53
 				$change["HostedZoneId"]			= $this->aws_zone_id;
 				$change["MaxItems"]			= '100';
 
-				if ($marker > 0)
+				if (!empty($marker))
 				{
-					$change["Marker"]		= $marker;
+					$change["StartRecordName"]	= $marker;
 				}
 
 				$query	= $this->obj_route53->listResourceRecordSets($change);
@@ -174,11 +174,11 @@ class cloud_route53
 					if ($query["IsTruncated"])
 					{
 					 	// Need to fetch next 100 records
-						$marker = $query["NextMarker"];
+						$marker = $query["NextRecordName"];
 					}
 					else
 					{
-						$marker = 0;
+						$marker = "";
 					}
 				}
 			}
@@ -245,7 +245,7 @@ class cloud_route53
 
 			unset($query);
 
-			if ($marker == 0)
+			if (empty($marker))
 			{
 				break;
 			}
@@ -658,6 +658,13 @@ class cloud_route53
 		$data_change_batch[]			= $tmp;
 
 
+		/*
+			Submit Change Batch request to Amazon
+		*/
+
+
+		// We need to handle Amazon limits - slice up the change into no more than 100
+		// requests per call, with DELETES before CREATES
 
 
 
