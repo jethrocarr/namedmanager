@@ -74,30 +74,36 @@ class page_output
 		$structure["fieldname"]					= "DEFAULT_HOSTMASTER";
 		$structure["type"]					= "input";
 		$structure["options"]["no_translate_fieldname"]		= "yes";
+		$structure["options"]["help"]				= "admin@example.com";
+		$structure["options"]["label"]				= " Email address for the DNS administrator.";
 		$this->obj_form->add_input($structure);
 
 		$structure = NULL;
 		$structure["fieldname"]					= "DEFAULT_TTL_SOA";
 		$structure["type"]					= "input";
 		$structure["options"]["no_translate_fieldname"]		= "yes";
+		$structure["options"]["autofill"]			= "86400";
 		$this->obj_form->add_input($structure);
 
 		$structure = NULL;
 		$structure["fieldname"]					= "DEFAULT_TTL_NS";
 		$structure["type"]					= "input";
 		$structure["options"]["no_translate_fieldname"]		= "yes";
+		$structure["options"]["label"]				= " Default TTL for Name Server (NS) records.";
 		$this->obj_form->add_input($structure);
 
 		$structure = NULL;
 		$structure["fieldname"]					= "DEFAULT_TTL_MX";
 		$structure["type"]					= "input";
 		$structure["options"]["no_translate_fieldname"]		= "yes";
+		$structure["options"]["label"]				= " Default TTL for MX records";
 		$this->obj_form->add_input($structure);
 
 		$structure = NULL;
 		$structure["fieldname"]					= "DEFAULT_TTL_OTHER";
 		$structure["type"]					= "input";
 		$structure["options"]["no_translate_fieldname"]		= "yes";
+		$structure["options"]["label"]				= " Default TTL for all other record types (A, AAAA, TXT, SPF, PTR, etc)";
 		$this->obj_form->add_input($structure);
 
 
@@ -226,7 +232,8 @@ class page_output
 		$structure["fieldname"]					= "ADMIN_API_KEY";
 		$structure["type"]					= "input";
 		$structure["options"]["no_translate_fieldname"]		= "yes";
-		$structure["options"]["label"]				= " ". lang_trans("help_admin_api_key");
+		$structure["options"]["help"]				= " Set me to a unique random string";
+		$structure["options"]["label"]				= " API keys for scripts that interact with NamedManager";
 		$this->obj_form->add_input($structure);
 
 
