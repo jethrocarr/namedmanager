@@ -67,44 +67,22 @@ class page_output
 
 		for ($i=0; $i < $this->obj_table->data_num_rows; $i++)
 		{
-			if ($this->obj_table->data[$i]["server_type"] == "api")
-			{
-				if ($sync_status_config != $this->obj_table->data[$i]["api_sync_config"])
-				{
-					$this->obj_table->data[$i]["sync_status_zones"]	= "<span class=\"table_highlight_important\">". lang_trans("status_unsynced") ."</span>";
-				}
-				else
-				{
-					$this->obj_table->data[$i]["sync_status_zones"]	= "<span class=\"table_highlight_open\">". lang_trans("status_synced") ."</span>";
-				}
-
-
-				if ($GLOBALS["config"]["FEATURE_LOGS_API"])
-				{
-					if ((time() - $this->obj_table->data[$i]["api_sync_log"]) > 86400)
-					{
-						$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_important\">". lang_trans("status_unsynced") ."</span>";
-					}
-					else
-					{
-						$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_open\">". lang_trans("status_synced") ."</span>";
-					}
-				}
-				else
-				{
-					$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_disabled\">". lang_trans("status_disabled") ."</span>";
-				}
-			}
-			else
-			{
-				$this->obj_table->data[$i]["sync_status_zones"]		= "<span class=\"table_highlight_open\">". lang_trans("status_databasesync") ."</span>";
-				$this->obj_table->data[$i]["sync_status_log"]		= "<span class=\"table_highlight_open\">". lang_trans("status_databasesync") ."</span>";
-			}
-
-			// overides for special server types
 			switch ($this->obj_table->data[$i]["server_type"])
 			{
 				case "route53":
+					// check the SOA of the mapped zones against the actual zones. The Mapped SOA is only
+					// updated once a successful change has been sent to Route53.
+					$num_unsynced = sql_get_singlevalue("SELECT COUNT(id_domain) as value FROM cloud_zone_map LEFT JOIN dns_domains ON cloud_zone_map.id_domain=dns_domains.id WHERE cloud_zone_map.id_name_server='". $this->obj_table->data[$i]["id"] ."' AND cloud_zone_map.soa_serial!=dns_domains.soa_serial");
+
+					if ($num_unsynced)
+					{
+						$this->obj_table->data[$i]["sync_status_zones"] = "<span class=\"table_highlight_important\">". lang_trans("status_unsynced") ."</span>";
+					}
+					else
+					{
+						$this->obj_table->data[$i]["sync_status_zones"] = "<span class=\"table_highlight_open\">". lang_trans("status_synced") ."</span>";
+					}
+
 					// no logs on route53
 					$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_disabled\">". lang_trans("status_disabled") ."</span>";
 
@@ -112,8 +90,37 @@ class page_output
 					$this->obj_table->data[$i]["server_primary"]	= 1;
 					$this->obj_table->data[$i]["server_record"]	= 1;
 				break;
+
+				case "api":
+				default:
+
+					if ($sync_status_config != $this->obj_table->data[$i]["api_sync_config"])
+					{
+						$this->obj_table->data[$i]["sync_status_zones"]	= "<span class=\"table_highlight_important\">". lang_trans("status_unsynced") ."</span>";
+					}
+					else
+					{
+						$this->obj_table->data[$i]["sync_status_zones"]	= "<span class=\"table_highlight_open\">". lang_trans("status_synced") ."</span>";
+					}
+
+
+					if ($GLOBALS["config"]["FEATURE_LOGS_API"])
+					{
+						if ((time() - $this->obj_table->data[$i]["api_sync_log"]) > 86400)
+						{
+							$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_important\">". lang_trans("status_unsynced") ."</span>";
+						}
+						else
+						{
+							$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_open\">". lang_trans("status_synced") ."</span>";
+						}
+					}
+					else
+					{
+						$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_disabled\">". lang_trans("status_disabled") ."</span>";
+					}
+				break;
 			}
-	
 
 		}
 
