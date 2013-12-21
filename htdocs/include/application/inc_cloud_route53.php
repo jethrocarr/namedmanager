@@ -208,10 +208,22 @@ class cloud_route53
 						break;
 					}
 
+					// AWS returns @ as \100, so we replace any \100 in the domain names with
+					// a proper @. Normally this isn't an issue, unless another tool/user did
+					// a bad import into AWS and kept an @ record in place.
+					$tmp["name"] = str_replace('\100', "@", $tmp["name"]);
+
 					// AWS records are returned with the full domain path - we need to
 					// remove the domain name to make it suitable for NamedManager usage.
+					//  note: we do this ONCE incase the record is messed up on AWS side, as we need
+					//  to be able to reassemble to delete it, errors and all.
+					$tmp["name"] = preg_replace("/.". $this->obj_domain->data["domain_name"] ."/", "", $tmp["name"], 1);
 
-					$tmp["name"] = str_replace(".". $this->obj_domain->data["domain_name"], "", $tmp["name"]);
+					// Apex records
+					if ($tmp["name"] == $this->obj_domain->data["domain_name"])
+					{
+						$tmp["name"] = "@";
+					}
 
 					$this->aws_records[] = $tmp;
 				}
@@ -301,7 +313,13 @@ class cloud_route53
 			// Exclude any NS records for the domain itself (but still include subdomains)
 			// AWS manages NS records for us, so we don't want to mess with them.
 			if ($this->obj_domain->data["records"][$id]["type"] == "NS" &&
-				$this->obj_domain->data["records"][$id]["name"] = $this->obj_domain->data["domain_name"])
+				$this->obj_domain->data["records"][$id]["name"] == $this->obj_domain->data["domain_name"])
+			{
+				continue;
+			}
+
+			if ($this->obj_domain->data["records"][$id]["type"] == "NS" &&
+				$this->obj_domain->data["records"][$id]["name"] == "@")
 			{
 				continue;
 			}
@@ -322,9 +340,24 @@ class cloud_route53
 						// MX records are special - need to re-merge priority and content together
 						$tmp2["Value"]	= $this->obj_domain->data["records"][$id]["prio"] ." ". $this->obj_domain->data["records"][$id]["content"] .".";
 					break;
+					
+					case "CNAME":
+						// ensure the value is a FQDN.
+						$tmp2["Value"] = $this->obj_domain->data["records"][$id]["content"];
+					
+						if (preg_match("/\./", $tmp2["Value"]))
+						{
+							// already a FQDN
+							$tmp2["Value"] .= ".";
+						}
+						else
+						{
+							// add local domain to make CNAME FQDN
+							$tmp2["Value"] .=  ".". $this->obj_domain->data["domain_name"] .".";
+						}
+					break;
 
 					case "NS":
-					case "CNAME":
 					case "SRV":
 					case "PTR":
 						// These record types need to point to FQDNs, so need the trailing .
@@ -346,10 +379,18 @@ class cloud_route53
 
 
 			// Adjust the record name to FQDN - AWS won't accept anything else
-			if ($tmp["Name"] != $this->obj_domain->data["domain_name"])
+			if (!strpos($tmp["Name"], $this->obj_domain->data["domain_name"]))
 			{
-				$tmp["Name"] .=  $this->obj_domain->data["domain_name"] .".";
+				if ($tmp["Name"] == "@.")
+				{
+					$tmp["Name"] =  $this->obj_domain->data["domain_name"] .".";
+				}
+				else
+				{
+					$tmp["Name"] .=  $this->obj_domain->data["domain_name"] .".";
+				}
 			}
+
 			
 			$data_records_local[] = $tmp;
 		}
@@ -386,11 +427,17 @@ class cloud_route53
 			// Exclude any NS records for the domain itself (but still include subdomains)
 			// AWS manages NS records for us, so we don't want to mess with them.
 			if ($this->aws_records[$id]["type"] == "NS" &&
-				$this->aws_records[$id]["name"] = $this->obj_domain->data["domain_name"])
+				$this->aws_records[$id]["name"] == $this->obj_domain->data["domain_name"])
 			{
 				continue;
 			}
-				
+
+			if ($this->aws_records[$id]["type"] == "NS" &&
+				$this->aws_records[$id]["name"] == "@")
+			{
+				continue;
+			}
+
 
 			$tmp["Name"]		= $this->aws_records[$id]["name"] .".";
 			$tmp["Type"]		= $this->aws_records[$id]["type"];
@@ -405,7 +452,7 @@ class cloud_route53
 				{
 					case "MX":
 						// MX records are special - need to re-merge priority and content together
-						$tmp2["Value"] = $this->aws_records[$id]["prio"] ." ". $this->obj_domain->data["records"][$id]["content"] .".";
+						$tmp2["Value"] = $this->aws_records[$id]["prio"] ." ". $this->aws_records[$id]["content"] .".";
 					break;
 
 					case "NS":
@@ -429,11 +476,32 @@ class cloud_route53
 				$tmp["ResourceRecords"][] = $tmp2;
 			}
 
+
 			// Adjust the record name to FQDN - AWS won't accept anything else
-			if ($tmp["Name"] != $this->obj_domain->data["domain_name"])
+			if (strpos($tmp["Name"], $this->obj_domain->data["domain_name"]))
 			{
+				// A record from AWS already includes the domain name... but we already
+				// strip this at import, which means the AWS record is messed up and includes
+				// multple domain records (eg something.example.com.example.com) probably
+				// from a buggy import.
+				//
+				// To ensure we can delete and correct this bad record, we append our domain
+				// that we originally stripped.
+
 				$tmp["Name"] .=  $this->obj_domain->data["domain_name"] .".";
-			}		
+			}
+			else
+			{
+				if ($tmp["Name"] == "@.")
+				{
+					$tmp["Name"] =  $this->obj_domain->data["domain_name"] .".";
+				}
+				else
+				{
+					$tmp["Name"] .=  $this->obj_domain->data["domain_name"] .".";
+				}
+			}
+
 
 			$data_records_route53[] = $tmp;
 		}
