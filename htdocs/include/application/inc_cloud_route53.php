@@ -565,7 +565,7 @@ class cloud_route53
 
 				// If debugging, uncommenting the following will dump out the entire change
 				// object before it's sent to AWS.
-				print_r($change);
+//				print_r($change);
 //				die("debug");
 
 				$query	= $this->obj_route53->changeResourceRecordSets($change);
