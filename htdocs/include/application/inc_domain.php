@@ -17,7 +17,8 @@
 class domain
 {
 	var $id;		// ID of the domain to manipulate
-	var $data;
+	var $data;		// Domain & record details stored here
+	var $format;		// "utf8" (default) or "idn" (punycode/IDN format)
 
 	var $sql_obj;		// zone SQL database connection
 
@@ -164,6 +165,15 @@ class domain
 
 			// load base domain data
 			$this->data = $this->sql_obj->data[0];
+
+			// fix international formatting
+			if ($this->format == 'idn')
+			{
+				$this->data["domain_name_idn"]	= idn_to_ascii($this->data["domain_name"]);
+				$this->data["domain_name_utf"]	= $this->data["domain_name"];
+				$this->data["domain_name"]	= $this->data["domain_name_idn"];
+				$this->data["soa_hostmaster"]	= idn_to_ascii($this->data["domain_name"]);
+			}
 
 			// load domain group membership
 			$this->sql_obj->string	= "SELECT id_group FROM dns_domains_groups WHERE id_domain='". $this->id ."'";
@@ -312,6 +322,13 @@ class domain
 
 			foreach ($this->sql_obj->data as $data_records)
 			{
+				// fix international formatting
+				if ($this->format == 'idn')
+				{
+					$data_records["name"]		= idn_to_ascii($data_records["name"]);
+					$data_records["content"]	= idn_to_ascii($data_records["content"]);
+				}
+
 				$this->data["records"][] = $data_records;
 			}
 

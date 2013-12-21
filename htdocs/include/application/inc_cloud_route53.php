@@ -92,8 +92,9 @@ class cloud_route53
 		$this->changelog->id_domain = $id_domain;
 
 		// load domain
-		$this->obj_domain	= New domain;
-		$this->obj_domain->id	= $id_domain;
+		$this->obj_domain		= New domain;
+		$this->obj_domain->id		= $id_domain;
+		$this->obj_domain->format	= 'idn';
 		
 		if (!$this->obj_domain->load_data())
 		{
@@ -335,7 +336,7 @@ class cloud_route53
 			{
 				continue;
 			}
-			
+
 
 			$tmp["Name"]		= $this->obj_domain->data["records"][$id]["name"] .".";
 			$tmp["Type"]		= $this->obj_domain->data["records"][$id]["type"];
@@ -350,7 +351,19 @@ class cloud_route53
 				{
 					case "MX":
 						// MX records are special - need to re-merge priority and content together
-						$tmp2["Value"]	= $this->obj_domain->data["records"][$id]["prio"] ." ". $this->obj_domain->data["records"][$id]["content"] .".";
+						$tmp2["Value"]	= $this->obj_domain->data["records"][$id]["prio"] ." ". $this->obj_domain->data["records"][$id]["content"];
+
+						if (preg_match("/\./", $tmp2["Value"]))
+						{
+							// already a FQDN
+							$tmp2["Value"] .= ".";
+						}
+						else
+						{
+							// add local domain to make CNAME FQDN
+							$tmp2["Value"] .=  ".". $this->obj_domain->data["domain_name"] .".";
+						}
+
 					break;
 					
 					case "CNAME":
@@ -391,7 +404,7 @@ class cloud_route53
 
 
 			// Adjust the record name to FQDN - AWS won't accept anything else
-			if (!strpos($tmp["Name"], $this->obj_domain->data["domain_name"]))
+			if (strpos($tmp["Name"], $this->obj_domain->data["domain_name"]) === FALSE)
 			{
 				if ($tmp["Name"] == "@.")
 				{
@@ -403,7 +416,6 @@ class cloud_route53
 				}
 			}
 
-			
 			$data_records_local[] = $tmp;
 		}
 
