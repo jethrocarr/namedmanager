@@ -83,8 +83,8 @@ class page_output
 						$this->obj_table->data[$i]["sync_status_zones"] = "<span class=\"table_highlight_open\">". lang_trans("status_synced") ."</span>";
 					}
 
-					// no logs on route53
-					$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_disabled\">". lang_trans("status_disabled") ."</span>";
+					// only route53 logs are self generated, so always show as synced.
+					$this->obj_table->data[$i]["sync_status_log"]	= "<span class=\"table_highlight_open\">". lang_trans("status_synced") ."</span>";
 
 					// set primary and NS record for route53 hosts
 					$this->obj_table->data[$i]["server_primary"]	= 1;

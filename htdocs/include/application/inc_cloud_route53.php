@@ -28,6 +28,14 @@ class cloud_route53
 	public $aws_zone_id;
 	public $aws_records;
 
+	private $changelog;
+
+
+	function __construct()
+	{
+		$this->changelog = New changelog;
+	}
+
 
 	/*
 		select_account
@@ -44,6 +52,8 @@ class cloud_route53
 	function select_account($id_name_server)
 	{
 		log_write("debug", "cloud_route53", "Executing select_account(". $id_name_server .")");
+
+		$this->changelog->id_server		= $id_name_server;
 
 		$this->obj_name_server			= New name_server;
 		$this->obj_name_server->id		= $id_name_server;
@@ -78,6 +88,8 @@ class cloud_route53
 	function select_domain($id_domain)
 	{
 		log_write("debug", "cloud_route53", "Executing select_domain($id_domain)");
+		
+		$this->changelog->id_domain = $id_domain;
 
 		// load domain
 		$this->obj_domain	= New domain;
@@ -641,6 +653,7 @@ class cloud_route53
 				if (empty($query["ChangeInfo"]))
 				{
 					log_write("error", "cloud_route53", "Invalid change response returned from Route53");
+					$this->changelog->log_post('server', "An error occured updating domain \"". $this->obj_domain->data["domain_name"] ."\" in Route53");
 					return 0;
 				}
 				else
@@ -653,6 +666,7 @@ class cloud_route53
 			{
 				log_write("error", "process", "A failure occured whilst trying to submit a batch change from AWS/Route53.");
 				log_write("error", "process", "Failure returned: ". $e->getExceptionCode() ."");
+				$this->changelog->log_post('server', "An error occured updating domain \"". $this->obj_domain->data["domain_name"] ."\" in Route53");
 
 				return 0;
 			}
@@ -692,11 +706,14 @@ class cloud_route53
 			if (!$query["HostedZone"]["Id"] || !$query["DelegationSet"]["NameServers"])
 			{
 				log_write("error", "cloud_route53", "Invalid creation response returned from Route53");
+				$this->changelog->log_post('server', "A failure occured whilst attempting to create domain \"". $change["Name"] ."\" in Route53");
+
 				return 0;
 			}
 			else
 			{
 				log_write("debug", "cloud_route53", "Route53 creation completed, ID is ". $query["HostedZone"]["Id"]);
+				$this->changelog->log_post('server', "Created domain \"". $change["Name"] ."\" in Route53 (ID ".$query["HostedZone"]["Id"] .")");
 						
 				$obj_sql		= New sql_query;
 				$obj_sql->string	= "INSERT INTO cloud_zone_map (id_name_server, id_domain, id_mapped, soa_serial, delegated_ns) VALUES ('". $this->obj_name_server->id ."', '". $this->obj_domain->id ."', '". $query["HostedZone"]["Id"] ."', '0', '". serialize($query["DelegationSet"]["NameServers"]) ."')";
@@ -707,6 +724,7 @@ class cloud_route53
 		{
 			log_write("error", "process", "A failure occured whilst trying to create a new hosted zone.");
 			log_write("error", "process", "Failure returned: ". $e->getExceptionCode() ."");
+			$this->changelog->log_post('server', "A failure occured whilst attempting to create domain \"". $change["Name"] ."\" in Route53");
 
 			return 0;
 		}
@@ -773,6 +791,7 @@ class cloud_route53
 		$obj_sql->execute();
 
 		log_write("debug", "inc_cloud_route53", "Successfully updated to domain version $current_soa");
+		$this->changelog->log_post('server', "Successfully updated domain \"". $this->obj_domain->data["domain_name"] ."\" in Route53");
 
 	} // end of action_update_records
 
@@ -837,6 +856,7 @@ class cloud_route53
 			else
 			{
 				log_write("debug", "cloud_route53", "Route53 delete request submitted");
+				$this->changelog->log_post('server', "Domain \"". $this->obj_domain->data["domain_name"] ."\" deleted from Route53");
 						
 				$obj_sql		= New sql_query;
 				$obj_sql->string	= "DELETE FROM cloud_zone_map WHERE id_name_server='". $this->obj_name_server->id ."' AND id_domain='". $this->obj_domain->id ."' LIMIT 1";
@@ -847,6 +867,8 @@ class cloud_route53
 		{
 			log_write("error", "process", "A failure occured whilst trying to delete hosted zone.");
 			log_write("error", "process", "Failure returned: ". $e->getExceptionCode() ."");
+			
+			$this->changelog->log_post('server', "An error occured attempting to delete domain \"". $this->obj_domain->data["domain_name"] ."\" from Route53");
 
 			return 0;
 		}
