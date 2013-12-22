@@ -20,7 +20,7 @@ Summary: namedmanager web-based interface and API components
 Group: Applications/Internet
 
 Requires: httpd, mod_ssl
-Requires: php >= 5.3.0, mysql-server, php-mysql, php-ldap, php-soap
+Requires: php >= 5.3.0, mysql-server, php-mysql, php-ldap, php-soap, php-intl, php-xml
 Requires: perl, perl-DBD-MySQL
 Prereq: httpd, php, mysql-server, php-mysql
 
@@ -32,7 +32,7 @@ Provides the namedmanager web-based interface and SOAP API.
 Summary:  Integration components for Bind nameservers.
 Group: Applications/Internet
 
-Requires: php-cli >= 5.3.0, php-soap, php-process
+Requires: php-cli >= 5.3.0, php-soap, php-process, php-intl
 Requires: perl, perl-DBD-MySQL
 Requires: bind
 
@@ -70,6 +70,8 @@ ln -s %{_sysconfdir}/namedmanager/config-bind.php $RPM_BUILD_ROOT%{_datadir}/nam
 # install linking config file
 install -m755 bind/include/config.php $RPM_BUILD_ROOT%{_datadir}/namedmanager/bind/include/config.php
 
+# log directory for www app.
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/log/namedmanager
 
 
 # install the apache configuration file
@@ -104,7 +106,6 @@ else
 	echo "Automatically upgrading the MySQL database..."
 	%{_datadir}/namedmanager/resources/schema_update.pl --schema=%{_datadir}/namedmanager/sql/ -v
 fi
-
 
 
 %post bind
@@ -173,6 +174,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/namedmanager/htdocs
 %{_datadir}/namedmanager/resources
 %{_datadir}/namedmanager/sql
+%attr(755,apache,apache) %{_localstatedir}/log/namedmanager
 
 %doc %{_datadir}/namedmanager/README.md
 %doc %{_datadir}/namedmanager/docs/AUTHORS

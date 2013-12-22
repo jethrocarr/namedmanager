@@ -198,7 +198,7 @@ else
 
 
 // Display Stats if debugging
-if ($_SESSION["user"]["debug"] == "on")
+if (@$_SESSION["user"]["debug"] == "on")
 {
 	log_debug_render();
 }
