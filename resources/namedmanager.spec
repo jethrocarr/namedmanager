@@ -1,6 +1,6 @@
 Summary: A web-based management system for DNS, consisting of a PHP web interface and some PHP CLI components to hook into FreeRadius.
 Name: namedmanager
-Version: 1.7.0
+Version: 1.8.0
 Release: 1%{dist}
 License: AGPLv3
 URL: http://www.amberdms.com/namedmanager
@@ -191,6 +191,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Sun Dec 22 2013 Jethro Carr <jethro.carr@amberdms.com> 1.8.0
+- Released version 1.8.0 [stable]
+- Adds Amazon AWS Route53 support
 * Sat Aug 17 2013 Jethro Carr <jethro.carr@amberdms.com> 1.7.0
 - Released version 1.7.0 [stable]
 - New version of Amberphplib framework

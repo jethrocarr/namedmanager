@@ -17,7 +17,7 @@ $GLOBALS["config"] = array();
 
 // define the application details
 $GLOBALS["config"]["app_name"]			= "NamedManager";
-$GLOBALS["config"]["app_version"]		= "1.7.0";
+$GLOBALS["config"]["app_version"]		= "1.8.0";
 
 
 /*
