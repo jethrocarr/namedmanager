@@ -525,6 +525,9 @@ class cloud_route53
 			if ($this->aws_records[$id]["type"] == "SOA")
 			{
 				$soa_record = $tmp;
+
+				// skip adding this to the change request, we do that manually.
+				continue;
 			}
 
 
@@ -616,12 +619,37 @@ class cloud_route53
 		}
 
 
+
 		/*
 			Now we have the lists of IDs that have been added, deleted or unchanged, we can generate our diff.
 		*/
 
 		$data_change_batch = array();
 
+
+		// Firstly, let's delete the existing SOA and add a new SOA. We need to do
+		// this first to ensure the delete and creates don't get split across requests.
+
+		$tmp = array();
+		$tmp["Action"]				= "DELETE";
+		$tmp["ResourceRecordSet"]		= $soa_record;
+		$data_change_batch[]			= $tmp;
+
+		$tmp = array();
+		$tmp["Action"]				= "CREATE";
+		$tmp["ResourceRecordSet"]		= $soa_record;
+	
+		$soa_record_tmp				= explode(' ', $soa_record["ResourceRecords"][0]["Value"]);
+		$soa_record_tmp[2]			= $this->obj_domain->data["soa_serial"];
+	
+		$tmp["ResourceRecordSet"]["ResourceRecords"][0]["Value"] = implode(' ', $soa_record_tmp);
+		
+		$data_change_batch[]			= $tmp;
+
+
+		// Add all the other records to the change batch job. We do DELETE first,
+		// since a CREATE will always fail if the old record hasn't been DELETEd
+		// first.
 		foreach ($ids_route53_deleted as $id)
 		{
 			$tmp = array();
@@ -642,40 +670,30 @@ class cloud_route53
 		unset($data_records_route53);
 
 
-		// Finally, append an SOA record that updates the current SOA to use the
-		// domain serial defined in the application, we don't need a DELETE record
-		// as one is automatically generated from the AWS/local diff process.
-
-		$tmp = array();
-		$tmp["Action"]				= "CREATE";
-		$tmp["ResourceRecordSet"]		= $soa_record;
-	
-		$soa_record_tmp				= explode(' ', $soa_record["ResourceRecords"][0]["Value"]);
-		$soa_record_tmp[2]			= $this->obj_domain->data["soa_serial"];
-	
-		$tmp["ResourceRecordSet"]["ResourceRecords"][0]["Value"] = implode(' ', $soa_record_tmp);
 		
-		$data_change_batch[]			= $tmp;
-
 
 		/*
 			Submit Change Batch request to Amazon
 		*/
 
+		log_write("debug", "cloud_route53", "Submitting batch change request to Amazon AWS.");
+
 
 		// We need to handle Amazon limits - slice up the change into no more than 100
 		// requests per call, with DELETES before CREATES
 
+		$max_records	= count(array_keys($data_change_batch));
+		$chunk		= ceil($max_records / 100);
+		$count		= 1;
 
-
-
-		// Submit the change to Amazon AWS.
-		log_write("debug", "cloud_route53", "Submitting batch change request to Amazon AWS.");
+		foreach (array_chunk($data_change_batch, 100) as $data_change_batch2)
+		{
+			log_write("debug", "cloud_route53", "Uploading batch change request number $count/$chunk");
 
 			try {
 				$change = NULL;
 				$change["HostedZoneId"]			= $this->aws_zone_id;
-				$change["ChangeBatch"]["Changes"]	= $data_change_batch;
+				$change["ChangeBatch"]["Changes"]	= $data_change_batch2;
 
 				// If debugging, uncommenting the following will dump out the entire change
 				// object before it's sent to AWS.
@@ -705,7 +723,8 @@ class cloud_route53
 				return 0;
 			}
 
-		// Verify the change has been applied OK.
+		} // end of foreach loop for uploads
+
 
 
 		return 1;
