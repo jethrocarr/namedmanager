@@ -80,8 +80,9 @@ install -m 644 resources/namedmanager-httpdconfig.conf $RPM_BUILD_ROOT%{_sysconf
 mkdir -p $RPM_BUILD_ROOT/etc/init.d/
 install -m 755 resources/namedmanager_logpush.rcsysinit $RPM_BUILD_ROOT/etc/init.d/namedmanager_logpush
 
-# install the cronfile
+# install the cronfiles
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
+install -m 644 resources/namedmanager-www.cron $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/namedmanager-www
 install -m 644 resources/namedmanager-bind.cron $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/namedmanager-bind
 
 # placeholder configuration file
@@ -166,6 +167,7 @@ rm -rf $RPM_BUILD_ROOT
 %files www
 %defattr(-,root,root)
 %config %dir %{_sysconfdir}/namedmanager
+%config %{_sysconfdir}/cron.d/namedmanager-www
 %attr(770,root,apache) %config(noreplace) %{_sysconfdir}/namedmanager/config.php
 %attr(660,root,apache) %config(noreplace) %{_sysconfdir}/httpd/conf.d/namedmanager.conf
 %{_datadir}/namedmanager/htdocs
@@ -181,7 +183,7 @@ rm -rf $RPM_BUILD_ROOT
 %files bind
 %defattr(-,root,root)
 %config %dir %{_sysconfdir}/namedmanager
-%config %dir %{_sysconfdir}/cron.d/namedmanager-bind
+%config %{_sysconfdir}/cron.d/namedmanager-bind
 %config(noreplace) %{_sysconfdir}/named.namedmanager.conf
 %config(noreplace) %{_sysconfdir}/namedmanager/config-bind.php
 %{_datadir}/namedmanager/bind

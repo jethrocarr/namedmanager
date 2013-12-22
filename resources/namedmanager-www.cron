@@ -1,0 +1,7 @@
+#
+# NAMEDMANAGER CRONJOBS
+#
+
+# Synchronise any changes to Route53
+*/1 * * * * apache cd /usr/share/namedmanager/include/cron/; php -q route53.php >> /var/log/namedmanager_route53
+
