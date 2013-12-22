@@ -26,12 +26,14 @@ database will not result in any impact to DNS servers.
 
 * Allows addition, adjusting and deletion DNS zones.
 * Supports Bind 9 and pushes Bind compatible configuration and zone files to configured servers.
+* Supports Amazon Route53
 * Ability to import from Bind zonefile support.
 * Includes a log tailer that runs on the name servers and sends back logs that are rendered in the web interface.
 * SOAP API to allow other tools to hook into the interface.
 * Written in PHP and uses a MySQL database backend.
 * Supports IPv4 and IPv6 users of the management interface.
 * Supports IPv4 and IPv6 forward and reverse records zones.
+* Supports internationalized domain names.
 
 
 ## Application Structure
