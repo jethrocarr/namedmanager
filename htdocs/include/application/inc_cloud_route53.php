@@ -366,6 +366,8 @@ class cloud_route53
 
 					break;
 					
+					case "NS":
+					case "SRV":
 					case "CNAME":
 						// ensure the value is a FQDN.
 						$tmp2["Value"] = $this->obj_domain->data["records"][$id]["content"];
@@ -382,10 +384,8 @@ class cloud_route53
 						}
 					break;
 
-					case "NS":
-					case "SRV":
 					case "PTR":
-						// These record types need to point to FQDNs, so need the trailing .
+						// These record types will always to point to FQDNs, so need the trailing .
 						$tmp2["Value"] = $this->obj_domain->data["records"][$id]["content"] .".";
 					break;
 
