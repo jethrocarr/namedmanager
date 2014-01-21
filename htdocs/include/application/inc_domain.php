@@ -1845,8 +1845,9 @@ class domain_records extends domain
 						break;
 
 						case "SRV":
-							// validate SRV name (_service._proto.name)
-							if (!preg_match("/^_[A-Za-z0-9\p{L}.-]*\._[A-Za-z\p{L}]*\.[A-Za-z0-9\p{L}.-]*$/", $data_tmp[$i]["name"]))
+							// validate SRV name (_service._proto.name OR _service._proto))
+							if (!preg_match("/^_[A-Za-z0-9\p{L}.-]*\._[A-Za-z\p{L}]*\.[A-Za-z0-9\p{L}.-]*$/", $data_tmp[$i]["name"])
+							    && !preg_match("/^_[A-Za-z0-9\p{L}.-]*\._[A-Za-z\p{L}]*$/", $data_tmp[$i]["name"]))
 							{
 								log_write("error", "process", "SRV record for ". $data_tmp[$i]["name"] ." is not correctly formatted - name must be: _service._proto.name");
 								error_flag_field("record_custom_". $i ."");
