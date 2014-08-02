@@ -634,8 +634,18 @@ class bind_api extends soap_api
 				// UTF-8 compatibility
 				if (function_exists("idn_to_ascii"))
 				{
-					$record["record_name"]		= idn_to_ascii($record["record_name"]);
-					$record["record_content"]	= idn_to_ascii($record["record_content"]);
+					$record["record_name"] = idn_to_ascii($record["record_name"]);
+
+					// idn_to_ascii has a lovely habit of blowing up with some record values, such as
+					// DKIM records. If idn_to_ascii fails, we leave the value unchanged
+					if ($tmp = idn_to_ascii($record["record_content"]))
+					{
+						$record["record_content"] = $tmp;
+					}
+					else
+					{
+						log_write("warning", "script", "Unable to punnycode parse record \"". $record["record_name"] ."\". This sometimes happens with certain records like DKIM and may not be an issue.");
+					}
 				}
 
 				switch($record["record_type"])
