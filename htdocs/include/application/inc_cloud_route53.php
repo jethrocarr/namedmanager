@@ -310,6 +310,30 @@ class cloud_route53
 
 		for ($i=0; $i < count($this->obj_domain->data["records"]); $i++)
 		{
+
+			// Of all the subdomain records, we should remove any which belong to nameservers that exist in
+			// other domain groups, we should exclude it to avoid contaminating across groups.
+			//
+			// However if the nameserver does *not* exist in NamedManager, then it must be an
+			// NS record for an external domain, so we should include it, so that external
+			// delegation works correctly.
+			//
+			// We need to do this per-merge, incase a single subdomain record has both ones
+			// we need to keep and ones we need to remove.
+
+			if ($this->obj_domain->data["records"][$i]["type"] == "NS")
+			{
+				$obj_ns_sql		= New sql_query;
+				$obj_ns_sql->string	= "SELECT id FROM name_servers WHERE server_name='". $this->obj_domain->data["records"][$i]["content"] ."' LIMIT 1";
+				$obj_ns_sql->execute();
+
+				if ($obj_ns_sql->num_rows())
+				{
+					// nameserver exists in other groups, we should exclude this NS record.
+					continue;
+				}
+			}
+
 			$merge_hash_local[ $this->obj_domain->data["records"][$i]["type"] ."_". $this->obj_domain->data["records"][$i]["name"] ][] = $i;
 		}
 
