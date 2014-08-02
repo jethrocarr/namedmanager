@@ -1518,7 +1518,8 @@ class domain_records extends domain
 
 		if (empty($this->data_record["ttl"]))
 		{
-			// can't have an empty TTL, must be "0" (eg CNAMEs)
+			// can't have an empty TTL, but zero is a valid TTL. Note that
+			// some systems will enforce mimimum TTLs like 60 seconds anyway.
 			$this->data_record["ttl"] = 0;
 		}
 

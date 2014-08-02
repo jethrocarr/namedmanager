@@ -497,16 +497,25 @@ if (user_permissions_get("namedadmins"))
 										eg:
 										mail.example.org. IN CNAME host1.example.org
 										mail.example.org. CNAME host1.example.org
+										mail.example.org. 60 CNAME host1.example.org
 									*/
 
 									$data_tmp = array();
 									$data_tmp["type"]	= "CNAME";
 									$data_tmp["prio"]	= 0;
 
-									if (preg_match("/^(\S*)\sIN\sCNAME/", $line, $matches))
+									// name information
+									if (preg_match("/^(\S*)\s([0-9]*)\s*IN/", $line, $matches)
+									   || preg_match("/^(\S*)\s([0-9]*)\s*CNAME/", $line, $matches))
 									{
 										// name
 										$data_tmp["name"]		= $matches[1];
+
+										// TTL
+										if ($matches[2])
+										{
+											$data_tmp["ttl"]	= $matches[2];
+										}
 									}
 
 									// content information

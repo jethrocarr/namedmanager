@@ -605,7 +605,7 @@ class bind_api extends soap_api
 					$record["record_name"] .= ".";	// append . as FQDN
 				}
 
-				fwrite($fh, $record["record_name"] . "\t CNAME ". $record["record_content"] ."");
+				fwrite($fh, $record["record_name"] . "\t". $record["record_ttl"] ." IN CNAME ". $record["record_content"] ."");
 
 				if (preg_match("/\./", $record["record_content"]))
 				{

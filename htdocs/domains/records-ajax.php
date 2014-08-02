@@ -488,7 +488,6 @@ class page_output
 				if ($record["type"] == "CNAME")
 				{
 					// disable inappropate values for CNAME fields
-					$this->obj_form->structure["record_custom_". $i ."_ttl"]["options"]["disabled"]	= "yes";
 					$this->obj_form->structure["record_custom_". $i ."_reverse_ptr"]["options"]["disabled"] = "yes";
 					$this->obj_form->structure["record_custom_". $i ."_reverse_ptr_orig"]["options"]["disabled"] = "yes";
 				}

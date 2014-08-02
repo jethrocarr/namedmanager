@@ -150,7 +150,6 @@ $(document).ready(function()
 	{	
 		if ($(this).val() == "CNAME")
 		{
-			$(this).parent().siblings().children("input[name$='_ttl']").attr("disabled", "disabled");
 			$(this).parent().siblings().children("input[name$='_reverse_ptr']").attr("disabled", "disabled");
 			change_help_message($(this).parent().siblings().children("input[name$='_name']"), "Record name for CNAME, eg www");
 			change_help_message($(this).parent().siblings().children("input[name$='_content']"), "Hostname or FQDN of target record");
