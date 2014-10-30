@@ -102,15 +102,17 @@ system("rm -rf $name_withversion/");
 
 
 # transfer RPM components to correct location?
-print "Would you like to place source + spec into /usr/src/redhat?\n";
+print "Would you like to place source + spec into ~/rpmbuild/?\n";
 $input = get_question('^[y|n]$');
 
 if ($input eq "y")
 {
-	system("cp $name_withversion.tar.bz2 /usr/src/redhat/SOURCES/");
-	system("cp $name_base.spec /usr/src/redhat/SPECS/");
+	system("mkdir -p ~/rpmbuild/SOURCES");
+	system("mkdir -p ~/rpmbuild/SPECS");
+	system("cp $name_withversion.tar.bz2 ~/rpmbuild/SOURCES/");
+	system("cp $name_base.spec ~/rpmbuild/SPECS/");
 
-	print "Execute rpmbuild -ba /usr/src/redhat/SPECS/$name_base.spec to build RPM.\n";
+	print "Execute rpmbuild -ba ~/rpmbuild/SPECS/$name_base.spec to build RPM.\n";
 }
 
 
