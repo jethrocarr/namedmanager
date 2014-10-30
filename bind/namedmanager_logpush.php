@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 /*
 	namedmanger_logpush
@@ -31,6 +32,81 @@ if (!is_readable($GLOBALS["config"]["log_file"]))
 	die("Fatal Error");
 }
 
+
+/*
+	Set sane PHP options required for daemonised run mode
+*/
+
+set_time_limit(0);
+gc_enable();
+
+
+
+/*
+	Load options & configuration
+	Note: Currently limited to --daemon only
+*/
+
+$options_all = array(
+			"daemon" => array(
+				"short"	=> "D",
+				"long"	=> "daemon",
+				"about" => "Run application as a backgrounded daemon"
+				)
+			);
+
+$options_long	= array();
+$options_short	= "";
+
+foreach (array_keys($options_all) as $key)
+{
+	$options_long[] = $key;
+
+	if ($options_all[$key]["short"])
+	{
+		if (isset($options_all[$key]["getopt"]))
+		{
+			$options_short .= $options_all[$key]["getopt"];
+		}
+		else
+		{
+			$options_short .= $options_all[$key]["short"];
+		}
+	}
+	
+}
+
+$options_set = getopt($options_short, $options_long);
+
+
+/*
+	Daemon Mode
+
+	By default the program runs in the foreground, however when called with the -D
+	option, we want to turn this process into a proper daemon, in which case we need
+	to pcntl_exec() this same program.
+*/
+
+if (isset($options_set["daemon"]))
+{
+	log_write("script", "debug", "Launching background process & terminating current process (Daemon mode)");
+
+	// Re-launch the process with no arguments
+	$program	= $argv[0];
+	$arguments	= array();
+	
+	// we fork, then 
+	$pid = pcntl_fork();
+
+	if (!$pid)
+	{
+		// launch new instance as a backgrounded daemon
+		pcntl_exec($program, $arguments);
+	}
+
+	// terminate origional parent leaving only the backgrounded processes
+	exit();
+}
 
 
 /*
