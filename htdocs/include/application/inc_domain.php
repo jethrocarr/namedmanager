@@ -1923,8 +1923,27 @@ class domain_records extends domain
 
 						break;
 
+						case "SSHFP":
+						// validate SSHFP content (algorithm, type, key/fingerprint)
+						if (!preg_match("/^[1-4] [1-2] [a-fA-F0-9]+$/", $data_tmp[$i]["content"]))
+						{
+							log_write("error", "process", "SSHFP record for ". $data_tmp[$i]["name"] ." is not correctly formatted - content must be: algorithm(1-4) type(1-2) <key/fingerprint>");
+							error_flag_field("record_custom_". $i ."");
+						}
+						break;
+
+						case "LOC":
+						// validate SSHFP content (algorithm, type, key/fingerprint)
+						if (!preg_match("/^[0-9]+( [0-9]+( [0-9]+\.[0-9]+)?)? N|S [0-9]+( [0-9]+( [0-9]+\.[0-9]+)?)? E|W \-?[0-9]+\.[0-9]+m?( [0-9]+\.[0-9]+m?)?( [0-9]+\.[0-9]+m?)?/", $data_tmp[$i]["content"]))
+						{
+							log_write("error", "process", "LOC record for ". $data_tmp[$i]["name"] ." is not correctly formatted - content must follow RFC 1876");
+							error_flag_field("record_custom_". $i ."");
+						}
+						break;
+
 						case "NS":
 						case "MX":
+						case "HINFO":
 							// nothing todo.
 						break;
 

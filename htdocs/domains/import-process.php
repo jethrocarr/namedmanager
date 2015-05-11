@@ -552,6 +552,9 @@ if (user_permissions_get("namedadmins"))
 								case "TXT":
 								case "SPF":
 								case "SRV":
+								case "SSHFP":
+								case "LOC":
+								case "HINFO":
 									/*
 										General Records
 
