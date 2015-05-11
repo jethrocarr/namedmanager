@@ -769,9 +769,9 @@ INSERT INTO `language` (`id`, `language`, `label`, `translation`) VALUES (NULL, 
 INSERT INTO `language` (`id`, `language`, `label`, `translation`) VALUES (NULL, 'en_us', 'config_amberstats', 'Assist the developers!');
 INSERT INTO `language` (`id`, `language`, `label`, `translation`) VALUES (NULL, 'en_us', 'config_hosted', 'Hosted Cloud DNS Services');
 
----
---- New Resource records
----
+--
+-- New Resource records
+--
 INSERT INTO `dns_record_types` (`id`, `type`, `user_selectable`, `is_standard`) VALUES (NULL, 'SSHFP', '1', '1');
 INSERT INTO `dns_record_types` (`id`, `type`, `user_selectable`, `is_standard`) VALUES (NULL, 'HINFO', '1', '1');
 INSERT INTO `dns_record_types` (`id`, `type`, `user_selectable`, `is_standard`) VALUES (NULL, 'LOC', '1', '1');
