@@ -47,6 +47,17 @@ class user_auth
 		{
 			$this->method = "sql";
 		}
+		if ($this->method == "ldaponly") // fallback to ldap_dn if more specific paths are not available
+		{
+			if (!isset($GLOBALS["config"]["ldap_user_dn"]))
+			{
+				$GLOBALS["config"]["ldap_user_dn"] = $GLOBALS["config"]["ldap_dn"];
+			}
+			if (!isset($GLOBALS["config"]["ldap_group_dn"]))
+			{
+				$GLOBALS["config"]["ldap_group_dn"] = $GLOBALS["config"]["ldap_dn"];
+			}
+		}
 	}
 
 
@@ -505,7 +516,7 @@ class user_auth
 						$obj_ldap->srvcfg["user"]		= $GLOBALS["config"]["ldap_manager_user"];
 						$obj_ldap->srvcfg["password"]		= $GLOBALS["config"]["ldap_manager_pwd"];
 					} else {
-						$obj_ldap->srvcfg["user"] = 'uid=' . $username . ',ou=People,' . $GLOBALS["config"]["ldap_dn"];
+						$obj_ldap->srvcfg["user"] = 'uid=' . $username . ',' . $GLOBALS["config"]["ldap_user_dn"];
 						$obj_ldap->srvcfg["password"] = $password;
 					}
 				}
@@ -523,7 +534,7 @@ class user_auth
 				}
 
 				// set base_dn to run user lookups in
-				$obj_ldap->srvcfg["base_dn"] = "ou=People,". $GLOBALS["config"]["ldap_dn"];
+				$obj_ldap->srvcfg["base_dn"] = $GLOBALS["config"]["ldap_user_dn"];
 
 				// run query against users
 				$obj_ldap->search("uid=$username", array("uidnumber", "userpassword"));
@@ -1073,7 +1084,7 @@ class user_auth
 				}
 
 				// set base_dn to run user lookups in
-				$obj_ldap->srvcfg["base_dn"] = "ou=Group,". $GLOBALS["config"]["ldap_dn"];
+				$obj_ldap->srvcfg["base_dn"] = $GLOBALS["config"]["ldap_group_dn"];
 
 				// run query against groups
 				$obj_ldap->search("cn=*", array("cn", "memberuid"));
