@@ -12,6 +12,7 @@
 class page_output
 {
 	var $obj_table;
+	var $obj_form;
 
 
 	function check_permissions()
@@ -28,6 +29,31 @@ class page_output
 
 	function execute()
 	{
+		// Define form structure for the filter
+		$this->obj_form			= New form_input;
+		$this->obj_form->formname	= "filter_domains";
+		$this->obj_form->language	= $_SESSION["user"]["lang"];
+
+		$this->obj_form->action		= "/";
+		$this->obj_form->method		= "get";
+
+
+		// filter pattern
+		$filter = NULL;
+		$filter["fieldname"] 		= "domain_name";
+		$filter["type"]				= "input";
+		$filter["sql"]				= "domain_name LIKE '%value%'";
+		$filter["defaultvalue"]		= $_GET["domain_name"]; // should be secured against sql injection and forbidden chars
+		$this->obj_form->add_input($filter);
+
+		// submit button
+		$structure = NULL;
+		$structure["fieldname"] 	= "submit";
+		$structure["type"]			= "submit";
+		$structure["defaultvalue"]	= "Apply Filter";
+		$this->obj_form->add_input($structure);
+
+
 		// establish a new table object
 		$this->obj_table = New table;
 
@@ -49,6 +75,7 @@ class page_output
 		// fetch all the domains
 		$this->obj_table->sql_obj->prepare_sql_settable("dns_domains");
 		$this->obj_table->sql_obj->prepare_sql_addfield("id", "");
+		$this->obj_table->add_filter($filter);
 		$this->obj_table->sql_obj->prepare_sql_addorderby("REVERSE(domain_name) LIKE 'apra%'");
 		$this->obj_table->sql_obj->prepare_sql_addorderby("domain_description");
 		$this->obj_table->sql_obj->prepare_sql_addorderby("domain_name");
@@ -66,12 +93,16 @@ class page_output
 		print "<p>List of domains managed by this server:</p>";
 
 		// table data
-		if (!$this->obj_table->data_num_rows)
+		if ((!$this->obj_table->data_num_rows) and (!$_GET["domain_name"]))
 		{
 			format_msgbox("important", "<p>There are currently no domain names configured.</p>");
 		}
 		else
 		{
+			if (!$this->obj_table->data_num_rows)
+			{
+				format_msgbox("important", "<p>No match on domain names with current filter expression.</p>");
+			}
 			// details link
 			$structure = NULL;
 			$structure["id"]["column"]	= "id";
@@ -87,6 +118,21 @@ class page_output
 			$structure["id"]["column"]	= "id";
 			$this->obj_table->add_link("tbl_lnk_delete", "domains/delete.php", $structure);
 
+			// include page name
+			$structure = NULL;
+			$structure["fieldname"] 	= "page";
+			$structure["type"]		= "hidden";
+			$structure["defaultvalue"]	= $_GET["page"];
+			$this->obj_form->add_input($structure);
+
+			// hide hidden field "page"
+			$this->obj_form->subforms["hidden"]	= array("page");
+
+			// show input field with button
+			$this->obj_form->subforms["Filter"]	= array("domain_name","submit");
+
+			// display filter form
+			$this->obj_form->render_form();
 
 			// display the table
 			$this->obj_table->render_table_html();
