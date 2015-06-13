@@ -1,24 +1,17 @@
 <?php
 /*
-	domains/domains.php
+	domains/domains-ajax.php
 
 	access:
 		namedadmins
 
-	Interface to view and manage domains.
+	Pull in filtered list of domains.
 */
 
 
 class page_output
 {
 	var $obj_table;
-	var $obj_form;
-
-		function page_output()
-	{
-		// include custom scripts and/or logic
-		$this->requires["javascript"][]	= "include/javascript/filter_domains.js";
-	}
 
 	function check_permissions()
 	{
@@ -34,14 +27,6 @@ class page_output
 
 	function execute()
 	{
-		// Define form structure for the filter
-		$this->obj_form			= New form_input;
-		$this->obj_form->formname	= "filter_domains";
-		$this->obj_form->language	= $_SESSION["user"]["lang"];
-
-		$this->obj_form->action		= "/";
-		$this->obj_form->method		= "get";
-
 
 		// filter pattern
 		$filter = NULL;
@@ -49,15 +34,6 @@ class page_output
 		$filter["type"]				= "input";
 		$filter["sql"]				= "domain_name LIKE '%value%'";
 		$filter["defaultvalue"]		= $_GET["domain_name"]; // should be secured against sql injection and forbidden chars
-		$this->obj_form->add_input($filter);
-
-		// submit button
-		$structure = NULL;
-		$structure["fieldname"] 	= "submit";
-		$structure["type"]			= "submit";
-		$structure["defaultvalue"]	= "Apply Filter";
-		$this->obj_form->add_input($structure);
-
 
 		// establish a new table object
 		$this->obj_table = New table;
@@ -93,10 +69,7 @@ class page_output
 
 	function render_html()
 	{
-		// title + summary
-		print "<h3>DOMAINS</h3>";
-		print "<p>List of domains managed by this server:</p>";
-
+	
 		// table data
 		if ((!$this->obj_table->data_num_rows) and (!$_GET["domain_name"]))
 		{
@@ -123,35 +96,98 @@ class page_output
 			$structure["id"]["column"]	= "id";
 			$this->obj_table->add_link("tbl_lnk_delete", "domains/delete.php", $structure);
 
-			// include page name
-			$structure = NULL;
-			$structure["fieldname"] 	= "page";
-			$structure["type"]		= "hidden";
-			$structure["defaultvalue"]	= $_GET["page"];
-			$this->obj_form->add_input($structure);
-
-			// hide hidden field "page"
-			$this->obj_form->subforms["hidden"]	= array("page");
-
-			// show input field with button
-			$this->obj_form->subforms["Filter"]	= array("domain_name","submit");
-
-			// display filter form
-			$this->obj_form->render_form();
-
 			// display the table
-			print "<div id=\"domains\">";
 			$this->obj_table->render_table_html();
-			print "</div>";
 
 		}
-
-		// add link
-		print "<p><a class=\"button\" href=\"index.php?page=domains/add.php\">Add New Domain</a></p>";
-
 	}
-
 }
 
+/*
+	Include configuration + libraries
+*/
+include("../include/config.php");
+include("../include/amberphplib/main.php");
+include("../include/application/main.php");
+
+
+// create new page object
+$page_obj = New page_output;
+
+// page is valid
+$page_valid = 1;
+
+/*
+	Load the page
+*/
+
+if ($page_valid == 1)
+{
+	// check permissions
+	if ($page_obj->check_permissions())
+	{
+
+
+		/*
+			Check data
+		*/
+		$page_valid = $page_obj->check_requirements();
+
+
+		/*
+			Run page logic, provided that the data was valid
+		*/
+		if ($page_valid)
+		{
+			$page_obj->execute();
+		}
+	}
+	else
+	{
+		// user has no valid permissions
+		$page_valid = 0;
+		error_render_noperms();
+	}
+}
+
+/*
+	Draw messages
+*/
+
+if ($_SESSION["error"]["message"])
+{
+	print "<tr><td colspan=\"100%\">";
+	log_error_render();
+	print "</td></tr>";
+}
+else
+{
+	if ($_SESSION["notification"]["message"])
+	{
+		print "<tr><td>";
+		log_notification_render();
+		print "</td></tr>";
+	}
+}
+
+
+
+/*
+	Draw page data
+*/
+
+
+if ($page_valid)
+{
+	$page_obj->render_html();
+}
+
+?>
+<?php
+
+// erase error and notification arrays
+$_SESSION["user"]["log_debug"] = array();
+$_SESSION["error"] = array();
+$_SESSION["notification"] = array();
 
 ?>
