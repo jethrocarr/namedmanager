@@ -48,6 +48,8 @@ $config["AUTH_METHOD"] = "sql";
 //$config["ldap_host"]		= "auth.example.com";			// hostname of the LDAP server
 //$config["ldap_port"]		= "389";				// LDAP server port
 //$config["ldap_dn"]		= "ou=auth,dc=example,dc=com";		// DN to run queries under
+//$config["ldap_user_dn"]	= "ou=People,dc=example,dc=com";	// optional DN to run user queries under
+//$config["ldap_group_dn"]	= "ou=Group,dc=example,dc=com";		// optional DN to run group queries under
 //$config["ldap_manager_user"]	= "cn=Manager,dc=example,dc=com";	// LDAP manager
 //$config["ldap_manager_pwd"]	= "password";
 //$config["ldap_ssl"]		= "enable";				// use TLS/SSL - enable/disable
