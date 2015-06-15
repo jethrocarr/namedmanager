@@ -13,11 +13,15 @@ class page_output
 {
 	var $obj_table;
 	var $obj_form;
+	var $invalid_filter;
 
 		function page_output()
 	{
 		// include custom scripts and/or logic
 		$this->requires["javascript"][]	= "include/javascript/filter_domains.js";
+
+		// initialize filter
+		$this->invalid_filter=false;
 	}
 
 	function check_permissions()
@@ -48,7 +52,12 @@ class page_output
 		$filter["fieldname"] 		= "domain_name";
 		$filter["type"]				= "input";
 		$filter["sql"]				= "domain_name LIKE '%value%'";
-		$filter["defaultvalue"]		= $_GET["domain_name"]; // should be secured against sql injection and forbidden chars
+		$filter["defaultvalue"]		= security_script_input("/^[A-Za-z0-9\.\-]*$/", $_GET["domain_name"]);
+		if ($filter["defaultvalue"] == "error")
+		{
+			$this->invalid_filter = true;
+			$filter["defaultvalue"] = "";
+		}
 		$this->obj_form->add_input($filter);
 
 		// submit button
@@ -102,12 +111,12 @@ class page_output
 		{
 			format_msgbox("important", "<p>There are currently no domain names configured.</p>");
 		}
-		else
-		{
-			if (!$this->obj_table->data_num_rows)
+		else {
+			if ($this->invalid_filter)
 			{
-				format_msgbox("important", "<p>No match on domain names with current filter expression.</p>");
+				format_msgbox("important", "<p>Invalid filter expression.</p>");
 			}
+
 			// details link
 			$structure = NULL;
 			$structure["id"]["column"]	= "id";
@@ -142,6 +151,10 @@ class page_output
 			// display the table
 			print "<div id=\"domains\">";
 			$this->obj_table->render_table_html();
+			if (!$this->obj_table->data_num_rows)
+			{
+				format_msgbox("important", "<p>No match on domain names with current filter expression.</p>");
+			}
 			print "</div>";
 
 		}

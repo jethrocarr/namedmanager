@@ -33,7 +33,7 @@ class page_output
 		$filter["fieldname"] 		= "domain_name";
 		$filter["type"]				= "input";
 		$filter["sql"]				= "domain_name LIKE '%value%'";
-		$filter["defaultvalue"]		= $_GET["domain_name"]; // should be secured against sql injection and forbidden chars
+		$filter["defaultvalue"]		= security_script_input("/^[A-Za-z0-9\.\-]*$/", $_GET["domain_name"]);
 
 		// establish a new table object
 		$this->obj_table = New table;
@@ -77,10 +77,6 @@ class page_output
 		}
 		else
 		{
-			if (!$this->obj_table->data_num_rows)
-			{
-				format_msgbox("important", "<p>No match on domain names with current filter expression.</p>");
-			}
 			// details link
 			$structure = NULL;
 			$structure["id"]["column"]	= "id";
@@ -98,6 +94,10 @@ class page_output
 
 			// display the table
 			$this->obj_table->render_table_html();
+			if (!$this->obj_table->data_num_rows)
+			{
+				format_msgbox("important", "<p>No match on domain names with current filter expression.</p>");
+			}
 
 		}
 	}
