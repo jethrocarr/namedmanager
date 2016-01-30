@@ -1,7 +1,7 @@
 Summary: A web-based management system for DNS, consisting of a PHP web interface and some PHP CLI components to hook into FreeRadius.
 Name: namedmanager
 Version: 1.9.0
-Release: 1%{dist}
+Release: 2%{dist}
 License: AGPLv3
 URL: http://www.amberdms.com/namedmanager
 Group: Applications/Internet
@@ -20,9 +20,16 @@ Summary: namedmanager web-based interface and API components
 Group: Applications/Internet
 
 Requires: httpd, mod_ssl
-Requires: php >= 5.3.0, mysql-server, php-mysql, php-ldap, php-soap, php-intl, php-xml
+Requires: php >= 5.3.0, php-mysql, php-ldap, php-soap, php-intl, php-xml
 Requires: perl, perl-DBD-MySQL
+%if 0%{?rhel} >= 7
+Requires: mysql-compat-server
+%else
+Requires: mysql-server
+%if 0%{?rhel} < 6
 Prereq: httpd, php, mysql-server, php-mysql
+%endif
+%endif
 
 %description www
 Provides the namedmanager web-based interface and SOAP API.
@@ -94,7 +101,7 @@ touch $RPM_BUILD_ROOT%{_sysconfdir}/named.namedmanager.conf
 
 # Reload apache
 echo "Reloading httpd..."
-/etc/init.d/httpd reload
+service httpd reload
 
 # update/install the MySQL DB
 if [ $1 == 1 ];
@@ -114,7 +121,7 @@ if [ $1 == 0 ];
 then
 	# upgrading existing rpm
 	echo "Restarting logging process..."
-	/etc/init.d/namedmanager_logpush restart
+	service namedmanager_logpush restart
 fi
 
 
@@ -158,7 +165,7 @@ fi
 %preun bind
 
 # stop running process
-/etc/init.d/namedmanager_logpush stop
+service namedmanager_logpush stop
 
 
 
@@ -193,6 +200,8 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Sat Jan 30 2016 Frank Crawford <Frank.Crawford@ac3.com.au> 1.9.0-2
+- Modified spec requirements and scripts to be more compatible with RHEL7
 * Sat Mar 14 2015 Jethro Carr <jethro.carr@amberdms.com> 1.9.0
 - Compilation of various bug fixes
 * Sun Dec 22 2013 Jethro Carr <jethro.carr@amberdms.com> 1.8.0
@@ -221,7 +230,7 @@ rm -rf $RPM_BUILD_ROOT
 - Released version 1.3.0 [stable]
 * Thu Feb  9 2012 Jethro Carr <jethro.carr@amberdms.com> 1.2.0
 - Released version 1.2.0 [stable]
-* Sun Aug 16 2011 Jethro Carr <jethro.carr@amberdms.com> 1.1.0
+* Tue Aug 16 2011 Jethro Carr <jethro.carr@amberdms.com> 1.1.0
 - Released version 1.1.0 [stable]
 * Sun Jul 24 2011 Jethro Carr <jethro.carr@amberdms.com> 1.0.0
 - Released version 1.0.0 [stable]
