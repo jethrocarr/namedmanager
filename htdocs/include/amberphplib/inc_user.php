@@ -19,6 +19,9 @@
 				(allows finer control over what users can login)
 	* ldaponly	authenticate using LDAP and also use LDAP for all user information
 				(all user information is from LDAP, allowing any user to login, but access is stricted by using groups in permissions_get())
+	* ldapbind	authenticates to LDAP by doing a login with a search user, getting the memberuid list from the group entity (also tries the other way around,
+			to get from a user the group members) and seeing if our login/user is a member; if it is and if group matches the admin group = namedadmins,
+			then try to bind to ldap with that user and pass; if successful, then auth = OK
 
 	Refer to Amberphplib developer documentation for futher information on authentication.
 */
@@ -801,7 +804,89 @@ class user_auth
 				} // end if user exists
 
 			break;
+		
+			case "ldapbind":
+				/* LDAP-bind Authentication 
+				   We use an LDAP user with search rights.
+				   We bind with it to LDAP and then try:
+					a) to retrieve for our user the group list and see if namedadmin is among them (this is if the user entry has a group membership attribute)
+					b) to retrieve from the group namedadmin, its members and see if our user is among them
+				   If OK, then we try to do an LDAP BIND with our username and his password
+				   IF OK => Success / Else -> Break
+				*/
+                                $obj_ldap	= New ldap_query;
+				/* bind auth connection for user login */
+				$obj_bind_auth	= New ldap_query;
+                                // use config files for LDAP server settings.
+                                if ($GLOBALS["config"]["ldap_host"])
+                                {
+                                        $obj_ldap->srvcfg["host"]               = $GLOBALS["config"]["ldap_host"];
+                                        $obj_ldap->srvcfg["port"]               = $GLOBALS["config"]["ldap_port"];
+                                        $obj_ldap->srvcfg["base_dn"]            = $GLOBALS["config"]["ldap_dn"];
+					$obj_bind_auth->srvcfg["host"]		= $GLOBALS["config"]["ldap_host"];
+					$obj_bind_auth->srvcfg["port"]		= $GLOBALS["config"]["ldap_port"];
+	
+                                        // use the ldap_manager_user if its set, else attempt a bind with the supplied credentials
+                                        if(isset($GLOBALS["config"]["ldap_manager_user"])) {
+                                                $obj_ldap->srvcfg["user"]               = $GLOBALS["config"]["ldap_manager_user"];
+                                                $obj_ldap->srvcfg["password"]           = $GLOBALS["config"]["ldap_manager_pwd"];
+                                        } else {
+                                                $obj_ldap->srvcfg["user"] = 'uid=' . $username . ',' . $GLOBALS["config"]["ldap_user_dn"];
+                                                $obj_ldap->srvcfg["password"] = $password;
+                                        }
+                                }
 
+                                // connect to LDAP server
+                                if ( ( $conn = $obj_ldap->connect() ) <= 0)
+                                {
+                                        if($conn == -1 && !isset($GLOBALS["config"]["ldap_manager_user"]) ) {
+                                                log_debug("user_auth", "Authentication failed due to incorrect password/username combination");
+                                                return -1;
+                                        }
+
+                                        log_write("error", "user_auth", "An error occurred in the authentication backend, please contact your system administrator");
+                                        return -1;
+                                }
+
+                                // run query against users
+				$obj_ldap->search("(&(objectClass=posixGroup)(cn=namedadmins)(memberUid=$username))", array("memberUid"));
+				$user_in_group	= $obj_ldap->data_num_rows;
+				$obj_ldap->search("(&(objectClass=posixAccount)(uid=$username)(memberOf=namedadmins))", array("memberOf"));
+				$group_in_user	= $obj_ldap->data_num_rows;
+				
+				// if either user is present in group namedadmins or if the group is present as an entry inside the user
+				// try to bind to ldap with the supplied user and password
+				if (($user_in_group >= 1) || ($group_in_user >=1)) {
+					$obj_ldap->search("(&(objectClass=inetOrgPerson)(uid=$username))", array("dn"));
+					
+					if ($obj_ldap->data_num_rows <> 1) {
+						log_write("error", "user_auth", "There was no Full DN entry found in the LDAP Server for the username specified.");					
+						return -2;
+					}
+					else {	
+						// get full DN that we need to use for binding to LDAP with this user
+				                $obj_bind_auth->srvcfg["user"] 		= $obj_ldap->data[0]["dn"];
+				                $obj_bind_auth->srvcfg["password"] 	= $password;
+				                if ( $conn = $obj_bind_auth->connect() <= 0 ) {
+							if ($conn == -1) {
+				                                log_write("error", "user_auth", "Authentication for the username $username failed");
+                                				return -1;
+				                        }
+						return 0;
+						}
+						else { 
+							log_debug("user_auth","Authentication success via LDAP BIND");
+							$obj_bind_auth->disconnect();
+							return 2;		
+						}
+					}
+				}
+				else {
+					log_write("error", "user_auth", "User is not present in the authorized group in LDAP");
+					return 0;
+				}
+			break;
+	
 		} // end of switch authentication method
 
 
