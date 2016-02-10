@@ -32,10 +32,10 @@ class api_namedmanager
 	*/
 	function api_namedmanager()
 	{
-		$this->auth_server	= $_SESSION["auth_server"];
-		$this->auth_online	= $_SESSION["auth_online"];
-		$this->auth_admin	= $_SESSION["auth_admin"];
-		$this->auth_group	= $_SESSION["auth_group"];
+        $this->auth_server  = isset($_SESSION["auth_server"]) ? $_SESSION["auth_server"] : NULL;                                                                
+        $this->auth_online  = isset($_SESSION["auth_online"]) ? $_SESSION["auth_online"] : NULL;
+        $this->auth_admin   = isset($_SESSION["auth_admin"]) ? $_SESSION["auth_admin"] : NULL;
+        $this->auth_group   = isset($_SESSION["auth_group"]) ? $_SESSION["auth_group"] : NULL;
 	}
 
 
@@ -200,7 +200,7 @@ class api_namedmanager
 
 			$obj_server->load_data();
 
-			if ($obj_server->data["sync_status_config"])
+			if (isset($obj_server->data["sync_status_config"]))
 			{
 				log_write("debug", "api_namedmanager", "Configuration is OUT OF SYNC!");
 
