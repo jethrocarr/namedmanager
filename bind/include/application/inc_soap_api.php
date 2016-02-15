@@ -88,7 +88,7 @@ class soap_api
 		if (!isset($GLOBALS["config"]["api_host"]))
 		{
 			// need to set what the API hostname is for DNS lookups
-			preg_match("/^http[s]:\/\/(\S*?)[:0-9]*\//", $GLOBALS["config"]["api_url"], $matches);
+			preg_match("/^http[s]?:\/\/(\S*)[:0-9]*\//", $GLOBALS["config"]["api_url"], $matches);
 			$GLOBALS["config"]["api_host"] = $matches[1];
 		}
 
