@@ -13,7 +13,7 @@ include_once("../include/amberphplib/main.php");
 include_once("../include/application/main.php");
 
 
-if (user_permissions_get(namedadmins))
+if (user_permissions_get("admin"))
 {
 	/////////////////////////
 
