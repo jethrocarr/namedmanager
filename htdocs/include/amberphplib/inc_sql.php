@@ -92,12 +92,12 @@ class sql_query
 			case "mysql":
 
 				// authenticate
-				$this->db_link = mysql_connect($db_hostname, $db_username, $db_password, TRUE);
+				$this->db_link = mysqli_connect($db_hostname, $db_username, $db_password, TRUE);
 
 				if (!$this->db_link)
 				{
 					log_write("error", "sql_query", "Failure to connect to SQL database $db_name on server $db_hostname. Verify correct authentication details.");
-					log_write("error", "sql_query", "SQL Database Error: ". mysql_error());
+					log_write("error", "sql_query", "SQL Database Error: ". mysqli_error());
 
 					return 0;
 				}
@@ -166,7 +166,7 @@ class sql_query
 		{
 			case "mysql":
 
-				$return = mysql_select_db($db_name, $this->db_link);
+				$return = mysqli_select_db($this->db_link, $db_name);
 
 			break;
 
@@ -219,7 +219,7 @@ class sql_query
 			{
 				case "mysql":
 
-					return mysql_close($this->db_link);
+					return mysqli_close($this->db_link);
 
 				break;
 			}
@@ -281,7 +281,7 @@ class sql_query
 		// check query length for debug dispaly handling
 		if (strlen($this->string) < 1000)
 		{
-			log_write("sql", "sql_query", $this->db_link ." ". $trans . $this->string);
+			log_write("sql", "sql_query", $trans . $this->string);
 		}
 		else
 		{
@@ -291,9 +291,9 @@ class sql_query
 
 
 		// execute query
-		if (!$this->db_resource = mysql_query($this->string, $this->db_link))
+		if (!$this->db_resource = mysqli_query($this->db_link, $this->string))
 		{
-			log_write("error", "sql_query", $trans . "Problem executing SQL query - ". mysql_error($this->db_link));
+			log_write("error", "sql_query", $trans . "Problem executing SQL query - ". mysqli_error($this->db_link));
 			return 0;
 		}
 		else
@@ -316,7 +316,7 @@ class sql_query
 	{
 		log_debug("sql_query", "Executing fetch_insertid()");
 
-		$id = mysql_insert_id($this->db_link);
+		$id = mysqli_insert_id($this->db_link);
 
 		if ($id)
 		{
@@ -340,7 +340,7 @@ class sql_query
 	{
 		log_debug("sql_query", "Executing fetch_affected_rows()");
 
-		$num = mysql_affected_rows($this->db_link);
+		$num = mysqli_affected_rows($this->db_link);
 
 		return $num;
 	}
@@ -365,7 +365,7 @@ class sql_query
 			// fetch the number of rows
 			if ($this->db_resource)
 			{
-				$this->data_num_rows = mysql_num_rows($this->db_resource);
+				$this->data_num_rows = mysqli_num_rows($this->db_resource);
 
 				return $this->data_num_rows;
 			}
@@ -395,7 +395,7 @@ class sql_query
 		
 		if ($this->db_resource)
 		{
-			while ($mysql_data = mysql_fetch_array($this->db_resource))
+			while ($mysql_data = mysqli_fetch_array($this->db_resource))
 			{
 				$this->data[] = $mysql_data;
 			}
@@ -493,7 +493,7 @@ class sql_query
 		{
 			log_write("sql", "sql_query", "START TRANSACTION");
 
-			if (mysql_query("START TRANSACTION", $this->db_link))
+			if (mysqli_query($this->db_link, "START TRANSACTION"))
 			{
 				// success
 
@@ -531,7 +531,7 @@ class sql_query
 
 				log_write("sql", "sql_query", "COMMIT");
 
-				if (mysql_query("COMMIT", $this->db_link))
+				if (mysqli_query($this->db_link, "COMMIT"))
 				{
 					// success
 					return 1;
@@ -576,7 +576,7 @@ class sql_query
 
 				log_write("sql", "sql_query", "ROLLBACK");
 
-				if (mysql_query("ROLLBACK", $this->db_link))
+				if (mysqli_query($this->db_link, "ROLLBACK"))
 				{
 					// success
 					return 1;
