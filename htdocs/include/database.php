@@ -8,14 +8,14 @@
 
 
 // login to the database
-$link = mysql_connect($config["db_host"], $config["db_user"], $config["db_pass"]);
+$link = mysqli_connect($config["db_host"], $config["db_user"], $config["db_pass"]);
 if (!$link)
-	die("Unable to connect to DB:" . mysql_error());
+	die("Unable to connect to DB:" . mysqli_error());
 
 // select the database
-$db_selected = mysql_select_db($config["db_name"], $link);
+$db_selected = mysqli_select_db($link, $config["db_name"]);
 if (!$db_selected)
-	die("Unable to connect to DB:" . mysql_error());
+	die("Unable to connect to DB:" . mysqli_error());
 
 
 // Disable SQL modes for this session to ensure backwards compat with
