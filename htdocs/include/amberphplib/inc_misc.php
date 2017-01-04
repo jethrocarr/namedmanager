@@ -1542,7 +1542,7 @@ function ipv4_split_to_class_c($address_with_cidr)
 	log_write("debug", "inc_misc", "Executing ipv4_split_to_class_c($address_with_cidr)");
 
 	// source range
-	$matches	= split("/", $address_with_cidr);
+	$matches	= explode("/", $address_with_cidr);
 
 	$src_addr	= $matches[0];
 	$src_cidr	= $matches[1];

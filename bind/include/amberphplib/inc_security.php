@@ -418,7 +418,7 @@ function security_form_input_predefined ($type, $valuename, $numchar, $errormsg)
 		break;
 
 		case "ipv6_cidr":
-			list($network, $cidr) = split("/", $_POST[$valuename]);
+			list($network, $cidr) = explode("/", $_POST[$valuename]);
 			
 			if (filter_var($network, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6))
 			{
