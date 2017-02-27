@@ -2,7 +2,7 @@
 /*
 	user/user-edit-process.php
 
-	Access: admin users only
+	Access: admin only
 
 	Updates or creates a user account based on the information provided to it.
 */
@@ -14,7 +14,7 @@ include_once("../include/amberphplib/main.php");
 include_once("../include/application/main.php");
 
 
-if (user_permissions_get(namedadmins))
+if (user_permissions_get("admin"))
 {
 	////// INPUT PROCESSING ////////////////////////
 

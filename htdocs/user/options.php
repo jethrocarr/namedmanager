@@ -185,27 +185,30 @@ class page_output
 
 
 		// administrator-only option
-		if (user_permissions_get("namedadmins"))
-		{
-			// debugging
-			$structure = NULL;
-			$structure["fieldname"]		= "option_debug";
-			$structure["type"]		= "checkbox";
-			$structure["defaultvalue"]	= $options["debug"];
-			$structure["options"]["label"]	= "Enable debug logging - this will impact performance a bit but will show a full trail of all functions and SQL queries made <i>(note: this option is only avaliable to administrators)</i>";
-			$this->obj_form->add_input($structure);
-
-			// concurrent logins
-			$structure = NULL;
-			$structure["fieldname"]		= "option_concurrent_logins";
-			$structure["type"]		= "checkbox";
-			$structure["defaultvalue"]	= $options["concurrent_logins"];
-			$structure["options"]["label"]	= "Permit this user to make multiple simultaneous logins</i>";
-			$this->obj_form->add_input($structure);
-			
-			$this->obj_form->subforms["user_options"][]	= "option_debug";
-			$this->obj_form->subforms["user_options"][]	= "option_concurrent_logins";
+		// debugging
+		$structure = NULL;
+		$structure["fieldname"]		= "option_debug";
+		$structure["type"]		= "checkbox";
+		$structure["defaultvalue"]	= $options["debug"];
+		$structure["options"]["label"]	= "Enable debug logging - this will impact performance a bit but will show a full trail of all functions and SQL queries made <i>(note: this option is only avaliable to administrators)</i>";
+		if (!user_permissions_get("admin")) {
+			$structure["options"]["disabled"]	= "yes";
 		}
+		$this->obj_form->add_input($structure);
+
+		// concurrent logins
+		$structure = NULL;
+		$structure["fieldname"]		= "option_concurrent_logins";
+		$structure["type"]		= "checkbox";
+		$structure["defaultvalue"]	= $options["concurrent_logins"];
+		$structure["options"]["label"]	= "Permit this user to make multiple simultaneous logins</i>";
+		if (!user_permissions_get("admin")) {
+			$structure["options"]["disabled"]	= "yes";
+		}
+		$this->obj_form->add_input($structure);
+			
+		$this->obj_form->subforms["user_options"][]	= "option_debug";
+		$this->obj_form->subforms["user_options"][]	= "option_concurrent_logins";
 
 
 		// remaining subforms		
