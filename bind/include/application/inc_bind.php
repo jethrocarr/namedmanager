@@ -660,6 +660,18 @@ class bind_api extends soap_api
 						{
 							$record["record_name"] .= ".";	// append . as FQDN
 						}
+                        
+						// Adjust content if > 255 and record type is TXT
+						if ((strcmp($record["record_type"],"TXT")==0) && (strlen($record["record_content"]) > 257)) {
+							$content2split = substr($record["record_content"],1,-1);
+							$record["record_content"] = '"';
+							while (strlen($content2split) > 255) {
+								$record["record_content"] .= substr($content2split,0,255) .'""';
+								$content2split = substr($content2split,255);
+							}
+
+							$record["record_content"] .= $content2split.'"';
+						}
 
 					break;
 					
