@@ -1828,6 +1828,13 @@ class domain_records extends domain
 						break;
 
 						case "CNAME":
+                               //Name should not have @
+                               if ($data_tmp[$i]["name"]=='@'){
+                                //@ is nt acceppted in cname                            
+								log_write("error", "process", "CNAME record for ". $data_tmp[$i]["content"] ." contains @ in name, which is not allowed");
+								error_flag_field("record_custom_". $i ."");
+                                                        }
+                                                    
 							// validate CNAME
 							if ($data_tmp[$i]["content"] != "@" && !preg_match("/^[A-Za-z0-9\p{L}._-]*$/", $data_tmp[$i]["content"]))
 							{
@@ -1944,6 +1951,7 @@ class domain_records extends domain
 						case "NS":
 						case "MX":
 						case "HINFO":
+						case "ALIAS":
 							// nothing todo.
 						break;
 
