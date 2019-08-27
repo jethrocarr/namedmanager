@@ -271,8 +271,8 @@ if (user_permissions_get("namedadmins"))
 					log_write("debug", "process", "Updating record ". $record["id"] ." due to changed details");
 			
 					$obj_record->data_record["name"]	= strtolower($record["name"]);
-					$obj_record->data_record["type"]	= strtolower($record["content"]);
-					$obj_record->data_record["content"]	= $record["content"];
+					$obj_record->data_record["type"]	= strtoupper($record["type"]);
+					$obj_record->data_record["content"]	= strtolower($record["content"]);
 					$obj_record->data_record["ttl"]		= $record["ttl"];
 					$obj_record->data_record["prio"]	= $record["prio"];
 
