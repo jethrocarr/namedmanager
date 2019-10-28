@@ -270,7 +270,15 @@ function add_recordrow_mx()
 	new_string = "record_mx_" + (num_records_mx) + "_ttl";
 	previous_string = "record_mx_" + (num_records_mx-1) + "_ttl";
 	dynamic_help_message(previous_string, new_string, "true");
-	
+
+// Add from Name/Origin
+	$(new_row).children().children("input[name='record_mx_" + (num_records_mx-1) + "_name']").removeAttr("name").attr("name", "record_mx_" + num_records_mx + "_name");
+	$(new_row).children().children("input[name='record_mx_" + (num_records_mx-1) + "_name_helpmessagestatus']").removeAttr("name").attr("name", "record_mx_" + num_records_mx + "_name_helpmessagestatus");
+	new_string = "record_mx_" + (num_records_mx) + "_name";
+	previous_string = "record_mx_" + (num_records_mx-1) + "_name";
+	dynamic_help_message(previous_string, new_string);
+
+
 	$(new_row).children().children("input[name='record_mx_" + (num_records_mx-1) + "_content']").removeAttr("name").attr("name", "record_mx_" + num_records_mx + "_content");
 	$(new_row).children().children("input[name='record_mx_" + (num_records_mx-1) + "_content_helpmessagestatus']").removeAttr("name").attr("name", "record_mx_" + num_records_mx + "_content_helpmessagestatus");
 	new_string = "record_mx_" + (num_records_mx) + "_content";
