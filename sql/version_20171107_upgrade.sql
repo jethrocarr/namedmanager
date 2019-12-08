@@ -1,7 +1,6 @@
 --
 -- New content size records 255 -> 1024
 --
-USE `namedmanager`;
 
 ALTER TABLE `dns_records` MODIFY content VARCHAR(1024);
 
