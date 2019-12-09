@@ -277,8 +277,8 @@ class page_output
 			$structure = NULL;
 			$structure["fieldname"] 		= "record_mx_". $i ."_content";
 			$structure["type"]			= "input";
-			$structure["options"]["help"]		= "FQDN or hostname of mail server";
 			$structure["options"]["width"]		= "300";
+			$structure["options"]["help"]		= "FQDN or hostname of mail server";
 			$this->obj_form->add_input($structure);
 
 			$structure = NULL;
