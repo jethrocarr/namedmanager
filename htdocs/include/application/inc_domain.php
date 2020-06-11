@@ -1696,7 +1696,13 @@ class domain_records extends domain
 				$data_tmp[$i]["id"]			= @security_script_input_predefined("int", $data_orig[$i]["id"], 1);
 				$data_tmp[$i]["type"]			= @security_script_input_predefined("any", $data_orig[$i]["type"], 1);
 				$data_tmp[$i]["ttl"]			= @security_script_input_predefined("int", $data_orig[$i]["ttl"], 1);
-				$data_tmp[$i]["name"]			= @security_script_input_predefined("any", $data_orig[$i]["name"], 1);
+
+//				Конвертация из/в punycode/IDN
+				$data_tmp[$i]["name"]			= stripslashes($data_tmp[$i]["name"]);
+				$data_tmp[$i]["name"]			= (stripos($data_tmp[$i]["name"], 'xn--')!==false) ? $data_tmp[$i]["name"]->idn_to_utf8(@security_script_input_predefined("any", $data_orig[$i]["name"], 1)) : $data_tmp[$i]["name"]->idn_to_ascii(@security_script_input_predefined("any", $data_orig[$i]["name"], 1));
+
+//				$data_tmp[$i]["name"]			= @security_script_input_predefined("any", $data_orig[$i]["name"], 1);
+
 				$data_tmp[$i]["prio"]			= @security_script_input_predefined("int", $data_orig[$i]["prio"], 0);
 				$data_tmp[$i]["content"]		= @security_script_input_predefined("any", $data_orig[$i]["content"], 1);
 				$data_tmp[$i]["reverse_ptr"]		= @security_script_input_predefined("checkbox", $data_orig[$i]["reverse_ptr"], 1);
@@ -1739,7 +1745,13 @@ class domain_records extends domain
 				$data_tmp[$i]["id"]			= @security_form_input_predefined("int", "record_custom_". $i ."_id", 0, "");
 				$data_tmp[$i]["type"]			= @security_form_input_predefined("any", "record_custom_". $i ."_type", 0, "");
 				$data_tmp[$i]["ttl"]			= @security_form_input_predefined("int", "record_custom_". $i ."_ttl", 0, "");
-				$data_tmp[$i]["name"]			= @security_form_input_predefined("any", "record_custom_". $i ."_name", 0, "");
+
+//				Конвертация из/в punycode/IDN
+				$data_tmp[$i]["name"]			= stripslashes($data_tmp[$i]["name"]);
+				$data_tmp[$i]["name"]			= (stripos($data_tmp[$i]["name"], 'xn--')!==false) ? $data_tmp[$i]["name"] = idn_to_utf8(@security_form_input_predefined("any", "record_custom_". $i ."_name", 0, "")) : $data_tmp[$i]["name"] = idn_to_ascii(@security_form_input_predefined("any", "record_custom_". $i ."_name", 0, ""));
+
+//				$data_tmp[$i]["name"]			= @security_form_input_predefined("any", "record_custom_". $i ."_name", 0, "");
+
 				$data_tmp[$i]["content"]		= @security_form_input_predefined("any", "record_custom_". $i ."_content", 0, "");
 				$data_tmp[$i]["reverse_ptr"]		= @security_form_input_predefined("checkbox", "record_custom_". $i ."_reverse_ptr", 0, "");
 				$data_tmp[$i]["reverse_ptr_orig"]	= @security_form_input_predefined("checkbox", "record_custom_". $i ."_reverse_ptr_orig", 0, "");
@@ -1809,7 +1821,8 @@ class domain_records extends domain
 					{
 						case "A":
 							// validate IPv4
-							if (!preg_match("/^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:[.](?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$/", $data_tmp[$i]["content"]))
+							if (filter_var($data_tmp[$i]["content"], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) == FALSE)
+//							if (!preg_match("/^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:[.](?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$/", $data_tmp[$i]["content"]))
 							{
 								// invalid IP address
 								log_write("error", "process", "A record for ". $data_tmp[$i]["name"] ." did not validate as an IPv4 address");
@@ -1829,14 +1842,14 @@ class domain_records extends domain
 
 						case "CNAME":
 							// validate CNAME
-							if ($data_tmp[$i]["content"] != "@" && !preg_match("/^[A-Za-z0-9\p{L}._-]*$/", $data_tmp[$i]["content"]))
-							{
+							if (filter_var($data_tmp[$i]["content"], FILTER_VALIDATE_DOMAIN) == $data_tmp[$i]["content"])
+//							if ($data_tmp[$i]["content"] != "@" && !preg_match("/^[A-Za-z0-9\p{L}._-]*$/", $data_tmp[$i]["content"]))
+/*							{
 								// invalid CNAME
 								log_write("error", "process", "CNAME record for ". $data_tmp[$i]["name"] ." contains invalid characters.");
 								error_flag_field("record_custom_". $i ."");
 							}
-
-							// make sure it's not an IP
+*/							// make sure it's not an IP
 							if (filter_var($data_tmp[$i]["content"], FILTER_VALIDATE_IP) == $data_tmp[$i]["content"])
 							{
 								// CNAME is pointing at an IP
