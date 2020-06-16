@@ -80,11 +80,12 @@ function security_form_input($expression, $valuename, $numchars, $errormsg)
         //
         // this prevents SQL injections, by backslashing -- " ' ` \ -- etc.
         //
-	if (get_magic_quotes_gpc() == 0)
-	{
-		$input = addslashes($input);
-	}
-
+		$input = mysqli_real_escape_string($GLOBALS["cache"]["database_default_link"], $input);
+/*		if (get_magic_quotes_gpc() == 0)
+		{
+			$input = addslashes($input);
+		}
+*/
 
 	if (strlen($input) >= $numchars)
 	{
