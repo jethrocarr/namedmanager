@@ -1783,7 +1783,7 @@ class domain_records extends domain
 
 
 				// verify name syntax
-				if ($data_tmp[$i]["name"] == "*" || preg_match("/^\*\.[A-Za-z0-9\p{L}:._-]+$/", $data_tmp[$i]["name"]))
+				if ($data_tmp[$i]["name"] == "*" || preg_match("/^\*\.[\\w\p{L}:._-]+$/ui", $data_tmp[$i]["name"]))
 				{
 					// wildcard records are annoying - wildcards must be standalone, and can't be part of a sring
 					// OK  -> *
@@ -1793,7 +1793,7 @@ class domain_records extends domain
 
 					// nothing todo
 				}
-				elseif ($data_tmp[$i]["name"] != "@" && !preg_match("/^[A-Za-z0-9\p{L}:._-]*$/", $data_tmp[$i]["name"]))
+				elseif ($data_tmp[$i]["name"] != "@" && !preg_match("/^[\\w\p{L}:._-]*$/ui", $data_tmp[$i]["name"]))
 				{
 					// all other record types
 					log_write("error", "process", "Sorry, the value you have entered for record ". $data_tmp[$i]["name"] ." contains invalid charactors");
@@ -1809,7 +1809,8 @@ class domain_records extends domain
 					{
 						case "A":
 							// validate IPv4
-							if (!preg_match("/^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:[.](?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$/", $data_tmp[$i]["content"]))
+							if (filter_var($data_tmp[$i]["content"], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) == FALSE)
+//							if (!preg_match("/^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:[.](?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$/", $data_tmp[$i]["content"]))
 							{
 								// invalid IP address
 								log_write("error", "process", "A record for ". $data_tmp[$i]["name"] ." did not validate as an IPv4 address");
@@ -1829,19 +1830,18 @@ class domain_records extends domain
 
 						case "CNAME":
 							// validate CNAME
-							if ($data_tmp[$i]["content"] != "@" && !preg_match("/^[A-Za-z0-9\p{L}._-]*$/", $data_tmp[$i]["content"]))
+							if ($data_tmp[$i]["content"] != "@" && !(filter_var($data_tmp[$i]["content"], FILTER_VALIDATE_DOMAIN)) && !(filter_var($data_tmp[$i]["content"], FILTER_VALIDATE_IP)) )
 							{
 								// invalid CNAME
-								log_write("error", "process", "CNAME record for ". $data_tmp[$i]["name"] ." contains invalid characters.");
-								error_flag_field("record_custom_". $i ."");
+								log_write("error", "process", "CNAME record for " . $data_tmp[$i]["name"] . " contains invalid characters.");
+								error_flag_field("record_custom_" . $i . "");
 							}
-
 							// make sure it's not an IP
-							if (filter_var($data_tmp[$i]["content"], FILTER_VALIDATE_IP) == $data_tmp[$i]["content"])
+							if (filter_var($data_tmp[$i]["content"], FILTER_VALIDATE_IP) == FALSE && !filter_var($data_tmp[$i]['content'], FILTER_VALIDATE_DOMAIN))
 							{
 								// CNAME is pointing at an IP
-								log_write("error", "process", "CNAME record for ". $data_tmp[$i]["name"] ." is incorrectly referencing an IP address.");
-								error_flag_field("record_custom_". $i ."");
+								log_write("error", "process", "CNAME record for " . $data_tmp[$i]["name"] . " is incorrectly referencing an IP address. ");
+								error_flag_field("record_custom_" . $i . "");
 							}
 						break;
 

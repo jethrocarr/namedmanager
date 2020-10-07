@@ -1152,7 +1152,7 @@ function log_debug_render()
 			}
 			
 			// display
-			print "<td nowrap>". $time_last  ."</td>";
+			print "<td nowrap>". date('Y-m-d H:i:s', $time_last)  ."</td>";
 			print "<td nowrap>". format_size_human($log_record["memory"]) ."</td>";
 			print "<td nowrap>". $log_record["type"] ."</td>";
 			print "<td nowrap>". $log_record["category"] ."</td>";

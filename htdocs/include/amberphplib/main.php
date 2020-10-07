@@ -75,7 +75,7 @@ function log_write($type, $category, $content)
 		
 		// print log messages when running from CLI
 		if (isset($_SESSION["mode"]) && $_SESSION["mode"] == "cli")
-			print "Error: $content\n";
+			print date("Y-m-d H:i:s") . " Error: " . $content . "\n";
 	}
 
 	// also add notification messages to the notification array
@@ -85,7 +85,7 @@ function log_write($type, $category, $content)
 		
 		// print log messages when running from CLI
 		if (isset($_SESSION["mode"]) && ($_SESSION["mode"] == "cli"))
-			print "$content\n";
+			print date("Y-m-d H:i:s", $time_last) . " Notification: " . $content . "\n";
 	}
 
 }
