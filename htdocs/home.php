@@ -19,7 +19,7 @@ else
 		function check_permissions()
 		{
 			// only allow namedadmins group members to have access
-			if (user_permissions_get("namedadmins"))
+			if (user_online())
 			{
 				return 1;
 			}
