@@ -58,9 +58,7 @@ class ReadLimitEntityBody extends AbstractEntityBodyDecorator
      */
     public function seek($offset, $whence = SEEK_SET)
     {
-        return $whence === SEEK_SET
-            ? $this->body->seek(max($this->offset, min($this->offset + $this->limit, $offset)))
-            : false;
+        return $whence === SEEK_SET && $this->body->seek(max($this->offset, min($this->offset + $this->limit, $offset)));
     }
 
     /**

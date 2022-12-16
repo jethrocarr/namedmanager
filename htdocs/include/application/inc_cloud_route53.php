@@ -210,15 +210,11 @@ class cloud_route53
 					$tmp["ttl"]	= $route53_record["TTL"];
 
 					// Type-Specific processing
-					switch ($tmp["type"])
-					{
-						case "MX":
-							if (preg_match("/^([0-9]*)\s(\S*)$/", $tmp["content"], $matches))
-							{
-								$tmp["prio"]	= $matches[1];
-								$tmp["content"]	= $matches[2];
-							}
-						break;
+					if ($tmp["type"] == "MX") {
+						if (preg_match("/^([0-9]*)\s(\S*)$/", $tmp["content"], $matches)) {
+							$tmp["prio"] = $matches[1];
+							$tmp["content"] = $matches[2];
+						}
 					}
 
 					// AWS returns @ as \100, so we replace any \100 in the domain names with
