@@ -173,7 +173,7 @@ class file_storage
 			switch ($_FILES[ $fieldname ]["error"])
 			{
 				case UPLOAD_ERR_INI_SIZE:
-					log_write("error", "file_storage", "File upload was in excess of maximum PHP limit of ". ini_get('upload_max_filesize') ."");
+					log_write("error", "file_storage", "File upload was in excess of maximum PHP limit of ". ini_get('upload_max_filesize'));
 				break;
 
 				case UPLOAD_ERR_NO_FILE:
@@ -181,7 +181,7 @@ class file_storage
 				break;
 
 				default:
-					log_write("error", "file_storage", "Unexpected upload error: ". $_FILES[ $fieldname ]["error"] ."");
+					log_write("error", "file_storage", "Unexpected upload error: ". $_FILES[ $fieldname ]["error"]);
 				break;
 			}
 
@@ -764,7 +764,7 @@ class file_storage
 		
 		// tell the browser how big the file is (in bytes)
 		// most browers seem to ignore this, but it's vital in order to make IE 7 work.
-		header("Content-Length: ". $this->data["file_size"] ."");
+		header("Content-Length: ". $this->data["file_size"]);
 
 		
 		
@@ -775,7 +775,7 @@ class file_storage
 			has some files on disk and some in the DB, we can handle it accordingly.
 		*/
 
-		log_write("debug", "file_storage", "Fetching file ". $this->id ." from location ". $this->data["file_location"] ."");
+		log_write("debug", "file_storage", "Fetching file ". $this->id ." from location ". $this->data["file_location"]);
 		
 		if ($this->data["file_location"] == "db")
 		{
@@ -790,7 +790,7 @@ class file_storage
 
 			if (!$sql_obj->num_rows())
 			{
-				die("No data found for file". $this->id ."");
+				die("No data found for file". $this->id);
 			}
 
 			$sql_obj->fetch_array();
@@ -876,7 +876,7 @@ class file_storage
 
 		$return_string = NULL;
 
-		log_write("debug", "file_storage", "Fetching file ". $this->id ." from location ". $this->data["file_location"] ."");
+		log_write("debug", "file_storage", "Fetching file ". $this->id ." from location ". $this->data["file_location"]);
 		
 		if ($this->data["file_location"] == "db")
 		{
@@ -897,7 +897,7 @@ class file_storage
 
 			if (!$sql_obj->num_rows())
 			{
-				die("No data found for file". $this->id ."");
+				die("No data found for file". $this->id);
 			}
 			
 
@@ -974,7 +974,7 @@ class file_storage
 			has some files on disk and some in the DB, we can handle it accordingly.
 		*/
 
-		log_write("debug", "file_storage", "Fetching file ". $this->id ." from location ". $this->data["file_location"] ."");
+		log_write("debug", "file_storage", "Fetching file ". $this->id ." from location ". $this->data["file_location"]);
 		
 		if ($this->data["file_location"] == "db")
 		{
@@ -997,7 +997,7 @@ class file_storage
 
 			if (!$sql_obj->num_rows())
 			{
-				die("No data found for file ". $this->id ."");
+				die("No data found for file ". $this->id);
 			}
 
 			$sql_obj->fetch_array();

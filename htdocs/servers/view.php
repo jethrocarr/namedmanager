@@ -28,14 +28,14 @@ class page_output
 		// define the navigiation menu
 		$this->obj_menu_nav = New menu_nav;
 
-		$this->obj_menu_nav->add_item("Adjust Server Configuration", "page=servers/view.php&id=". $this->obj_name_server->id ."", TRUE);
+		$this->obj_menu_nav->add_item("Adjust Server Configuration", "page=servers/view.php&id=". $this->obj_name_server->id, TRUE);
 		
 		if ($GLOBALS["config"]["FEATURE_LOGS_API"])
 		{
-			$this->obj_menu_nav->add_item("View Server-Specific Logs", "page=servers/logs.php&id=". $this->obj_name_server->id ."");
+			$this->obj_menu_nav->add_item("View Server-Specific Logs", "page=servers/logs.php&id=". $this->obj_name_server->id);
 		}
 
-		$this->obj_menu_nav->add_item("Delete Server", "page=servers/delete.php&id=". $this->obj_name_server->id ."");
+		$this->obj_menu_nav->add_item("Delete Server", "page=servers/delete.php&id=". $this->obj_name_server->id);
 	}
 
 
@@ -239,7 +239,7 @@ class page_output
 
 				if (!empty($this->obj_name_server->data["sync_status_config"]))
 				{
-					$this->obj_form->structure["sync_status_config"]["defaultvalue"]	= "<span class=\"table_highlight_important\">". lang_trans("status_unsynced") ."</span> Last synced on ". time_format_humandate($this->obj_name_server->data["api_sync_config"]) ." ". date("H:i:s", $this->obj_name_server->data["api_sync_log"]) ."";
+					$this->obj_form->structure["sync_status_config"]["defaultvalue"]	= "<span class=\"table_highlight_important\">". lang_trans("status_unsynced") ."</span> Last synced on ". time_format_humandate($this->obj_name_server->data["api_sync_config"]) ." ". date("H:i:s", $this->obj_name_server->data["api_sync_log"]);
 				}
 				else
 				{
@@ -251,11 +251,11 @@ class page_output
 				{
 					if (!empty($this->obj_name_server->data["sync_status_log"]))
 					{
-						$this->obj_form->structure["sync_status_log"]["defaultvalue"]		= "<span class=\"table_highlight_important\">". lang_trans("status_unsynced") ."</span> Logging appears stale, last synced on ". time_format_humandate($this->obj_name_server->data["api_sync_log"]) ." ". date("H:i:s", $this->obj_name_server->data["api_sync_log"]) ."";
+						$this->obj_form->structure["sync_status_log"]["defaultvalue"]		= "<span class=\"table_highlight_important\">". lang_trans("status_unsynced") ."</span> Logging appears stale, last synced on ". time_format_humandate($this->obj_name_server->data["api_sync_log"]) ." ". date("H:i:s", $this->obj_name_server->data["api_sync_log"]);
 					}
 					else
 					{
-						$this->obj_form->structure["sync_status_log"]["defaultvalue"]		= "<span class=\"table_highlight_open\">". lang_trans("status_synced") ."</span> Last log message delivered on ". time_format_humandate($this->obj_name_server->data["api_sync_log"]) ." ". date("H:i:s", $this->obj_name_server->data["api_sync_log"]) ."";
+						$this->obj_form->structure["sync_status_log"]["defaultvalue"]		= "<span class=\"table_highlight_open\">". lang_trans("status_synced") ."</span> Last log message delivered on ". time_format_humandate($this->obj_name_server->data["api_sync_log"]) ." ". date("H:i:s", $this->obj_name_server->data["api_sync_log"]);
 					}
 				}
 				else

@@ -185,7 +185,7 @@ class cloud_route53
 			catch (Route53Exception $e)
 			{
 				log_write("error", "process", "A failure occured whilst trying to fetch records from AWS/Route53.");
-				log_write("error", "process", "Failure returned: ". $e->getExceptionCode() ."");
+				log_write("error", "process", "Failure returned: ". $e->getExceptionCode());
 
 				return 0;
 			}
@@ -748,7 +748,7 @@ class cloud_route53
 			catch (Route53Exception $e)
 			{
 				log_write("error", "process", "A failure occured whilst trying to submit a batch change from AWS/Route53.");
-				log_write("error", "process", "Failure returned: ". $e->getExceptionCode() ."");
+				log_write("error", "process", "Failure returned: ". $e->getExceptionCode());
 				$this->changelog->log_post('server', "An error occured updating domain \"". $this->obj_domain->data["domain_name"] ."\" in Route53");
 
 				return 0;
@@ -807,7 +807,7 @@ class cloud_route53
 		catch (Route53Exception $e)
 		{
 			log_write("error", "process", "A failure occured whilst trying to create a new hosted zone.");
-			log_write("error", "process", "Failure returned: ". $e->getExceptionCode() ."");
+			log_write("error", "process", "Failure returned: ". $e->getExceptionCode());
 			$this->changelog->log_post('server', "A failure occured whilst attempting to create domain \"". $change["Name"] ."\" in Route53");
 
 			return 0;
@@ -950,7 +950,7 @@ class cloud_route53
 		catch (Route53Exception $e)
 		{
 			log_write("error", "process", "A failure occured whilst trying to delete hosted zone.");
-			log_write("error", "process", "Failure returned: ". $e->getExceptionCode() ."");
+			log_write("error", "process", "Failure returned: ". $e->getExceptionCode());
 			
 			$this->changelog->log_post('server', "An error occured attempting to delete domain \"". $this->obj_domain->data["domain_name"] ."\" from Route53");
 

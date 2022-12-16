@@ -79,8 +79,8 @@ abstract class AbstractUploadId implements UploadIdInterface
     {
         $data = array_replace(static::$expectedValues, array_intersect_key($data, static::$expectedValues));
         foreach ($data as $key => $value) {
-            if (isset($data[$key])) {
-                $this->data[$key] = $data[$key];
+            if (isset($value)) {
+                $this->data[$key] = $value;
             } else {
                 throw new InvalidArgumentException("A required key [$key] was missing from the UploadId.");
             }

@@ -744,7 +744,7 @@ class domain
 			$log 			= New changelog;
 			$log->id_domain		= $this->id;
 
-			$log->log_post("audit", "Domain ". $this->data["domain_name"] ." serial updated to ". $this->data["soa_serial"] ."");
+			$log->log_post("audit", "Domain ". $this->data["domain_name"] ." serial updated to ". $this->data["soa_serial"]);
 
 		
 			return $this->data["soa_serial"];
@@ -855,12 +855,12 @@ class domain
 		{
 			$this->sql_obj->trans_commit();
 
-			log_write("notification", "domain", "Nameserver configuration settings and domain serials updated for domain ". $this->data["domain_name"] ."");
+			log_write("notification", "domain", "Nameserver configuration settings and domain serials updated for domain ". $this->data["domain_name"]);
 	
 			$log 			= New changelog;
 			$log->id_domain		= $this->id;
 
-			$log->log_post("audit", "Updated nameserver (NS) records for ". $this->data["domain_name"] ."");
+			$log->log_post("audit", "Updated nameserver (NS) records for ". $this->data["domain_name"]);
 
 
 			return 1;
@@ -1371,7 +1371,7 @@ class domain_records extends domain
 
 			$this->id	= $this->sql_obj->data[0]["id"];
 
-			log_write("debug", "domain_records", "Found matching domain ". $ip_arpa ." with ID of ". $this->id ."");
+			log_write("debug", "domain_records", "Found matching domain ". $ip_arpa ." with ID of ". $this->id);
 
 			// now fetch the ID for the record that belongs to this domain
 			$this->sql_obj->string	= "SELECT id FROM `dns_records` WHERE id_domain='". $this->id ."' AND name='". $ip_ptr_name ."' LIMIT 1";
@@ -1383,7 +1383,7 @@ class domain_records extends domain
 
 				$this->id_record		= $this->sql_obj->data[0]["id"];
 
-				log_write("debug", "domain_records", "Found matching record with ID of ". $this->id_record ."");
+				log_write("debug", "domain_records", "Found matching record with ID of ". $this->id_record);
 			}
 
 
@@ -1564,7 +1564,7 @@ class domain_records extends domain
 				$log 			= New changelog;
 				$log->id_domain		= $this->id;
 
-				$log->log_post("audit", "Updated domain record type ". $this->data_record["type"] ." ". $this->data_record["name"] ."/". $this->data_record["content"] ." for domain ". $this->data["domain_name"] ."");
+				$log->log_post("audit", "Updated domain record type ". $this->data_record["type"] ." ". $this->data_record["name"] ."/". $this->data_record["content"] ." for domain ". $this->data["domain_name"]);
 
 			}
 			else
@@ -1574,7 +1574,7 @@ class domain_records extends domain
 				$log 			= New changelog;
 				$log->id_domain		= $this->id;
 
-				$log->log_post("audit", "Updated domain record type ". $this->data_record["type"] ." ". $this->data_record["name"] ."/". $this->data_record["content"] ." for domain ". $this->data["domain_name"] ."");
+				$log->log_post("audit", "Updated domain record type ". $this->data_record["type"] ." ". $this->data_record["name"] ."/". $this->data_record["content"] ." for domain ". $this->data["domain_name"]);
 
 
 			}
@@ -1639,7 +1639,7 @@ class domain_records extends domain
 			$log 			= New changelog;
 			$log->id_domain		= $this->id;
 
-			$log->log_post("audit", "Domain record type ". $this->data_record["type"] ." ". $this->data_record["name"] ."/". $this->data_record["content"] ." has been deleted from domain ". $this->data["domain_name"] ."");
+			$log->log_post("audit", "Domain record type ". $this->data_record["type"] ." ". $this->data_record["name"] ."/". $this->data_record["content"] ." has been deleted from domain ". $this->data["domain_name"]);
 
 			return 1;
 		}
@@ -1798,7 +1798,7 @@ class domain_records extends domain
 					// all other record types
 					log_write("error", "process", "Sorry, the value you have entered for record ". $data_tmp[$i]["name"] ." contains invalid charactors");
 
-					error_flag_field("record_custom_". $i ."");
+					error_flag_field("record_custom_". $i);
 				}
 
 
@@ -1814,7 +1814,7 @@ class domain_records extends domain
 							{
 								// invalid IP address
 								log_write("error", "process", "A record for ". $data_tmp[$i]["name"] ." did not validate as an IPv4 address");
-								error_flag_field("record_custom_". $i ."");
+								error_flag_field("record_custom_". $i);
 							}
 						break;
 
@@ -1824,7 +1824,7 @@ class domain_records extends domain
 							{
 								// invalid IP address
 								log_write("error", "process", "AAAA record for ". $data_tmp[$i]["name"] ." did not validate as an IPv6 address");
-								error_flag_field("record_custom_". $i ."");
+								error_flag_field("record_custom_". $i);
 							}
 						break;
 
@@ -1834,14 +1834,14 @@ class domain_records extends domain
 							{
 								// invalid CNAME
 								log_write("error", "process", "CNAME record for " . $data_tmp[$i]["name"] . " contains invalid characters.");
-								error_flag_field("record_custom_" . $i . "");
+								error_flag_field("record_custom_" . $i);
 							}
 							// make sure it's not an IP
 							if (filter_var($data_tmp[$i]["content"], FILTER_VALIDATE_IP) == FALSE && !filter_var($data_tmp[$i]['content'], FILTER_VALIDATE_DOMAIN))
 							{
 								// CNAME is pointing at an IP
 								log_write("error", "process", "CNAME record for " . $data_tmp[$i]["name"] . " is incorrectly referencing an IP address. ");
-								error_flag_field("record_custom_" . $i . "");
+								error_flag_field("record_custom_" . $i);
 							}
 						break;
 
@@ -1851,14 +1851,14 @@ class domain_records extends domain
 							    && !preg_match("/^_[A-Za-z0-9\p{L}.-]*\._[A-Za-z\p{L}]*$/", $data_tmp[$i]["name"]))
 							{
 								log_write("error", "process", "SRV record for ". $data_tmp[$i]["name"] ." is not correctly formatted - name must be: _service._proto.name");
-								error_flag_field("record_custom_". $i ."");
+								error_flag_field("record_custom_". $i);
 							}
 
 							// validate SRV content (priority, weight, port, target/host)
 							if (!preg_match("/^[0-9]*\s[0-9]*\s[0-9]*\s[A-Za-z0-9\p{L}.-]*$/", $data_tmp[$i]["content"]))
 							{
 								log_write("error", "process", "SRV record for ". $data_tmp[$i]["name"] ." is not correctly formatted - content must be: priority weight port target/hostname");
-								error_flag_field("record_custom_". $i ."");
+								error_flag_field("record_custom_". $i);
 							}
 						break;
 
@@ -1881,13 +1881,13 @@ class domain_records extends domain
 								if (!preg_match("/^[0-9]*$/", $data_tmp[$i]["name"]))
 								{
 									log_write("error", "process", "PTR reverse record for ". $data_tmp[$i]["content"] ." should be a single octet.");
-									error_flag_field("record_custom_". $i ."");
+									error_flag_field("record_custom_". $i);
 								}
 
 								if (!preg_match("/^[A-Za-z0-9\p{L}.-]*$/", $data_tmp[$i]["content"]))
 								{
 									log_write("error", "process", "PTR reverse record for ". $data_tmp[$i]["name"] ." is not correctly formatted.");
-									error_flag_field("record_custom_". $i ."");
+									error_flag_field("record_custom_". $i);
 								}
 		
 							}
@@ -1908,13 +1908,13 @@ class domain_records extends domain
 								if (!filter_var($data_tmp[$i]["name"], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6))
 								{
 									log_write("error", "process", "Provided PTR IPv6 address for ". $data_tmp[$i]["name"] ." is not a valid IPv6 address.");
-									error_flag_field("record_custom_". $i ."");
+									error_flag_field("record_custom_". $i);
 								}
 
 								if (!preg_match("/^[A-Za-z0-9\p{L}.-]*$/", $data_tmp[$i]["content"]))
 								{
 									log_write("error", "process", "Provided PTR IPv6 reverse record for ". $data_tmp[$i]["name"] ." is not correctly formatted.");
-									error_flag_field("record_custom_". $i ."");
+									error_flag_field("record_custom_". $i);
 								}
 
 								// convert the record into PTR formatted value
@@ -1928,7 +1928,7 @@ class domain_records extends domain
 						if (!preg_match("/^[1-4] [1-2] [a-fA-F0-9]+$/", $data_tmp[$i]["content"]))
 						{
 							log_write("error", "process", "SSHFP record for ". $data_tmp[$i]["name"] ." is not correctly formatted - content must be: algorithm(1-4) type(1-2) <key/fingerprint>");
-							error_flag_field("record_custom_". $i ."");
+							error_flag_field("record_custom_". $i);
 						}
 						break;
 
@@ -1937,7 +1937,7 @@ class domain_records extends domain
 						if (!preg_match("/^[0-9]+( [0-9]+( [0-9]+\.[0-9]+)?)? N|S [0-9]+( [0-9]+( [0-9]+\.[0-9]+)?)? E|W \-?[0-9]+\.[0-9]+m?( [0-9]+\.[0-9]+m?)?( [0-9]+\.[0-9]+m?)?/", $data_tmp[$i]["content"]))
 						{
 							log_write("error", "process", "LOC record for ". $data_tmp[$i]["name"] ." is not correctly formatted - content must follow RFC 1876");
-							error_flag_field("record_custom_". $i ."");
+							error_flag_field("record_custom_". $i);
 						}
 						break;
 
@@ -1949,7 +1949,7 @@ class domain_records extends domain
 
 
 						default:
-							log_write("error", "process", "Unknown record type ". $data_tmp[$i]["type"] ."");
+							log_write("error", "process", "Unknown record type ". $data_tmp[$i]["type"]);
 
 						break;
 					}
@@ -1973,7 +1973,7 @@ class domain_records extends domain
 								// no match
 								log_write("error", "process", "Sorry, we can't set a reverse PTR for ". $data_tmp[$i]["content"] ." --&gt; ". $data_tmp[$i]["name"] .", since there is no reverse domain record for that IP address");
 
-								error_flag_field("record_custom_". $i ."");
+								error_flag_field("record_custom_". $i);
 							}
 							else
 							{
@@ -1994,7 +1994,7 @@ class domain_records extends domain
 						else
 						{
 							log_write("error", "process", "A reverse PTR record is only valid for an A or AAAA record");
-							error_flag_field("record_custom_". $i ."");
+							error_flag_field("record_custom_". $i);
 						}
 					}
 
@@ -2013,7 +2013,7 @@ class domain_records extends domain
 					{
 						log_write("error", "process", "Name cannot be empty for IP address: " . $data_tmp[$i]['content']);
 
-						error_flag_field("record_custom_". $i ."");
+						error_flag_field("record_custom_". $i);
 					}
 
 				}

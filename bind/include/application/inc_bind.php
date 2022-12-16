@@ -127,7 +127,7 @@ class bind_api extends soap_api
 	*/
 	function action_reload()
 	{
-		log_write("debug", "script", "Reloading Bind with new configuration using ". $GLOBALS["config"]["bind"]["reload"] ."");
+		log_write("debug", "script", "Reloading Bind with new configuration using ". $GLOBALS["config"]["bind"]["reload"]);
 
 		exec($GLOBALS["config"]["bind"]["reload"] ." 2>&1", $exec_output, $exec_return_value);
 
@@ -285,7 +285,7 @@ class bind_api extends soap_api
 				if (!empty($GLOBALS["config"]["bind"]["zonefullpath"]))
 				{
 					// unusual, needed if Bind lacks a directory configuration option
-					fwrite($fh, "\tfile \"". $GLOBALS["config"]["bind"]["zonefiledir"] ."". $domain["domain_name"] .".zone\";\n");
+					fwrite($fh, "\tfile \"". $GLOBALS["config"]["bind"]["zonefiledir"] . $domain["domain_name"] .".zone\";\n");
 				}
 				else
 				{
@@ -605,7 +605,7 @@ class bind_api extends soap_api
 					$record["record_name"] .= ".";	// append . as FQDN
 				}
 
-				fwrite($fh, $record["record_name"] . "\t". $record["record_ttl"] ." IN CNAME ". $record["record_content"] ."");
+				fwrite($fh, $record["record_name"] . "\t". $record["record_ttl"] ." IN CNAME ". $record["record_content"]);
 
 				if (preg_match("/\./", $record["record_content"]))
 				{

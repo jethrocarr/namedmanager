@@ -118,7 +118,7 @@ class phone_home
 			$sql_obj->string	= "UPDATE config SET value='". $this->stats["subscription_id"] ."' WHERE name='SUBSCRIPTION_ID' LIMIT 1";
 			$sql_obj->execute();
 
-			log_write("debug", "phone_home", "Generated new subscription ID of ". $this->stats["subscription_id"] ."");
+			log_write("debug", "phone_home", "Generated new subscription ID of ". $this->stats["subscription_id"]);
 		}
 
 

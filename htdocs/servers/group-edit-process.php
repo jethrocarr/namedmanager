@@ -67,7 +67,7 @@ if (user_permissions_get('namedadmins'))
 		if ($obj_name_server_group->id)
 		{
 			$_SESSION["error"]["form"]["name_server_group_edit"]	= "failed";
-			header("Location: ../index.php?page=servers/group-view.php&id=". $obj_name_server_group->id ."");
+			header("Location: ../index.php?page=servers/group-view.php&id=". $obj_name_server_group->id);
 		}
 		else
 		{
@@ -94,7 +94,7 @@ if (user_permissions_get('namedadmins'))
 			Return
 		*/
 
-		header("Location: ../index.php?page=servers/group-view.php&id=". $obj_name_server_group->id ."");
+		header("Location: ../index.php?page=servers/group-view.php&id=". $obj_name_server_group->id);
 		exit(0);
 
 

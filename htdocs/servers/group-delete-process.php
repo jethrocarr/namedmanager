@@ -61,7 +61,7 @@ if (user_permissions_get('namedadmins'))
 	if (error_check())
 	{
 		$_SESSION["error"]["form"]["name_server_group_delete"]	= "failed";
-		header("Location: ../index.php?page=servers/group-delete.php&id=". $obj_name_server_group->id ."");
+		header("Location: ../index.php?page=servers/group-delete.php&id=". $obj_name_server_group->id);
 
 		exit(0);
 	}

@@ -29,7 +29,7 @@ require("include/application/main.php");
 
 if (!is_readable($GLOBALS["config"]["log_file"]))
 {
-	log_write("error", "script", "Unable to read log file ". $GLOBALS["config"]["log_file"] ."");
+	log_write("error", "script", "Unable to read log file ". $GLOBALS["config"]["log_file"]);
 	die(date("Y-m-d H:i:s") . " Fatal Error\n");
 }
 
@@ -80,7 +80,7 @@ function lockfile_remove()
 	// delete lock file
 	if (!unlink($GLOBALS["config"]["lock_file"]))
 	{
-		log_write("error", "script", "Unable to remove lock file ". $GLOBALS["config"]["lock_file"] ."");
+		log_write("error", "script", "Unable to remove lock file ". $GLOBALS["config"]["lock_file"]);
 	}
 }
 

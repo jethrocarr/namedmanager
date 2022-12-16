@@ -625,7 +625,7 @@ class journal_display extends journal_base
 					
 
 					default:
-						log_debug("journal_display", "Invalid journal type of ". $data["type"] ." provided, unable to process entry ". $data["id"] ."");
+						log_debug("journal_display", "Invalid journal type of ". $data["type"] ." provided, unable to process entry ". $data["id"]);
 					break;
 					
 				} // end type switch
@@ -1612,7 +1612,7 @@ class journal_process extends journal_base
 				// call the upload function
 				if (!$file_obj->action_update_form("upload"))
 				{
-					log_write("error", "journal_process", "Unable to upload file for journal entry id ". $this->structure["id"] . "");
+					log_write("error", "journal_process", "Unable to upload file for journal entry id ". $this->structure["id"]);
 				}
 			}
 			else

@@ -66,7 +66,7 @@ else
 		// if user has been redirected to login from a previous page, lets take them to that page.
 		if ($_SESSION["login"]["previouspage"])
 		{	
-			header("Location: ../index.php?" . $_SESSION["login"]["previouspage"] . "");
+			header("Location: ../index.php?" . $_SESSION["login"]["previouspage"]);
 			$_SESSION["login"] = array();
 			exit(0);
 		}

@@ -52,7 +52,7 @@ class template_engine
 		{
 			foreach (array_keys($this->data_files) as $var)
 			{
-				log_debug("template_engine", "Removing tmp file ". $this->data_files[$var]["filename"] ."");
+				log_debug("template_engine", "Removing tmp file ". $this->data_files[$var]["filename"]);
 				unlink($this->data_files[$var]["filename"]);
 			}
 		}

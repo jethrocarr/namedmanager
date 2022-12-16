@@ -132,7 +132,7 @@ class sql_query
 		}
 
 
-		log_write("debug", "sql_query", "New session ". $this->db_link ."");
+		log_write("debug", "sql_query", "New session ". $this->db_link);
 
 		// success
 		return 1;

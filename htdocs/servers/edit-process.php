@@ -156,7 +156,7 @@ if (user_permissions_get('namedadmins'))
 		catch (Aws\Route53\Exception\Route53Exception $e)
 		{
 			log_write("error", "process", "Unable to connect to Route53 with provided credentials");
-			log_write("error", "process", "Failure returned: ". $e->getExceptionCode() ."");
+			log_write("error", "process", "Failure returned: ". $e->getExceptionCode());
 			error_flag_field("route53_access_key");
 			error_flag_field("route53_secret_key");
 		}
@@ -173,7 +173,7 @@ if (user_permissions_get('namedadmins'))
 		if ($obj_name_server->id)
 		{
 			$_SESSION["error"]["form"]["name_server_edit"]	= "failed";
-			header("Location: ../index.php?page=servers/view.php&id=". $obj_name_server->id ."");
+			header("Location: ../index.php?page=servers/view.php&id=". $obj_name_server->id);
 		}
 		else
 		{
@@ -200,7 +200,7 @@ if (user_permissions_get('namedadmins'))
 			Return
 		*/
 
-		header("Location: ../index.php?page=servers/view.php&id=". $obj_name_server->id ."");
+		header("Location: ../index.php?page=servers/view.php&id=". $obj_name_server->id);
 		exit(0);
 
 
