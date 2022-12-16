@@ -76,15 +76,11 @@ function security_form_input($expression, $valuename, $numchars, $errormsg)
 	// strip any HTML tags
 	$input = strip_tags($input);
 
-        // check if magic quotes is on or off and process the input correctly.
-        //
-        // this prevents SQL injections, by backslashing -- " ' ` \ -- etc.
-        //
-	if (get_magic_quotes_gpc() == 0)
-	{
-		$input = addslashes($input);
-	}
-
+	// check if magic quotes is on or off and process the input correctly.
+	//
+	// this prevents SQL injections, by backslashing -- " ' ` \ -- etc.
+	//
+	$input = addslashes($input);
 
 	if (strlen($input) >= $numchars)
 	{

@@ -294,29 +294,14 @@ class journal_base
 
 		// make sure we perform quoting, since we will be insert
 		// these text strings into the database
-		if (get_magic_quotes_gpc() == 0)
-		{
-			$this->structure["content"] = addslashes($content);
-		}
-		else
-		{
-			$this->structure["content"] = $content;
-		}
+		$this->structure["content"] = addslashes($content);
 	}
 
 	function prepare_set_title($title)
 	{
 		log_debug("journal_base", "Executing prepare_set_title($title)");
 
-		if (get_magic_quotes_gpc() == 0)
-		{
-			$this->structure["title"] = addslashes($title);
-		}
-		else
-		{
-			$this->structure["title"] = $title;
-		}
-		
+		$this->structure["title"] = addslashes($title);
 	}
 	
 	function prepare_set_journalid($journalid)
