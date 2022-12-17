@@ -245,6 +245,8 @@ class api_namedmanager
 			$obj_server		= New name_server;
 			$obj_server->id		= $this->auth_server;
 
+			$obj_server->load_data();
+
 			return $obj_server->action_update_config_version($version);
 		}
 		else
