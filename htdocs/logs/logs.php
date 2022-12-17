@@ -13,7 +13,7 @@ class page_output
 {
 	var $obj_table;
 	
-	function page_output()
+	function __construct()
 	{
 		$this->requires["javascript"][] = "include/javascript/logs.js";
 	}

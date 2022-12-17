@@ -21,7 +21,7 @@ class page_output
 	var $obj_form;
 
 
-	function page_output()
+	function __construct()
 	{
 		$this->mode	= @security_script_input('/^[0-9]*$/', $_GET["mode"]);
 

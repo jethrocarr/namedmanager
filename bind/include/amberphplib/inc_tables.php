@@ -68,7 +68,7 @@ class table
 
 		Constructor Function
 	*/
-	function table()
+	function __construct()
 	{
 		// init the SQL structure
 		$this->sql_obj = New sql_query;

@@ -15,7 +15,7 @@ class page_output
 	var $obj_form;
 	var $invalid_filter;
 
-		function page_output()
+		function __construct()
 	{
 		// include custom scripts and/or logic
 		$this->requires["javascript"][]	= "include/javascript/filter_domains.js";

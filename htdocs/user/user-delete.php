@@ -15,7 +15,7 @@ class page_output
 	var $obj_form;
 
 
-	function page_output()
+	function __construct()
 	{
 		// fetch variables
 		$this->id = security_script_input('/^[0-9]*$/', $_GET["id"]);

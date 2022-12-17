@@ -28,7 +28,7 @@ class domain
 		Constructor
 	*/
 
-	function domain()
+	function __construct()
 	{
 		log_debug("domain", "Executing domain() [constructor]");
 

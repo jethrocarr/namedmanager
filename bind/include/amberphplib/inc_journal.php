@@ -29,7 +29,7 @@ class journal_base
 
 		Class Contructor
 	*/
-	function journal_base()
+	function __construct()
 	{
 		// init the SQL structure
 		$this->sql_obj = New sql_query;	
@@ -920,7 +920,7 @@ class journal_input extends journal_base
 
 		Class Contructor
 	*/
-	function journal_input()
+	function __construct()
 	{
 		// init the form object
 		$this->form_obj = New form_input;
@@ -1337,7 +1337,7 @@ class journal_process extends journal_base
 
 		Class Contructor
 	*/
-	function journal_process()
+	function __construct()
 	{
 		// sql query
 		$this->sql_obj = New sql_query;	

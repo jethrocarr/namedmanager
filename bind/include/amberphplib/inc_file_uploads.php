@@ -69,7 +69,7 @@ class file_storage
 
 		Constructor function
 	*/
-	function file_storage()
+	function __construct()
 	{
 		$this->config["data_storage_method"]	= sql_get_singlevalue("SELECT value FROM config WHERE name='DATA_STORAGE_METHOD' LIMIT 1");
 		$this->config["data_storage_location"]	= sql_get_singlevalue("SELECT value FROM config WHERE name='DATA_STORAGE_LOCATION' LIMIT 1");

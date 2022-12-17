@@ -35,7 +35,7 @@ class template_engine
 	/*
 		Constructor/Destructors
 	*/
-	function template_engine()
+	function __construct()
 	{
 		log_debug("template_engine", "Executing template_engine()");
 		

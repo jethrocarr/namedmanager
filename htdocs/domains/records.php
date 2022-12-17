@@ -25,7 +25,7 @@ class page_output
 	var $is_standard;
 
 
-	function page_output()
+	function __construct()
 	{
 		// include custom scripts and/or logic
 		$this->requires["javascript"][]	= "include/javascript/domain_records.js";

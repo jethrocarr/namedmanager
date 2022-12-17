@@ -30,7 +30,7 @@ class api_namedmanager
 	/*
 		constructor
 	*/
-	function api_namedmanager()
+	function __construct()
 	{
         $this->auth_server  = isset($_SESSION["auth_server"]) ? $_SESSION["auth_server"] : NULL;                                                                
         $this->auth_online  = isset($_SESSION["auth_online"]) ? $_SESSION["auth_online"] : NULL;

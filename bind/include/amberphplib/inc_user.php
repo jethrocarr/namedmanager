@@ -36,7 +36,7 @@ class user_auth
 		Constructor
 	*/
 
-	function user_auth()
+	function __construct()
 	{
 		log_debug("user_auth", "Executing user_auth()");
 
@@ -1230,7 +1230,7 @@ class blacklist
 	/*
 		Constructor
 	*/
-	function blacklist()
+	function __construct()
 	{
 		// default IP address to use
 		$this->ipaddress		= $_SERVER["REMOTE_ADDR"];

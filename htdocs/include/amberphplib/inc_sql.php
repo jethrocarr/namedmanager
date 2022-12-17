@@ -38,7 +38,7 @@ class sql_query
 	/*
 		Constructor
 	*/
-	function sql_query()
+	function __construct()
 	{
 		// fetch the default database session - this avoids having to carry one object around at all times
 		// yet still permits connecting to alternative databases
