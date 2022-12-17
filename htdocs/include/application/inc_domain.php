@@ -326,7 +326,7 @@ class domain
 				if ($this->format == 'idn')
 				{
 					$data_records["name"]		= idn_to_ascii($data_records["name"]);
-					$data_records["content"]	= idn_to_ascii($data_records["content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003);
+					$data_records["content"]	= idn_to_ascii($data_records["content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
 				}
 
 				$this->data["records"][] = $data_records;

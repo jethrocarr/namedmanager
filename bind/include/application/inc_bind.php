@@ -502,7 +502,7 @@ class bind_api extends soap_api
 				if (function_exists("idn_to_ascii"))
 				{
 					$record["record_name"]		= idn_to_ascii($record["record_name"]);
-					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003);
+					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
 				}
 
 				// handle origin and content format
@@ -537,7 +537,7 @@ class bind_api extends soap_api
 				if (function_exists("idn_to_ascii"))
 				{
 					$record["record_name"]		= idn_to_ascii($record["record_name"]);
-					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003);
+					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
 				}
 
 				// handle origin and content format
@@ -570,7 +570,7 @@ class bind_api extends soap_api
 				if (function_exists("idn_to_ascii"))
 				{
 					$record["record_name"]		= idn_to_ascii($record["record_name"]);
-					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003);
+					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
 				}
 
 				if (strpos($record["record_name"], "ip6.arpa"))
@@ -597,7 +597,7 @@ class bind_api extends soap_api
 				if (function_exists("idn_to_ascii"))
 				{
 					$record["record_name"]		= idn_to_ascii($record["record_name"]);
-					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003);
+					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
 				}
 
 				if (preg_match("/\./", $record["record_name"]) && preg_match("/". $domain_name ."$/", $record["record_name"]))
@@ -638,7 +638,7 @@ class bind_api extends soap_api
 
 					// idn_to_ascii has a lovely habit of blowing up with some record values, such as
 					// DKIM records. If idn_to_ascii fails, we leave the value unchanged
-					if ($tmp = idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003))
+					if ($tmp = idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46))
 					{
 						$record["record_content"] = $tmp;
 					}
