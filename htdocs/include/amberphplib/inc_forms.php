@@ -604,6 +604,11 @@ class form_input
 		log_debug("form", "Executing render_field($fieldname)");
 		
 		$helpmessagestatus = "false";
+
+		if (!isset($this->structure[$fieldname]) || !isset($this->structure[$fieldname]["type"])) {
+			log_debug("form", "Error: Tried to render unknown field ". $fieldname);
+			return 1;
+		}
 		
 		switch ($this->structure[$fieldname]["type"])
 		{
@@ -1224,7 +1229,7 @@ class form_input
 					
 			
 				// create value array if the SQL has not been executed yet
-				if (is_string($this->structure[$fieldname]["values"]))
+				if (isset($this->structure[$fieldname]["values"]) && is_string($this->structure[$fieldname]["values"]))
 				{
 					if(!empty($this->structure[$fieldname]["defaultvalue"]))
 					{
@@ -1280,7 +1285,7 @@ class form_input
 				else
 				{
 					// get translation for all options
-					$translations = language_translate($this->language, $this->structure[$fieldname]["values"]);
+					$translations = language_translate($this->language, $this->structure[$fieldname]["values"] ?? []);
 				}
 
 				// input box for filtering
@@ -1338,7 +1343,7 @@ class form_input
 
 				//echo "</select>";			
 				// add all the options
-				foreach ($this->structure[$fieldname]["values"] as $value)
+				foreach ($this->structure[$fieldname]["values"] ?? [] as $value)
 				{
 					
 					print "<option ";

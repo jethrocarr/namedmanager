@@ -73,6 +73,8 @@ class page_output
 		$sql_obj->string	= "SELECT name, value FROM users_options WHERE userid='". $this->id ."'";
 		$sql_obj->execute();
 
+		$options = array();
+
 		if ($sql_obj->num_rows())
 		{
 			$sql_obj->fetch_array();
@@ -158,14 +160,14 @@ class page_output
 
 		// options
 		$structure = form_helper_prepare_radiofromdb("option_lang", "SELECT name as id, name as label FROM language_avaliable ORDER BY name");
-		$structure["defaultvalue"] = $options["lang"];
+		$structure["defaultvalue"] = $options["lang"] ?? null;
 		$this->obj_form->add_input($structure);
 		
 		$structure = NULL;
 		$structure["fieldname"]		= "option_dateformat";
 		$structure["type"]		= "radio";
 		$structure["values"]		= array("yyyy-mm-dd", "mm-dd-yyyy", "dd-mm-yyyy");
-		$structure["defaultvalue"]	= $options["dateformat"];
+		$structure["defaultvalue"]	= $options["dateformat"] ?? null;
 		$this->obj_form->add_input($structure);
 
 /*
@@ -179,14 +181,14 @@ class page_output
 		$structure = NULL;
 		$structure["fieldname"]		= "option_shrink_tableoptions";
 		$structure["type"]		= "checkbox";
-		$structure["defaultvalue"]	= $options["shrink_tableoptions"];
+		$structure["defaultvalue"]	= $options["shrink_tableoptions"] ?? null;
 		$structure["options"]["label"]	= "Automatically hide the options table when using defaults";
 		$this->obj_form->add_input($structure);
 
 		$structure = NULL;
 		$structure["fieldname"]		= "option_debug";
 		$structure["type"]		= "checkbox";
-		$structure["defaultvalue"]	= $options["debug"];
+		$structure["defaultvalue"]	= $options["debug"] ?? null;
 		$structure["options"]["label"]	= "Enable debug logging - this will impact performance a bit but will show a full trail of all functions and SQL queries made</i>";
 		$this->obj_form->add_input($structure);
 
@@ -194,7 +196,7 @@ class page_output
 		$structure = NULL;
 		$structure["fieldname"]		= "option_concurrent_logins";
 		$structure["type"]		= "checkbox";
-		$structure["defaultvalue"]	= $options["concurrent_logins"];
+		$structure["defaultvalue"]	= $options["concurrent_logins"] ?? null;
 		$structure["options"]["label"]	= "Permit this user to make multiple simultaneous logins</i>";
 		$this->obj_form->add_input($structure);
 			

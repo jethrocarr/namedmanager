@@ -25,7 +25,7 @@ class changelog
 	/*
 		Constructor
 	*/
-	function changelog()
+	function __construct()
 	{
 		// default to current user or "SYSTEM"
 		if (isset($_SESSION["user"]["name"]))

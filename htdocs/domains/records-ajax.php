@@ -728,7 +728,7 @@ if ($page_valid == 1)
 	Draw messages
 */
 
-if ($_SESSION["error"]["message"])
+if (isset($_SESSION["error"]["message"]))
 {
 	print "<tr><td colspan=\"100%\">";
 	log_error_render();
@@ -736,7 +736,7 @@ if ($_SESSION["error"]["message"])
 }
 else
 {
-	if ($_SESSION["notification"]["message"])
+	if (isset($_SESSION["notification"]["message"]))
 	{
 		print "<tr><td>";
 		log_notification_render();

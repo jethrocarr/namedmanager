@@ -52,7 +52,7 @@ class page_output
 		$filter["fieldname"] 		= "domain_name";
 		$filter["type"]				= "input";
 		$filter["sql"]				= "domain_name LIKE '%value%'";
-		$filter["defaultvalue"]		= security_script_input("/^[A-Za-z0-9\.\-]*$/", $_GET["domain_name"]);
+		$filter["defaultvalue"]		= security_script_input("/^[A-Za-z0-9\.\-]*$/", $_GET["domain_name"] ?? "");
 		if ($filter["defaultvalue"] == "error")
 		{
 			$this->invalid_filter = true;
@@ -107,7 +107,7 @@ class page_output
 		print "<p>List of domains managed by this server:</p>";
 
 		// table data
-		if ((!$this->obj_table->data_num_rows) and (!$_GET["domain_name"]))
+		if ((!$this->obj_table->data_num_rows) and (!isset($_GET["domain_name"]) || !$_GET["domain_name"]))
 		{
 			format_msgbox("important", "<p>There are currently no domain names configured.</p>");
 		}

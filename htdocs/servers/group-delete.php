@@ -18,7 +18,7 @@ class page_output
 	var $lock_delete;
 
 
-	function page_output()
+	function __construct()
 	{
 
 		// initate object
