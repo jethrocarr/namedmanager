@@ -636,15 +636,21 @@ class bind_api extends soap_api
 				{
 					$record["record_name"] = idn_to_ascii($record["record_name"]);
 
-					// idn_to_ascii has a lovely habit of blowing up with some record values, such as
-					// DKIM records. If idn_to_ascii fails, we leave the value unchanged
-					if ($tmp = idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46))
+					// Values in TXT and SPF records are case sensitive.
+					// All other DNS record types have case-insensitive values.
+					// INTL_IDNA_VARIANT_UTS46 processes all input (domain names) to lower case.
+					if (!in_array($record["record_type"], array("TXT", "SPF")))
 					{
-						$record["record_content"] = $tmp;
-					}
-					else
-					{
-						log_write("warning", "script", "Unable to punnycode parse record \"". $record["record_name"] ."\". This sometimes happens with certain records like DKIM and may not be an issue.");
+						// idn_to_ascii has a lovely habit of blowing up with some record values, such as
+						// DKIM records. If idn_to_ascii fails, we leave the value unchanged
+						if ($tmp = idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46))
+						{
+							$record["record_content"] = $tmp;
+						}
+						else
+						{
+							log_write("warning", "script", "Unable to punnycode parse record \"". $record["record_name"] ."\". This sometimes happens with certain records like DKIM and may not be an issue.");
+						}
 					}
 				}
 
