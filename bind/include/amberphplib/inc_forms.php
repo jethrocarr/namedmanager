@@ -1416,7 +1416,7 @@ class form_input
 			break;
 
 			default:
-				log_debug("form", "Error: Unknown field type of ". $this->structure["fieldname"]["type"] ."");
+				log_debug("form", "Error: Unknown field type of ". $this->structure["fieldname"]["type"]);
 			break;
 		}
 

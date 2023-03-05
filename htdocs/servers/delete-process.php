@@ -56,7 +56,7 @@ if (user_permissions_get('namedadmins'))
 	if (error_check())
 	{
 		$_SESSION["error"]["form"]["name_server_delete"]	= "failed";
-		header("Location: ../index.php?page=servers/delete.php&id=". $obj_name_server->id ."");
+		header("Location: ../index.php?page=servers/delete.php&id=". $obj_name_server->id);
 
 		exit(0);
 	}

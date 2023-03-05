@@ -127,7 +127,7 @@ class bind_api extends soap_api
 	*/
 	function action_reload()
 	{
-		log_write("debug", "script", "Reloading Bind with new configuration using ". $GLOBALS["config"]["bind"]["reload"] ."");
+		log_write("debug", "script", "Reloading Bind with new configuration using ". $GLOBALS["config"]["bind"]["reload"]);
 
 		exec($GLOBALS["config"]["bind"]["reload"] ." 2>&1", $exec_output, $exec_return_value);
 
@@ -285,7 +285,7 @@ class bind_api extends soap_api
 				if (!empty($GLOBALS["config"]["bind"]["zonefullpath"]))
 				{
 					// unusual, needed if Bind lacks a directory configuration option
-					fwrite($fh, "\tfile \"". $GLOBALS["config"]["bind"]["zonefiledir"] ."". $domain["domain_name"] .".zone\";\n");
+					fwrite($fh, "\tfile \"". $GLOBALS["config"]["bind"]["zonefiledir"] . $domain["domain_name"] .".zone\";\n");
 				}
 				else
 				{
@@ -502,7 +502,7 @@ class bind_api extends soap_api
 				if (function_exists("idn_to_ascii"))
 				{
 					$record["record_name"]		= idn_to_ascii($record["record_name"]);
-					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003);
+					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
 				}
 
 				// handle origin and content format
@@ -537,7 +537,7 @@ class bind_api extends soap_api
 				if (function_exists("idn_to_ascii"))
 				{
 					$record["record_name"]		= idn_to_ascii($record["record_name"]);
-					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003);
+					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
 				}
 
 				// handle origin and content format
@@ -570,7 +570,7 @@ class bind_api extends soap_api
 				if (function_exists("idn_to_ascii"))
 				{
 					$record["record_name"]		= idn_to_ascii($record["record_name"]);
-					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003);
+					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
 				}
 
 				if (strpos($record["record_name"], "ip6.arpa"))
@@ -597,7 +597,7 @@ class bind_api extends soap_api
 				if (function_exists("idn_to_ascii"))
 				{
 					$record["record_name"]		= idn_to_ascii($record["record_name"]);
-					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003);
+					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
 				}
 
 				if (preg_match("/\./", $record["record_name"]) && preg_match("/". $domain_name ."$/", $record["record_name"]))
@@ -605,7 +605,7 @@ class bind_api extends soap_api
 					$record["record_name"] .= ".";	// append . as FQDN
 				}
 
-				fwrite($fh, $record["record_name"] . "\t". $record["record_ttl"] ." IN CNAME ". $record["record_content"] ."");
+				fwrite($fh, $record["record_name"] . "\t". $record["record_ttl"] ." IN CNAME ". $record["record_content"]);
 
 				if (preg_match("/\./", $record["record_content"]))
 				{
@@ -636,15 +636,21 @@ class bind_api extends soap_api
 				{
 					$record["record_name"] = idn_to_ascii($record["record_name"]);
 
-					// idn_to_ascii has a lovely habit of blowing up with some record values, such as
-					// DKIM records. If idn_to_ascii fails, we leave the value unchanged
-					if ($tmp = idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003))
+					// Values in TXT and SPF records are case sensitive.
+					// All other DNS record types have case-insensitive values.
+					// INTL_IDNA_VARIANT_UTS46 processes all input (domain names) to lower case.
+					if (!in_array($record["record_type"], array("TXT", "SPF")))
 					{
-						$record["record_content"] = $tmp;
-					}
-					else
-					{
-						log_write("warning", "script", "Unable to punnycode parse record \"". $record["record_name"] ."\". This sometimes happens with certain records like DKIM and may not be an issue.");
+						// idn_to_ascii has a lovely habit of blowing up with some record values, such as
+						// DKIM records. If idn_to_ascii fails, we leave the value unchanged
+						if ($tmp = idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46))
+						{
+							$record["record_content"] = $tmp;
+						}
+						else
+						{
+							log_write("warning", "script", "Unable to punnycode parse record \"". $record["record_name"] ."\". This sometimes happens with certain records like DKIM and may not be an issue.");
+						}
 					}
 				}
 

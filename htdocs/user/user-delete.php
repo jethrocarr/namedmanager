@@ -15,7 +15,7 @@ class page_output
 	var $obj_form;
 
 
-	function page_output()
+	function __construct()
 	{
 		// fetch variables
 		$this->id = security_script_input('/^[0-9]*$/', $_GET["id"]);
@@ -23,9 +23,9 @@ class page_output
 		// define the navigiation menu
 		$this->obj_menu_nav = New menu_nav;
 
-		$this->obj_menu_nav->add_item("User's Details", "page=user/user-view.php&id=". $this->id ."");
-		$this->obj_menu_nav->add_item("User's Permissions", "page=user/user-permissions.php&id=". $this->id ."");
-		$this->obj_menu_nav->add_item("Delete User", "page=user/user-delete.php&id=". $this->id ."", TRUE);
+		$this->obj_menu_nav->add_item("User's Details", "page=user/user-view.php&id=". $this->id);
+		$this->obj_menu_nav->add_item("User's Permissions", "page=user/user-permissions.php&id=". $this->id);
+		$this->obj_menu_nav->add_item("Delete User", "page=user/user-delete.php&id=". $this->id, TRUE);
 	}
 
 

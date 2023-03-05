@@ -120,7 +120,7 @@ if (user_permissions_get("namedadmins"))
 				// open the file and read data
 				if ($zonefile = file($_FILES["import_upload_file"]["tmp_name"]))
 				{
-					log_write("debug", "process", "Processing file ". $_FILES["import_upload_file"]["name"] ."");
+					log_write("debug", "process", "Processing file ". $_FILES["import_upload_file"]["name"]);
 
 					foreach ($zonefile as $line)
 					{
@@ -160,7 +160,7 @@ if (user_permissions_get("namedadmins"))
 						// domain origin
 						if (preg_match("/^\\\$ORIGIN\s(\S*)/", $line, $matches))
 						{
-							log_write("debug", "process", "Header: ORIGIN: ". $matches[1] ."");
+							log_write("debug", "process", "Header: ORIGIN: ". $matches[1]);
 
 							if (empty($data["domain_name"]))
 							{
@@ -184,7 +184,7 @@ if (user_permissions_get("namedadmins"))
 						// domain TTL
 						if (preg_match("/^\\\$TTL\s([0-9]*)/", $line, $matches))
 						{
-							log_write("debug", "process", "Header: TTL: ". $matches[1] ."");
+							log_write("debug", "process", "Header: TTL: ". $matches[1]);
 
 
 							if (empty($data["domain_ttl"]))
@@ -1119,7 +1119,7 @@ if (user_permissions_get("namedadmins"))
 			*/
 
 			// return
-			header("Location: ../index.php?page=domains/view.php&id=". $obj_domain->id ."");
+			header("Location: ../index.php?page=domains/view.php&id=". $obj_domain->id);
 			exit(0);
 
 			

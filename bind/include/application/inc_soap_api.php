@@ -57,7 +57,7 @@ class soap_api
 			}
 			else
 			{	
-				log_write("error", "soap_api", "Unknown failure whilst attempting to authenticate with the API - ". $exception->getMessage() ."");
+				log_write("error", "soap_api", "Unknown failure whilst attempting to authenticate with the API - ". $exception->getMessage());
 
 				return 0;
 			}
@@ -145,7 +145,7 @@ class soap_api
 				// for any other errors, report fault and retry later - better to keep retrying and only quit if there's an actual
 				// known un-fixable problem.
 
-                                log_write("error", "script", "Unknown failure whilst attempting to push log messages - ". $exception->getMessage() ."");
+                                log_write("error", "script", "Unknown failure whilst attempting to push log messages - ". $exception->getMessage());
 
 				sleep(10);
                         }
@@ -219,7 +219,7 @@ class soap_api
 		}
 		catch (SoapFault $exception)
 		{
-			log_write("error", "soap_api", "An unexpected error occured ". $exception->getMessage() ."");
+			log_write("error", "soap_api", "An unexpected error occured ". $exception->getMessage());
 			die("Fatal Error");
 		}
 

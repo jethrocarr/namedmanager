@@ -29,7 +29,7 @@ class journal_base
 
 		Class Contructor
 	*/
-	function journal_base()
+	function __construct()
 	{
 		// init the SQL structure
 		$this->sql_obj = New sql_query;	
@@ -294,29 +294,14 @@ class journal_base
 
 		// make sure we perform quoting, since we will be insert
 		// these text strings into the database
-		if (get_magic_quotes_gpc() == 0)
-		{
-			$this->structure["content"] = addslashes($content);
-		}
-		else
-		{
-			$this->structure["content"] = $content;
-		}
+		$this->structure["content"] = addslashes($content);
 	}
 
 	function prepare_set_title($title)
 	{
 		log_debug("journal_base", "Executing prepare_set_title($title)");
 
-		if (get_magic_quotes_gpc() == 0)
-		{
-			$this->structure["title"] = addslashes($title);
-		}
-		else
-		{
-			$this->structure["title"] = $title;
-		}
-		
+		$this->structure["title"] = addslashes($title);
 	}
 	
 	function prepare_set_journalid($journalid)
@@ -640,7 +625,7 @@ class journal_display extends journal_base
 					
 
 					default:
-						log_debug("journal_display", "Invalid journal type of ". $data["type"] ." provided, unable to process entry ". $data["id"] ."");
+						log_debug("journal_display", "Invalid journal type of ". $data["type"] ." provided, unable to process entry ". $data["id"]);
 					break;
 					
 				} // end type switch
@@ -935,7 +920,7 @@ class journal_input extends journal_base
 
 		Class Contructor
 	*/
-	function journal_input()
+	function __construct()
 	{
 		// init the form object
 		$this->form_obj = New form_input;
@@ -1352,7 +1337,7 @@ class journal_process extends journal_base
 
 		Class Contructor
 	*/
-	function journal_process()
+	function __construct()
 	{
 		// sql query
 		$this->sql_obj = New sql_query;	
@@ -1627,7 +1612,7 @@ class journal_process extends journal_base
 				// call the upload function
 				if (!$file_obj->action_update_form("upload"))
 				{
-					log_write("error", "journal_process", "Unable to upload file for journal entry id ". $this->structure["id"] . "");
+					log_write("error", "journal_process", "Unable to upload file for journal entry id ". $this->structure["id"]);
 				}
 			}
 			else

@@ -185,7 +185,7 @@ class cloud_route53
 			catch (Route53Exception $e)
 			{
 				log_write("error", "process", "A failure occured whilst trying to fetch records from AWS/Route53.");
-				log_write("error", "process", "Failure returned: ". $e->getExceptionCode() ."");
+				log_write("error", "process", "Failure returned: ". $e->getExceptionCode());
 
 				return 0;
 			}
@@ -210,15 +210,11 @@ class cloud_route53
 					$tmp["ttl"]	= $route53_record["TTL"];
 
 					// Type-Specific processing
-					switch ($tmp["type"])
-					{
-						case "MX":
-							if (preg_match("/^([0-9]*)\s(\S*)$/", $tmp["content"], $matches))
-							{
-								$tmp["prio"]	= $matches[1];
-								$tmp["content"]	= $matches[2];
-							}
-						break;
+					if ($tmp["type"] == "MX") {
+						if (preg_match("/^([0-9]*)\s(\S*)$/", $tmp["content"], $matches)) {
+							$tmp["prio"] = $matches[1];
+							$tmp["content"] = $matches[2];
+						}
 					}
 
 					// AWS returns @ as \100, so we replace any \100 in the domain names with
@@ -748,7 +744,7 @@ class cloud_route53
 			catch (Route53Exception $e)
 			{
 				log_write("error", "process", "A failure occured whilst trying to submit a batch change from AWS/Route53.");
-				log_write("error", "process", "Failure returned: ". $e->getExceptionCode() ."");
+				log_write("error", "process", "Failure returned: ". $e->getExceptionCode());
 				$this->changelog->log_post('server', "An error occured updating domain \"". $this->obj_domain->data["domain_name"] ."\" in Route53");
 
 				return 0;
@@ -807,7 +803,7 @@ class cloud_route53
 		catch (Route53Exception $e)
 		{
 			log_write("error", "process", "A failure occured whilst trying to create a new hosted zone.");
-			log_write("error", "process", "Failure returned: ". $e->getExceptionCode() ."");
+			log_write("error", "process", "Failure returned: ". $e->getExceptionCode());
 			$this->changelog->log_post('server', "A failure occured whilst attempting to create domain \"". $change["Name"] ."\" in Route53");
 
 			return 0;
@@ -950,7 +946,7 @@ class cloud_route53
 		catch (Route53Exception $e)
 		{
 			log_write("error", "process", "A failure occured whilst trying to delete hosted zone.");
-			log_write("error", "process", "Failure returned: ". $e->getExceptionCode() ."");
+			log_write("error", "process", "Failure returned: ". $e->getExceptionCode());
 			
 			$this->changelog->log_post('server', "An error occured attempting to delete domain \"". $this->obj_domain->data["domain_name"] ."\" from Route53");
 

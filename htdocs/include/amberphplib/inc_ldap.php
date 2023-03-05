@@ -63,7 +63,7 @@ class ldap_query
 
 		if (!$this->ldapcon)
 		{
-			log_debug("ldap_query", "Unable to connect to LDAP server ". $this->srvcfg["host"] ." on port ". $this->srvcfg["port"] ."");
+			log_debug("ldap_query", "Unable to connect to LDAP server ". $this->srvcfg["host"] ." on port ". $this->srvcfg["port"]);
 			return 0;
 		}
 
@@ -97,12 +97,12 @@ class ldap_query
 		// bind user
 		if (ldap_bind($this->ldapcon, $this->srvcfg["user"], $this->srvcfg["password"]))
 		{
-			log_debug("ldap_query", "Successfully connect to LDAP database on ". $this->srvcfg["host"] ." as ". $this->srvcfg["user"] ."");
+			log_debug("ldap_query", "Successfully connect to LDAP database on ". $this->srvcfg["host"] ." as ". $this->srvcfg["user"]);
 			return 1;
 		}
 		else
 		{
-			log_debug("ldap_query", "Unable to connect to LDAP database on ". $this->srvcfg["host"] ." as ". $this->srvcfg["user"] ."");
+			log_debug("ldap_query", "Unable to connect to LDAP database on ". $this->srvcfg["host"] ." as ". $this->srvcfg["user"]);
 			return -1;
 		}
 

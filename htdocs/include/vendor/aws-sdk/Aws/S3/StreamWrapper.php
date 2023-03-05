@@ -185,7 +185,7 @@ class StreamWrapper
             }
         }
 
-        return $errors ? $this->triggerError($errors) : true;
+        return !$errors || $this->triggerError($errors);
     }
 
     /**

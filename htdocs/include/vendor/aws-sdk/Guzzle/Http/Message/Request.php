@@ -465,7 +465,7 @@ class Request extends AbstractMessage implements RequestInterface
     public function isResponseBodyRepeatable()
     {
         Version::warn(__METHOD__ . ' is deprecated. Use $request->getResponseBody()->isRepeatable()');
-        return !$this->responseBody ? true : $this->responseBody->isRepeatable();
+        return !$this->responseBody || $this->responseBody->isRepeatable();
     }
 
     public function getCookies()

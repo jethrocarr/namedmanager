@@ -99,7 +99,7 @@ function log_write($type, $category, $content)
 
 @log_debug("start", "");
 @log_debug("start", "AMBERPHPLIB STARTED");
-@log_debug("start", "Debugging for: ". str_replace("&", " &", $_SERVER["REQUEST_URI"]) ."");
+@log_debug("start", "Debugging for: ". str_replace("&", " &", $_SERVER["REQUEST_URI"]));
 @log_debug("start", "");
 
 

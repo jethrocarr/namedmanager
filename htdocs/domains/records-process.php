@@ -212,7 +212,7 @@ if (user_permissions_get("namedadmins"))
 		}
 
 		$_SESSION["error"]["form"]["domain_records"] = "failed";
-		header("Location: ../index.php?page=domains/records.php&id=". $obj_domain->id ."");
+		header("Location: ../index.php?page=domains/records.php&id=". $obj_domain->id);
 		exit(0);
 	}
 
@@ -289,7 +289,7 @@ if (user_permissions_get("namedadmins"))
 					*/
 					if ($record["reverse_ptr"])
 					{
-						log_write("debug", "process", "Updating reverse PTR record for ". $record["name"] ."--&gt; ". $record["content"] ."");
+						log_write("debug", "process", "Updating reverse PTR record for ". $record["name"] ."--&gt; ". $record["content"]);
 
 
 						$obj_ptr		= New domain_records;
@@ -406,7 +406,7 @@ if (user_permissions_get("namedadmins"))
 			$obj_reverse->load_data();
 			$obj_reverse->action_update_serial();
 
-			log_write("notification", "process", "Updating serials for reverse domain ". $obj_reverse->data["domain_name"] ."");
+			log_write("notification", "process", "Updating serials for reverse domain ". $obj_reverse->data["domain_name"]);
 		}
 	}
 

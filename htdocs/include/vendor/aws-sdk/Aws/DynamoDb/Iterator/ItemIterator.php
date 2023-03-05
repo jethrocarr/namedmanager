@@ -102,7 +102,8 @@ class ItemIterator extends \IteratorIterator implements \Countable, ToArrayInter
      */
     protected function processAttribute(array $attribute)
     {
-        list($type, $value) = each($attribute);
+        $type = array_key_first($attribute);
+        $value = $attribute[$type];
 
         if ($type === 'B') {
             $value = base64_decode($value);

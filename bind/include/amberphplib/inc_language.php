@@ -154,6 +154,7 @@ function language_translate($language, $label_array)
 
 	// store labels to fetch from DB in here
 	$label_fetch_array = array();
+	$result = array();
 
 	// run through the labels - see what ones we have cached, and what ones we need to query
 	foreach ($label_array as $label)

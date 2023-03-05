@@ -18,7 +18,7 @@ class page_output
 	var $lock_delete;
 
 
-	function page_output()
+	function __construct()
 	{
 
 		// initate object
@@ -31,8 +31,8 @@ class page_output
 		// define the navigiation menu
 		$this->obj_menu_nav = New menu_nav;
 
-		$this->obj_menu_nav->add_item("Adjust Server Group", "page=servers/group-view.php&id=". $this->obj_name_server_group->id ."");
-		$this->obj_menu_nav->add_item("Delete Server Group", "page=servers/group-delete.php&id=". $this->obj_name_server_group->id ."", TRUE);
+		$this->obj_menu_nav->add_item("Adjust Server Group", "page=servers/group-view.php&id=". $this->obj_name_server_group->id);
+		$this->obj_menu_nav->add_item("Delete Server Group", "page=servers/group-delete.php&id=". $this->obj_name_server_group->id, TRUE);
 	}
 
 

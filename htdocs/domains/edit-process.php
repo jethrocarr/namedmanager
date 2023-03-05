@@ -264,7 +264,7 @@ if (user_permissions_get('namedadmins'))
 		if ($obj_domain->id)
 		{
 			$_SESSION["error"]["form"]["domain_edit"]	= "failed";
-			header("Location: ../index.php?page=domains/view.php&id=". $obj_domain->id ."");
+			header("Location: ../index.php?page=domains/view.php&id=". $obj_domain->id);
 		}
 		else
 		{
@@ -403,7 +403,7 @@ if (user_permissions_get('namedadmins'))
 			if ($obj_domain->id)
 			{
 				$_SESSION["error"]["form"]["domain_edit"]	= "failed";
-				header("Location: ../index.php?page=domains/view.php&id=". $obj_domain->id ."");
+				header("Location: ../index.php?page=domains/view.php&id=". $obj_domain->id);
 			}
 			else
 			{
@@ -424,7 +424,7 @@ if (user_permissions_get('namedadmins'))
 			if (empty($networks))
 			{
 				// multiple domains
-				header("Location: ../index.php?page=domains/view.php&id=". $obj_domain->id ."");
+				header("Location: ../index.php?page=domains/view.php&id=". $obj_domain->id);
 				exit(0);
 			}
 			else

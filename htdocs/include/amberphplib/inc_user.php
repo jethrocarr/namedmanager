@@ -39,7 +39,7 @@ class user_auth
 		Constructor
 	*/
 
-	function user_auth()
+	function __construct()
 	{
 		log_debug("user_auth", "Executing user_auth()");
 
@@ -390,7 +390,7 @@ class user_auth
 
 
 		// check the instance (if required) and select the required database
-		if ($GLOBALS["config"]["instance"] == "hosted")
+		if (isset($GLOBALS["config"]["instance"]) && $GLOBALS["config"]["instance"] == "hosted")
 		{
 			$sql_instance_obj		= New sql_query;
 			$sql_instance_obj->string	= "SELECT active, db_hostname FROM `instances` WHERE instanceid='$instance' LIMIT 1";
@@ -1326,7 +1326,7 @@ class blacklist
 	/*
 		Constructor
 	*/
-	function blacklist()
+	function __construct()
 	{
 		// default IP address to use
 		$this->ipaddress		= $_SERVER["REMOTE_ADDR"];

@@ -25,7 +25,7 @@ class page_output
 	var $is_standard;
 
 
-	function page_output()
+	function __construct()
 	{
 		// include custom scripts and/or logic
 		$this->requires["javascript"][]	= "include/javascript/domain_records.js";
@@ -40,9 +40,9 @@ class page_output
 		// define the navigiation menu
 		$this->obj_menu_nav = New menu_nav;
 
-		$this->obj_menu_nav->add_item("Domain Details", "page=domains/view.php&id=". $this->obj_domain->id ."");
-		$this->obj_menu_nav->add_item("Domain Records", "page=domains/records.php&id=". $this->obj_domain->id ."", TRUE);
-		$this->obj_menu_nav->add_item("Delete Domain", "page=domains/delete.php&id=". $this->obj_domain->id ."");
+		$this->obj_menu_nav->add_item("Domain Details", "page=domains/view.php&id=". $this->obj_domain->id);
+		$this->obj_menu_nav->add_item("Domain Records", "page=domains/records.php&id=". $this->obj_domain->id, TRUE);
+		$this->obj_menu_nav->add_item("Delete Domain", "page=domains/delete.php&id=". $this->obj_domain->id);
 	}
 
 

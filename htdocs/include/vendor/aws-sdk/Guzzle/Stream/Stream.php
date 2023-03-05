@@ -229,7 +229,7 @@ class Stream implements StreamInterface
 
     public function seek($offset, $whence = SEEK_SET)
     {
-        return $this->cache[self::SEEKABLE] ? fseek($this->stream, $offset, $whence) === 0 : false;
+        return $this->cache[self::SEEKABLE] && fseek($this->stream, $offset, $whence) === 0;
     }
 
     public function read($length)

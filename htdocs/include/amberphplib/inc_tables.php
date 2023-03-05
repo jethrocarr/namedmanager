@@ -68,7 +68,7 @@ class table
 
 		Constructor Function
 	*/
-	function table()
+	function __construct()
 	{
 		// init the SQL structure
 		$this->sql_obj = New sql_query;
@@ -1355,7 +1355,7 @@ class table
 
 
 					default:
-						log_debug("inc_tables", "Error: Unrecognised row total mode ". $this->total_rows_mode ."");
+						log_debug("inc_tables", "Error: Unrecognised row total mode ". $this->total_rows_mode);
 					break;
 				}
 
@@ -1558,7 +1558,7 @@ class table
 						}
 						else
 						{
-							print "<a href=\"index.php?page=". $this->links[$link]["page"] ."";
+							print "<a href=\"index.php?page=". $this->links[$link]["page"];
 						}
 
 						// add each option
@@ -1769,7 +1769,7 @@ class table
 							}
 							else
 							{
-								print "<a class=\"button_small ". $this->links[$link]["options"]["class"] ."\" href=\"index.php?page=". $this->links[$link]["page"] ."";
+								print "<a class=\"button_small ". $this->links[$link]["options"]["class"] ."\" href=\"index.php?page=". $this->links[$link]["page"];
 							}
 
 							// add each option
@@ -2080,8 +2080,7 @@ class table
 		// table foreach loop
 		$output_tabledata[]		= '%% foreach table\_data';
 
-		$line	= "";
-		$line	.= '%% ';
+		$line = '%% ';
 
 		for ($i=0; $i < $col_num; $i++)
 		{
@@ -2236,7 +2235,7 @@ class table
 			// add data for all selected columns
 			for ($j=0; $j < count($this->columns); $j++)
 			{
-				$structure["column_$j"]	= $this->data_render[$i]["". $this->columns[$j] .""];
+				$structure["column_$j"]	= $this->data_render[$i][strval($this->columns[$j])];
 			}
 
 			// optional: row totals column

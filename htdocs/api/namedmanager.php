@@ -30,7 +30,7 @@ class api_namedmanager
 	/*
 		constructor
 	*/
-	function api_namedmanager()
+	function __construct()
 	{
         $this->auth_server  = isset($_SESSION["auth_server"]) ? $_SESSION["auth_server"] : NULL;                                                                
         $this->auth_online  = isset($_SESSION["auth_online"]) ? $_SESSION["auth_online"] : NULL;
@@ -244,6 +244,8 @@ class api_namedmanager
 		{
 			$obj_server		= New name_server;
 			$obj_server->id		= $this->auth_server;
+
+			$obj_server->load_data();
 
 			return $obj_server->action_update_config_version($version);
 		}

@@ -14,7 +14,7 @@ include_once("../include/amberphplib/main.php");
 include_once("../include/application/main.php");
 
 
-if (user_permissions_get(namedadmins))
+if (user_permissions_get("namedadmins"))
 {
 	////// INPUT PROCESSING ////////////////////////
 
@@ -113,7 +113,7 @@ if (user_permissions_get(namedadmins))
 	//// PROCESS DATA ////////////////////////////
 
 
-	if ($_SESSION["error"]["message"])
+	if (isset($_SESSION["error"]["message"]))
 	{
 		if ($mode == "edit")
 		{
@@ -199,7 +199,7 @@ if (user_permissions_get(namedadmins))
 
 
 			// generate a new password and salt
-			if ($data["password"])
+			if (!empty($data["password"]))
 			{
 				user_changepwd($id, $data["password"]);
 			}
@@ -254,7 +254,7 @@ if (user_permissions_get(namedadmins))
 			$sql_obj->string = "UPDATE config SET value='update_required' WHERE name='PROCMAIL_UPDATE_STATUS' LIMIT 1";
 			$sql_obj->execute();
 
-			if ($_SESSION["error"]["message"])
+			if (isset($_SESSION["error"]["message"]))
 			{
 				$sql_obj->trans_rollback();
 

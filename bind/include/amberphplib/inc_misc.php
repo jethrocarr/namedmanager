@@ -1410,7 +1410,7 @@ function dir_list_contents($directory='.')
 			{
 				$filepath = $directory . '/' . $file;
 
-				array_push($files, $filepath);
+				$files[] = $filepath;
 				
 				if ( is_dir($filepath) )
 				{

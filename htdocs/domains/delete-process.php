@@ -56,7 +56,7 @@ if (user_permissions_get('namedadmins'))
 	if (error_check())
 	{
 		$_SESSION["error"]["form"]["domain_delete"]	= "failed";
-		header("Location: ../index.php?page=domains/delete.php&id=". $obj_domain->id ."");
+		header("Location: ../index.php?page=domains/delete.php&id=". $obj_domain->id);
 
 		exit(0);
 	}

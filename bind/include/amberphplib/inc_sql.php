@@ -38,7 +38,7 @@ class sql_query
 	/*
 		Constructor
 	*/
-	function sql_query()
+	function __construct()
 	{
 		// fetch the default database session - this avoids having to carry one object around at all times
 		// yet still permits connecting to alternative databases
@@ -132,7 +132,7 @@ class sql_query
 		}
 
 
-		log_write("debug", "sql_query", "New session ". $this->db_link ."");
+		log_write("debug", "sql_query", "New session ". $this->db_link);
 
 		// success
 		return 1;
@@ -213,17 +213,9 @@ class sql_query
 	{
 		log_write("debug", "sql_query", "Executing session_terminate()");
 
-		if ($this->db_link)
+		if ($this->db_link && $this->db_type == "mysql")
 		{
-			switch ($this->db_type)
-			{
-				case "mysql":
-
-					return mysqli_close($this->db_link);
-
-				break;
-			}
-
+			return mysqli_close($this->db_link);
 		}
 		else
 		{

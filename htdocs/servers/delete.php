@@ -15,7 +15,7 @@ class page_output
 	var $obj_form;
 
 
-	function page_output()
+	function __construct()
 	{
 
 		// initate object
@@ -28,14 +28,14 @@ class page_output
 		// define the navigiation menu
 		$this->obj_menu_nav = New menu_nav;
 
-		$this->obj_menu_nav->add_item("Adjust Server Configuration", "page=servers/view.php&id=". $this->obj_name_server->id ."");
+		$this->obj_menu_nav->add_item("Adjust Server Configuration", "page=servers/view.php&id=". $this->obj_name_server->id);
 		
 		if ($GLOBALS["config"]["FEATURE_LOGS_API"])
 		{
-			$this->obj_menu_nav->add_item("View Server-Specific Logs", "page=servers/logs.php&id=". $this->obj_name_server->id ."");
+			$this->obj_menu_nav->add_item("View Server-Specific Logs", "page=servers/logs.php&id=". $this->obj_name_server->id);
 		}
 
-		$this->obj_menu_nav->add_item("Delete Server", "page=servers/delete.php&id=". $this->obj_name_server->id ."", TRUE);
+		$this->obj_menu_nav->add_item("Delete Server", "page=servers/delete.php&id=". $this->obj_name_server->id, TRUE);
 	}
 
 
