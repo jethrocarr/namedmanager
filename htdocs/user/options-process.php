@@ -135,7 +135,7 @@ if (user_online())
 
 
 		// administrator-only options
-		if (user_permissions_get("namedadmins"))
+		if (user_permissions_get("admin"))
 		{
 			// debugging
 			$sql_obj->string	= "INSERT INTO users_options (userid, name, value) VALUES ($id, 'debug', '". $data["option_debug"] ."')";

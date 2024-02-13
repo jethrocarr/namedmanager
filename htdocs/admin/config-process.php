@@ -2,7 +2,7 @@
 /*
 	admin/config-process.php
 	
-	Access: namedadmins only
+	Access: admin only
 
 	Updates the system configuration.
 */
@@ -12,7 +12,7 @@
 include_once("../include/config.php");
 include_once("../include/amberphplib/main.php");
 
-if (user_permissions_get("namedadmins"))
+if (user_permissions_get("admin"))
 {
 	/*
 		Fetch Configuration Data
