@@ -30,7 +30,7 @@ require("include/application/main.php");
 if (!is_readable($GLOBALS["config"]["log_file"]))
 {
 	log_write("error", "script", "Unable to read log file ". $GLOBALS["config"]["log_file"] ."");
-	die("Fatal Error");
+	die(date("Y-m-d H:i:s") . " Fatal Error\n");
 }
 
 

@@ -502,7 +502,7 @@ class bind_api extends soap_api
 				if (function_exists("idn_to_ascii"))
 				{
 					$record["record_name"]		= idn_to_ascii($record["record_name"]);
-					$record["record_content"]	= idn_to_ascii($record["record_content"]);
+					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003);
 				}
 
 				// handle origin and content format
@@ -537,7 +537,7 @@ class bind_api extends soap_api
 				if (function_exists("idn_to_ascii"))
 				{
 					$record["record_name"]		= idn_to_ascii($record["record_name"]);
-					$record["record_content"]	= idn_to_ascii($record["record_content"]);
+					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003);
 				}
 
 				// handle origin and content format
@@ -570,7 +570,7 @@ class bind_api extends soap_api
 				if (function_exists("idn_to_ascii"))
 				{
 					$record["record_name"]		= idn_to_ascii($record["record_name"]);
-					$record["record_content"]	= idn_to_ascii($record["record_content"]);
+					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003);
 				}
 
 				if (strpos($record["record_name"], "ip6.arpa"))
@@ -597,7 +597,7 @@ class bind_api extends soap_api
 				if (function_exists("idn_to_ascii"))
 				{
 					$record["record_name"]		= idn_to_ascii($record["record_name"]);
-					$record["record_content"]	= idn_to_ascii($record["record_content"]);
+					$record["record_content"]	= idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003);
 				}
 
 				if (preg_match("/\./", $record["record_name"]) && preg_match("/". $domain_name ."$/", $record["record_name"]))
@@ -638,7 +638,7 @@ class bind_api extends soap_api
 
 					// idn_to_ascii has a lovely habit of blowing up with some record values, such as
 					// DKIM records. If idn_to_ascii fails, we leave the value unchanged
-					if ($tmp = idn_to_ascii($record["record_content"]))
+					if ($tmp = idn_to_ascii($record["record_content"], IDNA_DEFAULT, INTL_IDNA_VARIANT_2003))
 					{
 						$record["record_content"] = $tmp;
 					}
@@ -659,6 +659,18 @@ class bind_api extends soap_api
 						if (preg_match("/\./", $record["record_name"]) && preg_match("/". $domain_name ."$/", $record["record_name"]))
 						{
 							$record["record_name"] .= ".";	// append . as FQDN
+						}
+                        
+						// Adjust content if > 255 and record type is TXT
+						if ((strcmp($record["record_type"],"TXT")==0) && (strlen($record["record_content"]) > 257)) {
+							$content2split = substr($record["record_content"],1,-1);
+							$record["record_content"] = '"';
+							while (strlen($content2split) > 255) {
+								$record["record_content"] .= substr($content2split,0,255) .'""';
+								$content2split = substr($content2split,255);
+							}
+
+							$record["record_content"] .= $content2split.'"';
 						}
 
 					break;

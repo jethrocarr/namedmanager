@@ -80,11 +80,12 @@ function security_form_input($expression, $valuename, $numchars, $errormsg)
         //
         // this prevents SQL injections, by backslashing -- " ' ` \ -- etc.
         //
-	if (get_magic_quotes_gpc() == 0)
-	{
-		$input = addslashes($input);
-	}
-
+		$input = mysqli_real_escape_string($GLOBALS["cache"]["database_default_link"], $input);
+/*		if (get_magic_quotes_gpc() == 0)
+		{
+			$input = addslashes($input);
+		}
+*/
 
 	if (strlen($input) >= $numchars)
 	{
@@ -418,7 +419,7 @@ function security_form_input_predefined ($type, $valuename, $numchar, $errormsg)
 		break;
 
 		case "ipv6_cidr":
-			list($network, $cidr) = split("/", $_POST[$valuename]);
+			list($network, $cidr) = explode("/", $_POST[$valuename]);
 			
 			if (filter_var($network, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6))
 			{

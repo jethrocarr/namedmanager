@@ -30,7 +30,15 @@ $config["db_pass"] = "";				// MySQL password (if any)
 
 $config["AUTH_METHOD"] = "sql";
 
+/*
+	Instance Configuration
+	When running the Amberdms Billing System for a single entity/company, set
+	this value to "single".
+	To support multiple instances, set to "hosted" to enable the hosted mode
+	and refer to the product documentation for further details.
+*/
 
+$config["instance"]	= "single";
 
 /*
 	LDAP Database Configuration

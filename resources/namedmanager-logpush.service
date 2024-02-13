@@ -1,0 +1,11 @@
+[Unit]
+Description=Delivers logs from Named (via syslog) back to NamedManager
+After=network.target
+Requires=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/php -q /usr/share/namedmanager/bind/namedmanager_logpush.php
+
+[Install]
+WantedBy=multi-user.target

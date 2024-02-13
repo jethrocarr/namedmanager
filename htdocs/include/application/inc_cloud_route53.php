@@ -419,7 +419,14 @@ class cloud_route53
 					case "SPF":
 					default:
 						// Point to IPs or quoted strings. Don't touch.
-						$tmp2["Value"] = $this->obj_domain->data["records"][$id]["content"];
+						if ($this->obj_domain->data["records"][$id]["content"] != "")
+						{
+							$tmp2["Value"] = $this->obj_domain->data["records"][$id]["content"];
+						}
+						else
+						{
+							$tmp2["Value"] = $this->obj_domain->data["records"][$id][3];
+						}
 					break;
 				}
 				
